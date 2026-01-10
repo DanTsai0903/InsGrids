@@ -1,77 +1,77 @@
-# 如何使用 AltStore 安裝 InsGrids (免年費、無線續期)
+# How to Install InsGrids with AltStore (Free, Wireless Renewal)
 
-這份指南將教您如何使用 [AltStore](https://altstore.io/) 將 InsGrids 安裝到您的 iPhone 上。這是目前最穩定且免費的安裝方式。
+This guide will teach you how to use [AltStore](https://altstore.io/) to install InsGrids on your iPhone. This is currently the most stable and free installation method.
 
-## 第一階段：電腦端準備
+## Phase 1: Computer Preparation
 
-### 1. 安裝 AltServer
-1. 前往 [altstore.io](https://altstore.io/) 下載 **AltServer (macOS)**。
-2. 解壓縮並將 `AltServer.app` 拖入「應用程式」資料夾。
-3. 開啟 AltServer（它會出現在頂部選單列）。
+### 1. Install AltServer
+1. Go to [altstore.io](https://altstore.io/) and download **AltServer (macOS)**.
+2. Unzip and drag `AltServer.app` into your "Applications" folder.
+3. Open AltServer (it will appear in the menu bar).
 
-### 2. 安裝 Mail Plug-in (必要)
-1. 點擊選單列的 AltServer 圖示 > **Install Mail Plug-in**。
-2. 開啟 Mac 的「郵件」(Mail) App。
-3. 郵件 > 設定 > 一般 > 管理外掛模組... (Manage Plug-ins...)。
-4. 勾選 **AltPlugin.mailbundle** 並點擊「允許存取」。
-5. 重啟郵件 App。
+### 2. Install Mail Plug-in (Required)
+1. Click the AltServer icon in the menu bar > **Install Mail Plug-in**.
+2. Open the "Mail" app on your Mac.
+3. Mail > Settings > General > Manage Plug-ins...
+4. Check **AltPlugin.mailbundle** and click "Allow Access".
+5. Restart the Mail app.
 
-### 3.生成 App 檔案
-我們為您準備了一個自動打包腳本，只需在終端機執行：
+### 3. Generate App File
+We have prepared an automatic packaging script for you. Just run in the terminal:
 
 ```bash
 ./generate_ipa.sh
 ```
 
-執行後，資料夾內會出現一個 `InsGrids.ipa` 檔案。這就是我們要安裝的安裝包。
+After execution, an `InsGrids.ipa` file will appear in the folder. This is the package we want to install.
 
-## 第二階段：手機端安裝
+## Phase 2: Phone Installation
 
-### 1. 安裝 AltStore 到手機
-1. 用傳輸線將 iPhone 連接至 Mac。
-2. 點擊選單列的 AltServer 圖示 > **Install AltStore** > 選擇您的 iPhone。
-3. 輸入您的 Apple ID 和密碼（這僅用於向 Apple 申請免費憑證，很安全）。
-4. 幾秒後，AltStore App 就會出現在您的 iPhone 上。
+### 1. Install AltStore on Phone
+1. Connect your iPhone to your Mac via USB cable.
+2. Click the AltServer icon in the menu bar > **Install AltStore** > Select your iPhone.
+3. Enter your Apple ID and password (this is only used to request a free certificate from Apple, it is safe).
+4. After a few seconds, the AltStore app will appear on your iPhone.
 
-### 2. 信任開發者
-1. 在 iPhone 上，前往 **設定 > 一般 > VPN 與裝置管理**。
-2. 點擊您的 Apple ID。
-3. 點擊「信任...」。
+### 2. Trust Developer
+1. On your iPhone, go to **Settings > General > VPN & Device Management**.
+2. Tap your Apple ID.
+3. Tap "Trust...".
 
-## 第三階段：安裝 InsGrids
+## Phase 3: Install InsGrids
 
-1. **傳送檔案**：將剛剛電腦生成的 `InsGrids.ipa` 透過 AirDrop 傳送到 iPhone。
-2. **安裝**：
-   - 在 iPhone 上打開 AltStore。
-   - 點擊下方的 **My Apps**。
-   - 點擊左上角的 **+** 號。
-   - 選擇剛剛傳送的 `InsGrids.ipa`。
-   - 如果是第一次使用，需要再次輸入 Apple ID。
-3. **完成！** InsGrids 現在已經安裝在您的手機上，並且可以正常使用了。
+1. **Transfer File**: Transfer the `InsGrids.ipa` just generated on your computer to your iPhone via AirDrop.
+2. **Install**:
+   - Open AltStore on your iPhone.
+   - Tap **My Apps** at the bottom.
+   - Tap the **+** button in the top left corner.
+   - Select the `InsGrids.ipa` you just transferred.
+   - If this is your first time using it, you may need to enter your Apple ID again.
+3. **Done!** InsGrids is now installed on your phone and ready to use.
 
-## 如何保持 App 不過期？
+## How to Keep the App Active?
 
-免費帳號的 App 只有 7 天有效期。但 AltStore 會自動幫您續命：
-1. 確保電腦上的 **AltServer** 是開啟的。
-2. 確保 iPhone 和電腦連在 **同一個 Wi-Fi**。
-3. AltStore 會在背景自動更新簽名（您可以隨時打開 AltStore 查看剩餘天數）。
+Apps on free accounts only have a 7-day validity period. However, AltStore will automatically renew it for you:
+1. Ensure **AltServer** is running on your computer.
+2. Ensure your iPhone and computer are connected to the **same Wi-Fi**.
+3. AltStore will automatically refresh the signature in the background (you can open AltStore at any time to check the remaining days).
 
-只要每 7 天內有一次機會讓手機和電腦在同一個 Wi-Fi 下相遇，您的 App 就可以永久使用！
+As long as your phone and computer meet on the same Wi-Fi once every 7 days, your app can be used permanently!
 
-## 如何更新 App？
+## How to Update the App?
 
-當 InsGrids 有新功能發佈或修復 Bug 時，更新步驟非常簡單：
+When InsGrids has new features or bug fixes, updating is very simple:
 
-1. **重新生成檔案**：
-   - 在電腦上重新執行打包腳本：
+1. **Regenerate File**:
+   - Re-run the packaging script on your computer:
      ```bash
      ./generate_ipa.sh
      ```
-   - 這會產生最新的 `InsGrids.ipa`。
+   - This will generate the latest `InsGrids.ipa`.
 
-2. **覆蓋安裝**：
-   - 將新的 IPA 傳送到手機。
-   - 用 AltStore 再次開啟它。
-   - AltStore 會自動覆蓋舊版本，您的設定和資料通常會保留。
+2. **Overwrite Install**:
+   - Transfer the new IPA to your phone.
+   - Open it again with AltStore.
+   - AltStore will automatically overwrite the old version, and your settings and data will usually be preserved.
 
-**注意**：不需要刪除舊版 App，直接安裝新版即可覆蓋。
+**Note**: You do not need to delete the old version of the app, just install the new version to overwrite it.
