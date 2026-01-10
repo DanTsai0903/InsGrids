@@ -1,0 +1,20 @@
+/* 
+  Localizable.strings
+  InsGrids - English
+*/
+
+"app.title" = "InsGrids";
+"app.tagline" = "Create Perfect Aspect Ratios for Your Photos";
+"button.selectPhotos" = "Select Photos";
+"button.save" = "Save";
+"button.done" = "Done";
+"button.ok" = "OK";
+"footer.features" = "Multi-select • Smart Align";
+"label.border" = "Border";
+"label.borderColor" = "Border Color";
+"label.selectRatio" = "Select Ratio";
+"status.saving" = "Saving...";
+"status.processing" = "Processing...";
+"alert.complete" = "Complete";
+"alert.savedPhotos" = "Saved %lld photos";
+"alert.saveFailed" = "Save failed";

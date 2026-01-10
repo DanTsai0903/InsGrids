@@ -1,0 +1,20 @@
+/* 
+  Localizable.strings
+  InsGrids - Traditional Chinese
+*/
+
+"app.title" = "InsGrids";
+"app.tagline" = "為您的照片打造完美比例";
+"button.selectPhotos" = "選擇照片";
+"button.save" = "儲存";
+"button.done" = "完成";
+"button.ok" = "好";
+"footer.features" = "支援多張選取 • 智慧對齊";
+"label.border" = "邊框";
+"label.borderColor" = "邊框顏色";
+"label.selectRatio" = "選擇比例";
+"status.saving" = "儲存中...";
+"status.processing" = "處理中...";
+"alert.complete" = "完成";
+"alert.savedPhotos" = "已儲存 %lld 張照片";
+"alert.saveFailed" = "儲存失敗";

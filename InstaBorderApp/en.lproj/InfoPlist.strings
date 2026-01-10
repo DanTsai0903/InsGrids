@@ -1,0 +1,9 @@
+/* 
+  InfoPlist.strings
+  InsGrids
+  English
+*/
+
+"CFBundleDisplayName" = "InsGrids";
+"NSPhotoLibraryUsageDescription" = "InsGrids needs access to your photo library to select photos for editing.";
+"NSPhotoLibraryAddUsageDescription" = "InsGrids needs permission to save edited photos to your library.";

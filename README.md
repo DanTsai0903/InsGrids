@@ -11,6 +11,7 @@
 - **Real-time Preview**: See changes instantly with optimized thumbnail rendering
 - **Memory Optimized**: Carefully designed to handle high-resolution photos without crashes
 - **Privacy Focused**: Uses iOS Photo Picker with minimal permissions
+- **Localization**: Supports English and Traditional Chinese (繁體中文)
 
 ## 📱 Requirements
 
@@ -60,6 +61,17 @@ Press `Cmd + R` to build and run on your device or simulator.
    - Tap the border color button to choose or customize border color
 3. **Save**: Tap "Save" to process and save all edited photos to your library
 
+## 🌍 Localization
+
+The app supports the following languages:
+- **English** (en)
+- **Traditional Chinese** (zh-Hant) - 繁體中文
+
+The app automatically follows your device's language settings. To change the language:
+1. Go to **Settings → General → Language & Region**
+2. Set your preferred language
+3. The app will display in the corresponding language
+
 ## 🏗 Architecture
 
 ```
@@ -76,6 +88,8 @@ InsGrids/
 │   │   └── Components/                 # Reusable UI components
 │   ├── Utilities/
 │   │   └── ImageExporter.swift         # Photo library saving logic
+│   ├── en.lproj/                       # English localization
+│   ├── zh-Hant.lproj/                  # Traditional Chinese localization
 │   └── Assets.xcassets/
 │       ├── AppIcon.appiconset/         # App icon
 │       └── Logo.imageset/              # Launch screen logo

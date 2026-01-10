@@ -27,7 +27,7 @@ struct ContentView: View {
                 VStack(spacing: 40) {
                     Spacer()
                     
-                    // Logo - Use Logo image set (same as App Icon)
+                    // Logo
                     VStack(spacing: 20) {
                         Image("Logo")
                             .resizable()
@@ -35,12 +35,12 @@ struct ContentView: View {
                             .frame(width: 100, height: 100)
                             .clipShape(RoundedRectangle(cornerRadius: 22))
                         
-                        Text("InsGrids")
+                        Text(NSLocalizedString("app.title", comment: ""))
                             .font(.system(size: 42, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                             .tracking(1)
                         
-                        Text("為您的照片打造完美比例")
+                        Text(NSLocalizedString("app.tagline", comment: ""))
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .tracking(0.5)
@@ -53,7 +53,7 @@ struct ContentView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "plus")
                                 .font(.headline)
-                            Text("選擇照片")
+                            Text(NSLocalizedString("button.selectPhotos", comment: ""))
                                 .font(.headline)
                         }
                         .foregroundColor(.black)
@@ -67,7 +67,7 @@ struct ContentView: View {
                     }
                     
                     // Footer
-                    Text("支援多張選取 • 智慧對齊")
+                    Text(NSLocalizedString("footer.features", comment: ""))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.3))
                         .padding(.bottom, 40)

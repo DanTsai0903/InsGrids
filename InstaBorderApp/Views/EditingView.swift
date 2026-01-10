@@ -31,12 +31,12 @@ struct EditingView: View {
                         .frame(width: 40, height: 40)
                 }
                 Spacer()
-                Text("InsGrids")
+                Text(NSLocalizedString("app.title", comment: ""))
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                 Spacer()
                 Button(action: saveImages) {
-                    Text("儲存")
+                    Text(NSLocalizedString("button.save", comment: ""))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
@@ -50,7 +50,7 @@ struct EditingView: View {
             .padding(.bottom, 8)
             .background(Color.black)
             
-            // Photos Grid - takes all available space
+            // Photos Grid
             ScrollView {
                 let cols = viewModel.processedThumbnails.count == 1 
                     ? [GridItem(.flexible())]
@@ -69,7 +69,6 @@ struct EditingView: View {
             
             // Bottom Controls
             VStack(spacing: 16) {
-                // Slider
                 HStack {
                     Image(systemName: "photo.fill")
                         .font(.caption)
@@ -84,7 +83,6 @@ struct EditingView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // Tool Buttons
                 HStack(spacing: 50) {
                     Button(action: { showRatioSheet = true }) {
                         VStack(spacing: 6) {
@@ -102,7 +100,7 @@ struct EditingView: View {
                                 .fill(currentColor)
                                 .frame(width: 24, height: 24)
                                 .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            Text("邊框")
+                            Text(NSLocalizedString("label.border", comment: ""))
                                 .font(.caption.bold())
                         }
                         .foregroundColor(.white)
@@ -129,20 +127,20 @@ struct EditingView: View {
                     Color.black.opacity(0.7).ignoresSafeArea()
                     VStack(spacing: 12) {
                         ProgressView().tint(.white).scaleEffect(1.3)
-                        Text(isSaving ? "儲存中..." : "處理中...")
+                        Text(isSaving ? NSLocalizedString("status.saving", comment: "") : NSLocalizedString("status.processing", comment: ""))
                             .font(.subheadline)
                             .foregroundColor(.white)
                     }
                 }
             }
         )
-        .alert("完成", isPresented: $showingSaveSuccess) {
-            Button("好") {}
+        .alert(NSLocalizedString("alert.complete", comment: ""), isPresented: $showingSaveSuccess) {
+            Button(NSLocalizedString("button.ok", comment: "")) {}
         } message: {
             Text(saveMessage)
         }
         .onAppear { applyChanges() }
-        .onDisappear { viewModel.clearAll() }  // Free memory when leaving
+        .onDisappear { viewModel.clearAll() }
     }
     
     private func applyChanges() {
@@ -153,7 +151,9 @@ struct EditingView: View {
         isSaving = true
         viewModel.processAndSaveAll { success, count in
             isSaving = false
-            saveMessage = success ? "已儲存 \(count) 張照片" : "儲存失敗"
+            saveMessage = success 
+                ? String(format: NSLocalizedString("alert.savedPhotos", comment: ""), count)
+                : NSLocalizedString("alert.saveFailed", comment: "")
             showingSaveSuccess = true
         }
     }
@@ -168,7 +168,7 @@ struct RatioSheet: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text("選擇比例").font(.headline).padding(.top)
+            Text(NSLocalizedString("label.selectRatio", comment: "")).font(.headline).padding(.top)
             HStack(spacing: 12) {
                 ForEach(ratios, id: \.0) { r in
                     Button { currentRatio = r.1; onSelect(); dismiss() } label: {
@@ -193,7 +193,7 @@ struct ColorSheet: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text("邊框顏色").font(.headline).padding(.top)
+            Text(NSLocalizedString("label.borderColor", comment: "")).font(.headline).padding(.top)
             HStack(spacing: 16) {
                 ForEach(presets, id: \.self) { c in
                     Button { currentColor = c; onSelect(); dismiss() } label: {
@@ -205,7 +205,7 @@ struct ColorSheet: View {
                 ColorPicker("", selection: $currentColor).labelsHidden()
                     .onChange(of: currentColor) { _, _ in onSelect() }
             }
-            Button("完成") { dismiss() }
+            Button(NSLocalizedString("button.done", comment: "")) { dismiss() }
                 .font(.headline).foregroundColor(.white)
                 .frame(maxWidth: .infinity).frame(height: 44)
                 .background(Color.blue).cornerRadius(10)

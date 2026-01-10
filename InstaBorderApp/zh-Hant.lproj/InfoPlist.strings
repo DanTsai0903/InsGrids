@@ -1,0 +1,9 @@
+/* 
+  InfoPlist.strings
+  InsGrids
+  Traditional Chinese
+*/
+
+"CFBundleDisplayName" = "InsGrids";
+"NSPhotoLibraryUsageDescription" = "InsGrids 需要存取您的相簿以選取照片進行編輯。";
+"NSPhotoLibraryAddUsageDescription" = "InsGrids 需要權限將編輯後的照片儲存到您的相簿。";
