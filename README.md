@@ -1,6 +1,6 @@
 # InsGrids
 
-**為您的照片打造完美比例** - A simple and elegant iOS app for adding customizable borders to your photos, perfect for Instagram and social media.
+**Create Perfect Aspect Ratios for Your Photos** - A simple and elegant iOS app for adding customizable borders to your photos, perfect for Instagram and social media.
 
 ## ✨ Features
 
@@ -31,7 +31,7 @@ brew install xcodegen
 ### Step 2: Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/InsGrids.git
+git clone https://github.com/DanTsai0903/InsGrids.git
 cd InsGrids
 ```
 
@@ -53,12 +53,12 @@ Press `Cmd + R` to build and run on your device or simulator.
 
 ## 🎯 Usage
 
-1. **Select Photos**: Tap the "選擇照片" button to select one or more photos from your library
+1. **Select Photos**: Tap the "Select Photos" button to choose one or more photos from your library
 2. **Adjust Settings**:
    - Use the slider to adjust image scale (how much of the frame the image fills)
    - Tap the aspect ratio button (4:5, 1:1, etc.) to change the output dimensions
    - Tap the border color button to choose or customize border color
-3. **Save**: Tap "儲存" to process and save all edited photos to your library
+3. **Save**: Tap "Save" to process and save all edited photos to your library
 
 ## 🏗 Architecture
 
