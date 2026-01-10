@@ -52,6 +52,53 @@ open InsGrids.xcodeproj
 
 Press `Cmd + R` to build and run on your device or simulator.
 
+## 📲 Installing with AltStore (Free, No Developer Account Required)
+
+If you don't have an Apple Developer account ($99/year), you can use [AltStore](https://altstore.io/) to install the app on your iPhone for free.
+
+### Prerequisites
+
+- A Mac or Windows PC
+- iPhone with iOS 12.2+
+- Same WiFi network for phone and computer
+
+### Step 1: Generate IPA File
+
+Run the included script to build an unsigned IPA:
+
+```bash
+./generate_ipa.sh
+```
+
+This will create `InsGrids.ipa` in the project folder.
+
+### Step 2: Install AltServer on Your Computer
+
+1. Download [AltServer](https://altstore.io/) for Mac or Windows
+2. Install and run AltServer (it appears in the menu bar)
+
+### Step 3: Install AltStore on Your iPhone
+
+1. Connect iPhone to computer via USB
+2. Click AltServer icon → Install AltStore → Select your iPhone
+3. Enter your Apple ID (used for free signing)
+4. AltStore app will appear on your iPhone
+5. Go to Settings → General → VPN & Device Management → Trust your Apple ID
+
+### Step 4: Install InsGrids
+
+1. Transfer `InsGrids.ipa` to your iPhone (via iCloud Drive, AirDrop, or any cloud service)
+2. Open the Files app on iPhone, locate the .ipa file
+3. Tap and hold → Share → AltStore
+4. Wait for installation to complete
+
+### Keeping the App Active
+
+Free accounts have a 7-day expiration. To keep the app working:
+- Keep AltServer running on your computer
+- Ensure iPhone and computer are on the same WiFi
+- AltStore will automatically refresh the app in the background
+
 ## 🎯 Usage
 
 1. **Select Photos**: Tap the "Select Photos" button to choose one or more photos from your library
@@ -67,10 +114,7 @@ The app supports the following languages:
 - **English** (en)
 - **Traditional Chinese** (zh-Hant) - 繁體中文
 
-The app automatically follows your device's language settings. To change the language:
-1. Go to **Settings → General → Language & Region**
-2. Set your preferred language
-3. The app will display in the corresponding language
+The app automatically follows your device's language settings.
 
 ## 🏗 Architecture
 
@@ -78,53 +122,33 @@ The app automatically follows your device's language settings. To change the lan
 InsGrids/
 ├── InstaBorderApp/
 │   ├── Models/
-│   │   ├── BorderConfiguration.swift   # Configuration model for border settings
-│   │   └── ImageProcessor.swift        # Core image processing with 12MP limit
+│   │   ├── BorderConfiguration.swift
+│   │   └── ImageProcessor.swift
 │   ├── ViewModels/
-│   │   └── PhotoEditorViewModel.swift  # MVVM pattern, handles state & processing
+│   │   └── PhotoEditorViewModel.swift
 │   ├── Views/
-│   │   ├── ContentView.swift           # Landing screen with photo picker
-│   │   ├── EditingView.swift           # Main editing interface
-│   │   └── Components/                 # Reusable UI components
+│   │   ├── ContentView.swift
+│   │   ├── EditingView.swift
+│   │   └── Components/
 │   ├── Utilities/
-│   │   └── ImageExporter.swift         # Photo library saving logic
-│   ├── en.lproj/                       # English localization
-│   ├── zh-Hant.lproj/                  # Traditional Chinese localization
+│   │   └── ImageExporter.swift
+│   ├── en.lproj/
+│   ├── zh-Hant.lproj/
 │   └── Assets.xcassets/
-│       ├── AppIcon.appiconset/         # App icon
-│       └── Logo.imageset/              # Launch screen logo
-└── project.yml                         # XcodeGen configuration
+├── project.yml
+└── generate_ipa.sh
 ```
 
 ## 🚀 Technical Highlights
 
-- **Memory Management**: 
-  - Thumbnail-based real-time preview (200px) for instant feedback
-  - Full-resolution processing capped at 12MP (4000×3000) to prevent crashes
-  - Serial processing with `autoreleasepool` to minimize memory footprint
-  
-- **Image Processing**:
-  - Uses `UIGraphicsImageRenderer` for accurate centering and scaling
-  - Pixel count limiting (width × height ≤ 12,000,000) instead of dimension limiting
-  - Renderer scale set to 1.0 to avoid retina multiplication
-
-- **Privacy**:
-  - Uses `PhotosPicker` (iOS 14+) for restricted photo access
-  - Requests `.addOnly` permission for saving, never full library access
+- **Memory Management**: Thumbnail-based preview, 12MP output limit, serial processing with autoreleasepool
+- **Image Processing**: UIGraphicsImageRenderer with pixel count limiting
+- **Privacy**: PhotosPicker with `.addOnly` permission
 
 ## 📝 Permissions
 
-The app requires the following permissions:
-
-- **Photo Library (Limited)**: To let users select specific photos for editing
-- **Photo Library Add**: To save processed photos back to the library
-
-## 🎨 Design
-
-- Dark theme with premium aesthetics
-- Minimalist UI with floating controls
-- Rounded, modern typography (SF Pro Rounded)
-- Portrait-only orientation for focused editing experience
+- **Photo Library (Limited)**: To select photos for editing
+- **Photo Library Add**: To save processed photos
 
 ## 📄 License
 
