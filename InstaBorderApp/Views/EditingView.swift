@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditingView: View {
     @ObservedObject var viewModel: PhotoEditorViewModel
+    @StateObject private var presetManager = PresetManager()
     @State private var showingSaveSuccess = false
     @State private var saveMessage = ""
     @State private var currentRatio: CGFloat = BorderConfiguration.ratio4x5
@@ -9,6 +10,7 @@ struct EditingView: View {
     @State private var imageScale: CGFloat = 0.8
     @State private var showRatioSheet = false
     @State private var showColorSheet = false
+    @State private var showPresetsSheet = false
     @State private var isSaving = false
     @Environment(\.dismiss) var dismiss
     
@@ -31,9 +33,12 @@ struct EditingView: View {
                         .frame(width: 40, height: 40)
                 }
                 Spacer()
+                
+                // Title
                 Text(NSLocalizedString("app.title", comment: ""))
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
+                
                 Spacer()
                 Button(action: saveImages) {
                     Text(NSLocalizedString("button.save", comment: ""))
@@ -83,7 +88,7 @@ struct EditingView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                HStack(spacing: 50) {
+                HStack(spacing: 40) {
                     Button(action: { showRatioSheet = true }) {
                         VStack(spacing: 6) {
                             Image(systemName: "aspectratio")
@@ -105,6 +110,16 @@ struct EditingView: View {
                         }
                         .foregroundColor(.white)
                     }
+                    
+                    Button(action: { showPresetsSheet = true }) {
+                        VStack(spacing: 6) {
+                            Image(systemName: "bookmark.fill")
+                                .font(.system(size: 22))
+                            Text(NSLocalizedString("presets.title", comment: ""))
+                                .font(.caption.bold())
+                        }
+                        .foregroundColor(.white)
+                    }
                 }
             }
             .padding(.vertical, 16)
@@ -120,6 +135,22 @@ struct EditingView: View {
         .sheet(isPresented: $showColorSheet) {
             ColorSheet(currentColor: $currentColor) { applyChanges() }
                 .presentationDetents([.height(220)])
+        }
+        .sheet(isPresented: $showPresetsSheet) {
+            PresetsSheet(
+                presetManager: presetManager,
+                currentConfig: Binding(
+                    get: { BorderConfiguration(borderColor: currentColor, aspectRatio: currentRatio, imageScale: imageScale) },
+                    set: { _ in }
+                ),
+                onApply: { config in
+                    self.currentRatio = config.aspectRatio
+                    self.currentColor = config.borderColor
+                    self.imageScale = config.imageScale
+                    applyChanges()
+                }
+            )
+            .presentationDetents([.medium, .large])
         }
         .overlay(
             Group {

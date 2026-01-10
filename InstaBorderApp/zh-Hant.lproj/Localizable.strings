@@ -9,6 +9,7 @@
 "button.save" = "儲存";
 "button.done" = "完成";
 "button.ok" = "好";
+"button.cancel" = "取消";
 "footer.features" = "支援多張選取 • 智慧對齊";
 "label.border" = "邊框";
 "label.borderColor" = "邊框顏色";
@@ -18,3 +19,11 @@
 "alert.complete" = "完成";
 "alert.savedPhotos" = "已儲存 %lld 張照片";
 "alert.saveFailed" = "儲存失敗";
+
+// Presets
+"presets.title" = "預設組";
+"presets.save" = "儲存設定";
+"presets.name" = "預設組名稱";
+"presets.enterName" = "輸入名稱";
+"presets.saveCurrent" = "儲存目前設定";
+"presets.empty" = "尚未儲存任何預設組";

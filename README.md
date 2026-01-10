@@ -11,6 +11,7 @@
 - **Real-time Preview**: See changes instantly with optimized thumbnail rendering
 - **Memory Optimized**: Carefully designed to handle high-resolution photos without crashes
 - **Privacy Focused**: Uses iOS Photo Picker with minimal permissions
+- **Presets**: Save your favorite aspect ratio, scale, and color settings for quick access
 - **Localization**: Supports English and Traditional Chinese (繁體中文)
 
 ## 📱 Requirements
@@ -106,7 +107,9 @@ Free accounts have a 7-day expiration. To keep the app working:
    - Use the slider to adjust image scale (how much of the frame the image fills)
    - Tap the aspect ratio button (4:5, 1:1, etc.) to change the output dimensions
    - Tap the border color button to choose or customize border color
-3. **Save**: Tap "Save" to process and save all edited photos to your library
+3. **Use Presets** (Optional):
+   - Tap the **Presets** button (bookmark icon) in the bottom toolbar to save your current settings or apply a previously saved preset.
+4. **Save**: Tap "Save" to process and save all edited photos to your library
 
 ## 🌍 Localization
 

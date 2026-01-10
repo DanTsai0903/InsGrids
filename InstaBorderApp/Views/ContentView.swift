@@ -44,6 +44,9 @@ struct ContentView: View {
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .tracking(0.5)
+                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.5)
+                            .padding(.horizontal)
                     }
                     
                     Spacer()

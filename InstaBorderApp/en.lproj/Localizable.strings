@@ -9,6 +9,7 @@
 "button.save" = "Save";
 "button.done" = "Done";
 "button.ok" = "OK";
+"button.cancel" = "Cancel";
 "footer.features" = "Multi-select • Smart Align";
 "label.border" = "Border";
 "label.borderColor" = "Border Color";
@@ -18,3 +19,11 @@
 "alert.complete" = "Complete";
 "alert.savedPhotos" = "Saved %lld photos";
 "alert.saveFailed" = "Save failed";
+
+// Presets
+"presets.title" = "Presets";
+"presets.save" = "Save Preset";
+"presets.name" = "Preset Name";
+"presets.enterName" = "Enter preset name";
+"presets.saveCurrent" = "Save current settings";
+"presets.empty" = "No presets saved yet";
