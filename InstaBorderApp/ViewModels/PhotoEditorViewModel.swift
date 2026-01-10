@@ -1,0 +1,141 @@
+import SwiftUI
+import PhotosUI
+import Combine
+
+class PhotoEditorViewModel: ObservableObject {
+    @Published var processedThumbnails: [UIImage] = []
+    @Published var configuration = BorderConfiguration()
+    @Published var isProcessing = false
+    
+    private var originalImages: [UIImage] = []
+    private var thumbnails: [UIImage] = []
+    private let thumbnailSize: CGFloat = 200
+    
+    func addImages(_ images: [UIImage]) {
+        self.originalImages = images
+        
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            let thumbs = images.map { self.createThumbnail($0) }
+            DispatchQueue.main.async {
+                self.thumbnails = thumbs
+                self.processAllThumbnails()
+            }
+        }
+    }
+    
+    private func createThumbnail(_ image: UIImage) -> UIImage {
+        return resizeImage(image, maxDimension: thumbnailSize)
+    }
+    
+    private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        
+        if size.width <= maxDimension && size.height <= maxDimension {
+            return image
+        }
+        
+        let scale = min(maxDimension / size.width, maxDimension / size.height)
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+    
+    func updateConfiguration(_ newConfig: BorderConfiguration) {
+        self.configuration = newConfig
+        processAllThumbnails()
+    }
+    
+    func processAllThumbnails() {
+        guard !thumbnails.isEmpty else { return }
+        
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            guard let self = self else { return }
+            let config = self.configuration
+            
+            let processed = self.thumbnails.compactMap { image in
+                autoreleasepool {
+                    return ImageProcessor.shared.processImage(image, configuration: config)
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.processedThumbnails = processed
+            }
+        }
+    }
+    
+    // Serial processing: ONE image at a time to minimize memory usage
+    func processAndSaveAll(completion: @escaping (Bool, Int) -> Void) {
+        guard !originalImages.isEmpty else {
+            completion(false, 0)
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.isProcessing = true
+        }
+        
+        let currentConfig = self.configuration
+        let imageCount = self.originalImages.count
+        
+        // Process on background thread, one at a time
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else {
+                DispatchQueue.main.async { completion(false, 0) }
+                return
+            }
+            
+            var successCount = 0
+            
+            for i in 0..<imageCount {
+                // Use autoreleasepool to free memory after each image
+                autoreleasepool {
+                    let originalImage = self.originalImages[i]
+                    
+                    // Process
+                    guard let processed = ImageProcessor.shared.processImage(originalImage, configuration: currentConfig) else {
+                        return // continue to next image
+                    }
+                    
+                    // Save synchronously (wait for completion)
+                    let semaphore = DispatchSemaphore(value: 0)
+                    var saveSuccess = false
+                    
+                    ImageExporter.shared.saveImage(processed) { success, _ in
+                        saveSuccess = success
+                        semaphore.signal()
+                    }
+                    
+                    // Wait up to 30 seconds
+                    _ = semaphore.wait(timeout: .now() + 30)
+                    
+                    if saveSuccess {
+                        successCount += 1
+                    }
+                }
+                // Memory should be freed here for this iteration
+            }
+            
+            DispatchQueue.main.async {
+                self.isProcessing = false
+                completion(successCount == imageCount, successCount)
+            }
+        }
+    }
+    
+    func clearAll() {
+        originalImages.removeAll()
+        thumbnails.removeAll()
+        processedThumbnails.removeAll()
+    }
+    
+    var imageCount: Int {
+        return originalImages.count
+    }
+}
