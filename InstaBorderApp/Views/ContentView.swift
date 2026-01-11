@@ -54,7 +54,7 @@ struct ContentView: View {
                     // Main Action Button
                     PhotosPicker(selection: $selectedItems, matching: .images, photoLibrary: .shared()) {
                         HStack(spacing: 12) {
-                            Image(systemName: "plus")
+                            Image(systemName: "square.dashed")
                                 .font(.headline)
                             Text(NSLocalizedString("button.selectPhotos", comment: ""))
                                 .font(.headline)
@@ -67,6 +67,24 @@ struct ContentView: View {
                     }
                     .onChange(of: selectedItems) { _, newItems in
                         loadImages(from: newItems)
+                    }
+                    
+                    // Freeform Grid Button
+                    NavigationLink(destination: GridEditingView()) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.grid.3x3")
+                                .font(.headline)
+                            Text(NSLocalizedString("button.freeformGrid", comment: ""))
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(width: 220, height: 56)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(28)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
                     }
                     
                     // Footer

@@ -5,7 +5,7 @@
 
 "app.title" = "InsGrids";
 "app.tagline" = "為您的照片打造完美比例";
-"button.selectPhotos" = "選擇照片";
+"button.selectPhotos" = "加框框";
 "button.save" = "儲存";
 "button.done" = "完成";
 "button.ok" = "好";
@@ -21,9 +21,65 @@
 "alert.saveFailed" = "儲存失敗";
 
 // Presets
-"presets.title" = "預設組";
+"presets.title" = "預設";
 "presets.save" = "儲存設定";
-"presets.name" = "預設組名稱";
+"presets.name" = "預設名稱";
 "presets.enterName" = "輸入名稱";
 "presets.saveCurrent" = "儲存目前設定";
-"presets.empty" = "尚未儲存任何預設組";
+"presets.empty" = "尚未儲存任何預設";
+
+// Grid Mode
+"button.freeformGrid" = "自由網格";
+"button.apply" = "套用";
+
+// Grid Dimensions
+"grid.dimension.title" = "網格大小";
+"grid.dimension.presets" = "快速選擇";
+"grid.dimension.custom" = "自訂大小";
+"grid.dimension.rows" = "列";
+"grid.dimension.columns" = "欄";
+"grid.dimension.tiles" = "%d 個格子";
+"grid.dimension.warning" = "較大的網格可能需要較長的匯出時間";
+"grid.dimension.format" = "%d×%d 網格";
+
+// Grid Canvas
+"grid.cell.empty" = "點擊新增";
+"grid.cell.actions" = "格子選項";
+"grid.cell.assignImage" = "指派選取的圖片";
+"grid.cell.removeImage" = "移除圖片";
+"grid.cell.addEmoji" = "新增表情";
+"grid.cell.removeEmoji" = "移除表情";
+
+// Grid Library
+"grid.library.title" = "圖片庫";
+"grid.library.empty" = "尚未新增圖片";
+
+// Grid Toolbar
+"grid.addPhotos" = "新增照片";
+"grid.size" = "網格大小";
+"grid.background" = "背景";
+"grid.background.title" = "背景顏色";
+"grid.background.custom" = "自訂顏色";
+"grid.export" = "匯出";
+"grid.exporting" = "正在匯出格子...";
+"grid.export.success" = "已成功儲存 %d 個網格圖片";
+"grid.export.failed" = "部分圖片匯出失敗";
+
+// Grid Restore
+"grid.restore.title" = "恢復上次編輯?";
+"grid.restore.message" = "發現先前的編輯紀錄。";
+"grid.restore.yes" = "恢復";
+"grid.restore.no" = "重新開始";
+"grid.autosave.saved" = "已儲存";
+
+// Emoji Picker
+"emoji.picker.title" = "新增表情";
+"emoji.picker.clear" = "清除";
+
+// Alerts
+"alert.success" = "成功";
+
+// Delete
+"button.delete" = "刪除";
+"grid.deleteImage.title" = "刪除圖片？";
+"title.crop" = "裁剪圖片";

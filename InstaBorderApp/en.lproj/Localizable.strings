@@ -5,7 +5,7 @@
 
 "app.title" = "InsGrids";
 "app.tagline" = "Create Perfect Aspect Ratios for Your Photos";
-"button.selectPhotos" = "Select Photos";
+"button.selectPhotos" = "Border";
 "button.save" = "Save";
 "button.done" = "Done";
 "button.ok" = "OK";
@@ -27,3 +27,59 @@
 "presets.enterName" = "Enter preset name";
 "presets.saveCurrent" = "Save current settings";
 "presets.empty" = "No presets saved yet";
+
+// Grid Mode
+"button.freeformGrid" = "Freeform Grid";
+"button.apply" = "Apply";
+
+// Grid Dimensions
+"grid.dimension.title" = "Grid Size";
+"grid.dimension.presets" = "Quick Presets";
+"grid.dimension.custom" = "Custom Size";
+"grid.dimension.rows" = "Rows";
+"grid.dimension.columns" = "Columns";
+"grid.dimension.tiles" = "%d tiles";
+"grid.dimension.warning" = "Large grids may take longer to export";
+"grid.dimension.format" = "%d×%d Grid";
+
+// Grid Canvas
+"grid.cell.empty" = "Tap to add";
+"grid.cell.actions" = "Cell Actions";
+"grid.cell.assignImage" = "Assign Selected Image";
+"grid.cell.removeImage" = "Remove Image";
+"grid.cell.addEmoji" = "Add Emoji";
+"grid.cell.removeEmoji" = "Remove Emoji";
+
+// Grid Library
+"grid.library.title" = "Images";
+"grid.library.empty" = "No images added";
+
+// Grid Toolbar
+"grid.addPhotos" = "Add Photos";
+"grid.size" = "Grid Size";
+"grid.background" = "Background";
+"grid.background.title" = "Background Color";
+"grid.background.custom" = "Custom Color";
+"grid.export" = "Export";
+"grid.exporting" = "Exporting tiles...";
+"grid.export.success" = "Successfully saved %d grid tiles to Photos";
+"grid.export.failed" = "Failed to export some tiles";
+
+// Grid Restore
+"grid.restore.title" = "Restore Previous Grid?";
+"grid.restore.message" = "A previous editing session was found.";
+"grid.restore.yes" = "Restore";
+"grid.restore.no" = "Start Fresh";
+"grid.autosave.saved" = "Saved";
+
+// Emoji Picker
+"emoji.picker.title" = "Add Emoji";
+"emoji.picker.clear" = "Clear";
+
+// Alerts
+"alert.success" = "Success";
+
+// Delete
+"button.delete" = "Delete";
+"grid.deleteImage.title" = "Delete Image?";
+"title.crop" = "Crop Image";
