@@ -4,20 +4,22 @@
 
 ## ✨ Features
 
-- **Customizable Borders**: Add white, black, or custom-colored borders to your photos
-- **Multiple Aspect Ratios**: Support for 1:1, 4:5, 16:9, and 9:16 aspect ratios
-- **Adjustable Image Scale**: Resize your photo within the border (30% - 100%)
-- **Batch Processing**: Select and edit multiple photos at once
-- **Real-time Preview**: See changes instantly with optimized thumbnail rendering
-- **Memory Optimized**: Carefully designed to handle high-resolution photos without crashes
+- **Freeform Canvas**: Arrange photos freely in a customizable grid (2x2, 3x3, etc.)
+- **Advanced Cropping**: Crop images directly on the canvas with aspect ratio presets (1:1, 4:5, 16:9, etc.)
+- **Smart Gestures**: Drag to move, pinch to zoom/rotate, and intuitive delete interactions
+- **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution
+- **Tiled Export**: Export high-resolution grids (up to 12MP per tile) using background tiled rendering
+- **Auto-Save & Restore**: Your work is automatically saved and can be restored if the app is closed
+- **Undo/Redo**: Full undo history support for all canvas operations
+- **Memory Optimized**: Handles high-resolution images (e.g., 48MP ProRAW) using advanced memory management
 - **Privacy Focused**: Uses iOS Photo Picker with minimal permissions
 - **Presets**: Save your favorite aspect ratio, scale, and color settings for quick access
 - **Localization**: Supports English and Traditional Chinese (繁體中文)
 
 ## 📱 Requirements
 
-- iOS 26.0+
-- Xcode 26.2+
+- iOS 17.0+
+- Xcode 15.0+
 - Swift 5.9+
 
 ## 🛠 Installation
@@ -60,7 +62,7 @@ If you don't have an Apple Developer account ($99/year), you can use [AltStore](
 ### Prerequisites
 
 - A Mac or Windows PC
-- iPhone with iOS 12.2+
+- iPhone with iOS 16.0+
 - Same WiFi network for phone and computer
 
 ### Step 1: Generate IPA File
@@ -102,14 +104,16 @@ Free accounts have a 7-day expiration. To keep the app working:
 
 ## 🎯 Usage
 
-1. **Select Photos**: Tap the "Select Photos" button to choose one or more photos from your library
-2. **Adjust Settings**:
-   - Use the slider to adjust image scale (how much of the frame the image fills)
-   - Tap the aspect ratio button (4:5, 1:1, etc.) to change the output dimensions
-   - Tap the border color button to choose or customize border color
-3. **Use Presets** (Optional):
-   - Tap the **Presets** button (bookmark icon) in the bottom toolbar to save your current settings or apply a previously saved preset.
-4. **Save**: Tap "Save" to process and save all edited photos to your library
+1. **Select Photos**: Tap the "+" button freely add photos to your grid
+2. **Arrange**: 
+   - **Move**: Drag photos to rearrange
+   - **Zoom/Rotate**: Pinch with two fingers
+   - **Crop**: Tap a photo -> Crop icon
+   - **Delete**: Drag photo to the bottom trash can or long press
+3. **Customize Grid**:
+   - Tap the grid button (e.g. "2x2") to change layout columns/rows
+   - Tap the color circle to change background color
+4. **Export**: Tap "Export" to save the high-resolution grid tiles to your library
 
 ## 🌍 Localization
 
@@ -125,14 +129,17 @@ The app automatically follows your device's language settings.
 InsGrids/
 ├── InstaBorderApp/
 │   ├── Models/
-│   │   ├── BorderConfiguration.swift
+│   │   ├── CanvasImage.swift
+│   │   ├── GridAutoSaveConfig.swift
 │   │   └── ImageProcessor.swift
 │   ├── ViewModels/
-│   │   └── PhotoEditorViewModel.swift
+│   │   └── GridViewModel.swift
 │   ├── Views/
-│   │   ├── ContentView.swift
-│   │   ├── EditingView.swift
-│   │   └── Components/
+│   │   ├── GridEditingView.swift
+│   │   ├── Components/
+│   │   │   ├── FreeformCanvasView.swift
+│   │   │   ├── ImageCropView.swift
+│   │   │   └── GridCanvasView.swift
 │   ├── Utilities/
 │   │   └── ImageExporter.swift
 │   ├── en.lproj/
@@ -144,9 +151,10 @@ InsGrids/
 
 ## 🚀 Technical Highlights
 
-- **Memory Management**: Thumbnail-based preview, 12MP output limit, serial processing with autoreleasepool
-- **Image Processing**: UIGraphicsImageRenderer with pixel count limiting
-- **Privacy**: PhotosPicker with `.addOnly` permission
+- **Proxy Image Workflow**: Implements a "Low-Res Edit, High-Res Export" architecture. 48MP images are cached to disk, and lightweight 1200px proxies are used for fluid UI performance.
+- **Tiled Rendering**: Exports are processed in background threads using tiled rendering. High-res assets are dynamically loaded and released for each tile to strictly control memory usage (OOM prevention).
+- **Auto-Save System**: Robust state persistence using file system storage for images and UserDefaults for metadata, surviving app termination.
+- **Safe Layout**: Advanced geometry calculations for crop and canvas management.
 
 ## 📝 Permissions
 
