@@ -5,12 +5,15 @@
 - [x] 1.2 Implement `PhotoEditorEngine` (Helper class wrapping CoreImage logic)
     - [x] 1.2.1 Filter chain implementation
     - [x] 1.2.2 Rendering method (`render(uiImage:adjustments:) -> UIImage`)
+    - [x] 1.2.3 **Tone Curve Logic** (Highlights, Shadows, Whites, Blacks)
 - [x] 1.3 Add standard CIPhotoEffect presets support
 
 ## 2. User Interface (PhotoEditorView)
 - [x] 2.1 Scaffold `PhotoEditorView` (Sheet presentation)
 - [x] 2.2 Implement Image Preview area (using downsampled image)
-- [x] 2.3 Implement Adjustment Sliders UI (Brightness, Contrast, etc.)
+- [x] 2.3 Implement Adjustment Sliders UI (Exposure, Contrast, Highlights, Shadows, Whites, Blacks)
+    - [x] 2.3.1 Reorder sliders to match Lightroom
+    - [x] 2.3.2 Implemented View Original & Reset All
 - [x] 2.4 Implement Filter Selector UI (Horizontal scroll)
 - [x] 2.5 Connect UI sliders to `PhotoEditorEngine` with debounce/throttling
 

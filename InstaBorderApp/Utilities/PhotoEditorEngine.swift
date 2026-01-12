@@ -131,8 +131,24 @@ final class PhotoEditorEngine {
         // 7. Preset Filter (e.g., CIPhotoEffectMono)
         if let filterName = adjustments.filterName,
            let filter = CIFilter(name: filterName) {
+            
             filter.setValue(output, forKey: kCIInputImageKey)
-            output = filter.outputImage ?? output
+            
+            if let filtered = filter.outputImage {
+                // Apply intensity if less than 1.0
+                if adjustments.filterIntensity < 1.0 {
+                    // Mix filtered result with original (output) based on intensity
+                    // CIDissolveTransition: t=0 is source(image), t=1 is target
+                    // We want: t=0 -> output (unfiltered), t=1 -> filtered
+                    let blender = CIFilter.dissolveTransition()
+                    blender.inputImage = output         // Start state (0.0)
+                    blender.targetImage = filtered      // End state (1.0)
+                    blender.time = Float(adjustments.filterIntensity)
+                    output = blender.outputImage ?? filtered
+                } else {
+                    output = filtered
+                }
+            }
         }
         
         return output

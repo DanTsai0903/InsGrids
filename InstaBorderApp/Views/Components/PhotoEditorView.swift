@@ -13,6 +13,7 @@ struct PhotoEditorView: View {
     @State private var selectedTab: EditorTab = .adjust
     @State private var isProcessing = false
     @State private var showingOriginal = false  // Toggle to show original vs edited
+    @State private var editingFilterIntensity = false // Toggle for filter intensity slider
     
     private let engine = PhotoEditorEngine()
     
@@ -266,61 +267,105 @@ struct PhotoEditorView: View {
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
+                }
             }
         }
-    }
     
     // MARK: - Filters Panel
     private var filtersPanel: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                // "None" option
-                filterButton(name: NSLocalizedString("filter.none", comment: "None filter"), filterName: nil)
-                
-                // All available filters
-                ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
-                    filterButton(name: NSLocalizedString(filter.localizationKey, comment: ""), filterName: filter.name)
+        VStack {
+            if editingFilterIntensity && adjustments.filterName != nil {
+                // Intensity Slider Mode
+                VStack(spacing: 12) {
+                    HStack {
+                        Text(NSLocalizedString("editor.filter", comment: "") + " " + NSLocalizedString("adjust.intensity", value: "Intensity", comment: ""))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                        Spacer()
+                        Button {
+                            editingFilterIntensity = false
+                        } label: {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.white)
+                                .font(.title2)
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Slider(value: $adjustments.filterIntensity, in: 0...1)
+                        .tint(.white)
+                        .padding(.horizontal)
                 }
+                .frame(height: 120)
+                .transition(.opacity)
+            } else {
+                // Filter List Mode
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        // "None" option
+                        filterButton(name: NSLocalizedString("filter.none", comment: "None filter"), filterName: nil)
+                        
+                        // All available filters
+                        ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
+                            filterButton(name: NSLocalizedString(filter.localizationKey, comment: ""), filterName: filter.name)
+                        }
+                    }
+                    .padding()
+                }
+                .frame(height: 120)
+                .transition(.opacity)
             }
-            .padding()
         }
-        .frame(height: 120)
     }
     
     private func filterButton(name: String, filterName: String?) -> some View {
         let isSelected = adjustments.filterName == filterName
         let displayImage: UIImage? = {
             guard let thumb = filterThumbnail else { return nil }
-            if let fn = filterName {
-                return engine.generateFilterThumbnail(image: thumb, filterName: fn)
+            // If this button represents a specific filter, apply it to the thumbnail
+            if let fName = filterName {
+                let engine = PhotoEditorEngine()
+                return engine.generateFilterThumbnail(image: thumb, filterName: fName)
+            } else {
+                return thumb // "None" shows original
             }
-            return thumb
         }()
         
         return Button {
-            adjustments.filterName = filterName
+            if isSelected && filterName != nil {
+                // Tap again on selected filter -> Edit Intensity
+                withAnimation {
+                    editingFilterIntensity = true
+                }
+            } else {
+                // Select new filter
+                withAnimation {
+                    adjustments.filterName = filterName
+                    adjustments.filterIntensity = 1.0 // Reset intensity on switch
+                    editingFilterIntensity = false    // Exit edit mode if switching
+                }
+            }
         } label: {
-            VStack(spacing: 4) {
-                // Thumbnail
+            VStack(spacing: 8) {
                 if let img = displayImage {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
                         .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(isSelected ? Color.yellow : Color.clear, lineWidth: 2)
                         )
                 } else {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(Color.gray.opacity(0.3))
                         .frame(width: 60, height: 60)
                 }
                 
                 Text(name)
-                    .font(.caption2)
-                    .foregroundColor(isSelected ? .blue : .white)
+                    .font(.caption)
+                    .foregroundColor(isSelected ? .yellow : .white)
             }
         }
     }

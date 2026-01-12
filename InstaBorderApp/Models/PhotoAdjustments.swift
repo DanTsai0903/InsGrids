@@ -36,6 +36,9 @@ struct PhotoAdjustments: Codable, Equatable {
     /// Optional filter preset name (e.g., "CIPhotoEffectMono")
     var filterName: String? = nil
     
+    /// Filter intensity/opacity (0.0 to 1.0, default 1.0)
+    var filterIntensity: Double = 1.0
+    
     /// Check if any adjustments have been made (not default)
     var hasAdjustments: Bool {
         contrast != 1.0 ||
@@ -64,6 +67,7 @@ struct PhotoAdjustments: Codable, Equatable {
         vignette = 0.0
         sharpness = 0.0
         filterName = nil
+        filterIntensity = 1.0
     }
     
     /// Available filter presets using CIPhotoEffect filters

@@ -98,6 +98,7 @@
 "adjust.blacks" = "黑色";
 "adjust.saturation" = "飽和度";
 "adjust.warmth" = "色溫";
+"adjust.intensity" = "強度";
 "adjust.vignette" = "暗角";
 "adjust.sharpness" = "銳利度";
 
