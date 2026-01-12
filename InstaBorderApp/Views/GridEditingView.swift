@@ -30,10 +30,10 @@ struct GridEditingView: View {
     // Delete button state (shared with canvas)
     @State private var pendingDeleteImageId: UUID? = nil
     
-    // Cropping
+    // Cropping - store both ID and pre-captured image
     @State private var cropImageId: UUID? = nil
+    @State private var cropImage: UIImage? = nil  // Pre-captured image for crop
     @State private var showCropSheet = false
-
     
     var body: some View {
         VStack(spacing: 0) {
@@ -61,8 +61,24 @@ struct GridEditingView: View {
                     },
                     onCropImage: { id in
                         pendingDeleteImageId = nil
+                        
+                        // CRITICAL: Pre-capture image BEFORE presenting sheet
+                        // This avoids viewModel queries during sheet initialization
+                        let capturedImage: UIImage?
+                        if let original = viewModel.loadOriginal(id: id) {
+                            capturedImage = original
+                        } else if let canvasImage = viewModel.canvasImages.first(where: { $0.id == id }) {
+                            capturedImage = canvasImage.image
+                        } else {
+                            capturedImage = nil
+                        }
+                        
+                        guard let imageToEdit = capturedImage else { return }
+                        
                         cropImageId = id
-                        // Add a tiny delay to ensure everything is settled before presenting sheet
+                        cropImage = imageToEdit
+                        
+                        // Small delay for view stabilization
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             showCropSheet = true
                         }
@@ -117,10 +133,8 @@ struct GridEditingView: View {
         .onChange(of: selectedPhotos) { _, newItems in
             loadImages(from: newItems)
         }
-        // Image Crop Sheet
-        .fullScreenCover(isPresented: $showCropSheet) {
-            cropSheetContent
-        }
+        // NOTE: Crop view is now shown via overlay at bottom of view hierarchy
+        // to avoid SwiftUI sheet presentation issues
         // Color picker sheet
         .sheet(isPresented: $showColorPicker) {
             ColorPickerSheet(
@@ -166,6 +180,27 @@ struct GridEditingView: View {
                     Text(NSLocalizedString("grid.exporting", comment: "Exporting tiles..."))
                         .foregroundColor(.white)
                 }
+            }
+        }
+        // Crop overlay - renders within same view hierarchy, avoiding modal issues
+        .overlay {
+            if showCropSheet, let imageToEdit = cropImage, let id = cropImageId {
+                ImageCropView(
+                    originalImage: imageToEdit,
+                    onCrop: { croppedImage in
+                        viewModel.updateImage(id, newImage: croppedImage)
+                        cropImageId = nil
+                        cropImage = nil
+                        showCropSheet = false
+                    },
+                    onCancel: {
+                        cropImageId = nil
+                        cropImage = nil
+                        showCropSheet = false
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(1000)
             }
         }
     }
@@ -252,31 +287,6 @@ struct GridEditingView: View {
         .padding(.top, 4)
         .padding(.bottom, 8)
         .background(Color.black)
-    }
-    
-    @ViewBuilder
-    private var cropSheetContent: some View {
-        if let id = cropImageId,
-           let canvasImage = viewModel.canvasImages.first(where: { $0.id == id }) {
-            // Try to load high-res original for editing, fallback to proxy if needed
-            let imageToEdit = viewModel.loadOriginal(id: id) ?? canvasImage.image
-            
-            ImageCropView(
-                originalImage: imageToEdit,
-                onCrop: { croppedImage in
-                    viewModel.updateImage(id, newImage: croppedImage)
-                    cropImageId = nil
-                    showCropSheet = false
-                },
-                onCancel: {
-                    cropImageId = nil
-                    showCropSheet = false
-                }
-            )
-        } else {
-            // Fallback if image not found
-            Color.black.onAppear { showCropSheet = false }
-        }
     }
     
     // MARK: - Actions
@@ -383,6 +393,10 @@ struct ImageCropView: View {
     @State private var viewSize: CGSize = .zero
     @State private var selectedRatio: CGFloat? = nil
     @State private var displayImage: UIImage? = nil // Downsampled for display
+    @State private var isLayoutReady = false // Guard against premature layout
+    @State private var isRatioLocked = false // Whether aspect ratio is locked
+    @State private var lockedRatio: CGFloat? = nil // The locked aspect ratio (width/height)
+    @State private var isDraggingCropRect = false // Hide lock icon while dragging
     
     private let touchTarget: CGFloat = 30
     private let minCropSize: CGFloat = 50
@@ -407,6 +421,7 @@ struct ImageCropView: View {
                         .font(.headline)
                         .foregroundColor(.white)
                 }
+                .disabled(!isLayoutReady) // Disable until layout is ready
             }
             .padding()
             .background(Color.black)
@@ -414,122 +429,65 @@ struct ImageCropView: View {
             Spacer()
             
             // Editor Area
-            // Editor Area
             GeometryReader { geometry in
                 ZStack {
-                    if viewSize.width > 0 && viewSize.height > 0 {
-                        ZStack {
-                            // 1. The Image (Strictly use ONLY displayImage to prevent OOM)
-                            if let displayImg = displayImage {
-                                Image(uiImage: displayImg)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: viewSize.width, height: viewSize.height)
-                                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                                
-                                // 2. Dimmed Overlay & Handles (Only show when image is loaded)
-
-                            if cropRect.width > 0 && cropRect.height > 0 {
-                                // Dimmed Overlay with Hole
-                                Rectangle()
-                                    .fill(Color.black.opacity(0.5))
-                                    .overlay(
-                                        Rectangle()
-                                            .frame(width: cropRect.width, height: cropRect.height)
-                                            .position(x: cropRect.midX, y: cropRect.midY)
-                                            .blendMode(.destinationOut)
-                                    )
-                                    .compositingGroup()
-                                    .allowsHitTesting(false)
-                                
-                                // Crop Handles & Border
-                                ZStack {
-                                    // Border
+                    if let displayImg = displayImage, isLayoutReady {
+                        // Image is loaded and layout is ready
+                        Image(uiImage: displayImg)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: viewSize.width, height: viewSize.height)
+                            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        
+                        // Crop overlay (only show when cropRect is valid)
+                        if cropRect.width > 0 && cropRect.height > 0 {
+                            // Dimmed Overlay with Hole
+                            Rectangle()
+                                .fill(Color.black.opacity(0.5))
+                                .overlay(
                                     Rectangle()
-                                        .stroke(Color.white, lineWidth: 1)
                                         .frame(width: cropRect.width, height: cropRect.height)
                                         .position(x: cropRect.midX, y: cropRect.midY)
-                                    
-                                    // Grid lines (3x3)
-                                    VStack(spacing: 0) {
-                                        Spacer()
-                                        Divider().background(Color.white.opacity(0.5))
-                                        Spacer()
-                                        Divider().background(Color.white.opacity(0.5))
-                                        Spacer()
-                                    }
-                                    .frame(width: cropRect.width, height: cropRect.height)
-                                    .position(x: cropRect.midX, y: cropRect.midY)
-                                    
-                                    HStack(spacing: 0) {
-                                        Spacer()
-                                        Rectangle().fill(Color.white.opacity(0.5)).frame(width: 1)
-                                        Spacer()
-                                        Rectangle().fill(Color.white.opacity(0.5)).frame(width: 1)
-                                        Spacer()
-                                    }
-                                    .frame(width: cropRect.width, height: cropRect.height)
-                                    .position(x: cropRect.midX, y: cropRect.midY)
-                                    
-                                    // Corner Handles
-                                    handle(at: .topLeft)
-                                    handle(at: .topRight)
-                                    handle(at: .bottomLeft)
-                                    handle(at: .bottomRight)
-                                    
-                                    // Side Handles
-                                    sideHandle(for: .top)
-                                    sideHandle(for: .bottom)
-                                    sideHandle(for: .left)
-                                    sideHandle(for: .right)
-                                }
-                                // Allow dragging anywhere on screen to move crop rect? 
-                                // Or just specific area? User said "move the box freely".
-                                // Usually this means dragging inside the box.
-                                .contentShape(Rectangle()) 
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            moveCropRect(value.translation)
-                                        }
-                                        .onEnded { _ in
-                                            dragStartRect = nil
-                                        }
+                                        .blendMode(.destinationOut)
                                 )
-                            }
-                        } else {
-                            // Loading state while downsampling
-                            ProgressView()
-                                .tint(.white)
-                                .scaleEffect(1.5)
-                                .frame(width: viewSize.width, height: viewSize.height)
-                                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                                .compositingGroup()
+                                .allowsHitTesting(false)
+                            
+                            // Crop Handles & Border
+                            cropHandlesView
                         }
-
-                    }
-                } else {
-                        // Fallback while calculating layout
-                        Color.black
+                    } else {
+                        // Loading state
+                        ProgressView()
+                            .tint(.white)
+                            .scaleEffect(1.5)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
                 .onAppear {
-                    self.viewSize = geometry.size
-                    self.calculateImageRect(containerSize: geometry.size)
-                    self.cropRect = self.imageRect
+                    // Step 1: Capture geometry size
+                    let containerSize = geometry.size
+                    guard containerSize.width > 0, containerSize.height > 0 else { return }
                     
-                    // Generate downsampled image for display to save memory
-                    if displayImage == nil {
-                        DispatchQueue.global(qos: .userInitiated).async {
-                            let downsampled = self.downsample(image: self.originalImage, to: 1000)
-                            DispatchQueue.main.async {
-                                self.displayImage = downsampled
-                            }
+                    // Step 2: Start downsampling in background
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let downsampled = self.downsample(image: self.originalImage, to: 1000)
+                        
+                        DispatchQueue.main.async {
+                            self.displayImage = downsampled
+                            
+                            // Step 3: Only now calculate layout (after image is ready)
+                            self.initializeLayout(containerSize: containerSize)
                         }
                     }
                 }
                 .onChange(of: geometry.size) { _, newSize in
-                    self.viewSize = newSize
-                    self.calculateImageRect(containerSize: newSize)
+                    guard newSize.width > 0, newSize.height > 0 else { return }
+                    
+                    // Only recalculate if we're already initialized
+                    if isLayoutReady {
+                        recalculateLayout(containerSize: newSize)
+                    }
                 }
             }
             .background(Color.black)
@@ -552,11 +510,97 @@ struct ImageCropView: View {
         .background(Color.black.edgesIgnoringSafeArea(.all))
     }
     
-    // MARK: - Logic
+    // MARK: - Crop Handles View
     
-    private func calculateImageRect(containerSize: CGSize) {
+    @ViewBuilder
+    private var cropHandlesView: some View {
+        ZStack {
+            // Border
+            Rectangle()
+                .stroke(Color.white, lineWidth: 1)
+                .frame(width: cropRect.width, height: cropRect.height)
+                .position(x: cropRect.midX, y: cropRect.midY)
+            
+            // Grid lines (3x3)
+            VStack(spacing: 0) {
+                Spacer()
+                Divider().background(Color.white.opacity(0.5))
+                Spacer()
+                Divider().background(Color.white.opacity(0.5))
+                Spacer()
+            }
+            .frame(width: cropRect.width, height: cropRect.height)
+            .position(x: cropRect.midX, y: cropRect.midY)
+            
+            HStack(spacing: 0) {
+                Spacer()
+                Rectangle().fill(Color.white.opacity(0.5)).frame(width: 1)
+                Spacer()
+                Rectangle().fill(Color.white.opacity(0.5)).frame(width: 1)
+                Spacer()
+            }
+            .frame(width: cropRect.width, height: cropRect.height)
+            .position(x: cropRect.midX, y: cropRect.midY)
+            
+            // Corner Handles
+            handle(at: .topLeft)
+            handle(at: .topRight)
+            handle(at: .bottomLeft)
+            handle(at: .bottomRight)
+            
+            // Side Handles (only show when ratio is not locked)
+            if !isRatioLocked {
+                sideHandle(for: .top)
+                sideHandle(for: .bottom)
+                sideHandle(for: .left)
+                sideHandle(for: .right)
+            }
+            
+            // Lock/Unlock Button (at bottom center of crop rect) - hide while dragging
+            if !isDraggingCropRect {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isRatioLocked.toggle()
+                        if !isRatioLocked {
+                            // When unlocking, clear the locked ratio
+                            lockedRatio = nil
+                            selectedRatio = nil
+                        }
+                    }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(isRatioLocked ? Color.blue : Color.white.opacity(0.8))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: isRatioLocked ? "lock.fill" : "lock.open")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(isRatioLocked ? .white : .black)
+                    }
+                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
+                .position(x: cropRect.midX, y: cropRect.maxY + 25)
+                .transition(.opacity)
+            }
+        }
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    isDraggingCropRect = true
+                    moveCropRect(value.translation)
+                }
+                .onEnded { _ in
+                    isDraggingCropRect = false
+                    dragStartRect = nil
+                }
+        )
+    }
+    
+    // MARK: - Layout Initialization
+    
+    private func initializeLayout(containerSize: CGSize) {
         let imgSize = originalImage.size
-        guard imgSize.width > 0, imgSize.height > 0, containerSize.width > 0, containerSize.height > 0 else { return }
+        guard imgSize.width > 0, imgSize.height > 0 else { return }
         
         let aspect = imgSize.width / imgSize.height
         let containerAspect = containerSize.width / containerSize.height
@@ -565,11 +609,9 @@ struct ImageCropView: View {
         var renderHeight: CGFloat
         
         if aspect > containerAspect {
-            // Image is wider than container
             renderWidth = containerSize.width
             renderHeight = containerSize.width / aspect
         } else {
-            // Image is taller than container
             renderHeight = containerSize.height
             renderWidth = containerSize.height * aspect
         }
@@ -577,15 +619,54 @@ struct ImageCropView: View {
         let x = (containerSize.width - renderWidth) / 2
         let y = (containerSize.height - renderHeight) / 2
         
-        let newRect = CGRect(x: x, y: y, width: renderWidth, height: renderHeight)
+        self.viewSize = CGSize(width: renderWidth, height: renderHeight)
+        self.imageRect = CGRect(x: x, y: y, width: renderWidth, height: renderHeight)
+        self.cropRect = self.imageRect // Initialize crop to full image
+        self.isLayoutReady = true
+    }
+    
+    private func recalculateLayout(containerSize: CGSize) {
+        let imgSize = originalImage.size
+        guard imgSize.width > 0, imgSize.height > 0 else { return }
         
-        // Prevent layout loop/reset if value is stable
-        if newRect != self.imageRect {
-            self.imageRect = newRect
-            // Only reset crop rect if it hasn't been set or is suspiciously zero
-            if self.cropRect == .zero || self.cropRect.width < 1 {
-                self.cropRect = newRect
-            }
+        // Store old values to calculate relative crop
+        let oldImageRect = imageRect
+        let oldCropRect = cropRect
+        
+        let aspect = imgSize.width / imgSize.height
+        let containerAspect = containerSize.width / containerSize.height
+        
+        var renderWidth: CGFloat
+        var renderHeight: CGFloat
+        
+        if aspect > containerAspect {
+            renderWidth = containerSize.width
+            renderHeight = containerSize.width / aspect
+        } else {
+            renderHeight = containerSize.height
+            renderWidth = containerSize.height * aspect
+        }
+        
+        let x = (containerSize.width - renderWidth) / 2
+        let y = (containerSize.height - renderHeight) / 2
+        
+        let newImageRect = CGRect(x: x, y: y, width: renderWidth, height: renderHeight)
+        self.viewSize = CGSize(width: renderWidth, height: renderHeight)
+        self.imageRect = newImageRect
+        
+        // Scale crop rect proportionally
+        if oldImageRect.width > 0, oldImageRect.height > 0 {
+            let relX = (oldCropRect.minX - oldImageRect.minX) / oldImageRect.width
+            let relY = (oldCropRect.minY - oldImageRect.minY) / oldImageRect.height
+            let relW = oldCropRect.width / oldImageRect.width
+            let relH = oldCropRect.height / oldImageRect.height
+            
+            self.cropRect = CGRect(
+                x: newImageRect.minX + relX * newImageRect.width,
+                y: newImageRect.minY + relY * newImageRect.height,
+                width: relW * newImageRect.width,
+                height: relH * newImageRect.height
+            )
         }
     }
     
@@ -597,9 +678,8 @@ struct ImageCropView: View {
             Text(label)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(
-                    // Simple equality check for ratio might be tricky with floats, but ok for now
-                    (ratio == nil && selectedRatio == nil) || 
-                    (ratio != nil && selectedRatio != nil && abs(ratio! - selectedRatio!) < 0.01) 
+                    (ratio == nil && selectedRatio == nil) ||
+                    (ratio != nil && selectedRatio != nil && abs(ratio! - selectedRatio!) < 0.01)
                     ? .white : .gray
                 )
                 .padding(.vertical, 8)
@@ -607,18 +687,31 @@ struct ImageCropView: View {
                 .background(
                     Capsule()
                         .fill(
-                            (ratio == nil && selectedRatio == nil) || 
-                            (ratio != nil && selectedRatio != nil && abs(ratio! - selectedRatio!) < 0.01) 
+                            (ratio == nil && selectedRatio == nil) ||
+                            (ratio != nil && selectedRatio != nil && abs(ratio! - selectedRatio!) < 0.01)
                             ? Color.blue : Color.white.opacity(0.1)
                         )
                 )
         }
+        .disabled(!isLayoutReady)
     }
     
     private func applyRatio(_ ratio: CGFloat?) {
-        guard let r = ratio else { return }
+        guard isLayoutReady else { return }
         
-        // Try to fit new ratio within current image rect, centered
+        // If ratio is nil (Free mode), unlock
+        if ratio == nil {
+            isRatioLocked = false
+            lockedRatio = nil
+            return
+        }
+        
+        let r = ratio!
+        
+        // Auto-lock when selecting a preset ratio
+        isRatioLocked = true
+        lockedRatio = r
+        
         let currentW = imageRect.width
         let currentH = imageRect.height
         
@@ -633,7 +726,6 @@ struct ImageCropView: View {
         let headerOffset = (currentH - newH) / 2
         let sideOffset = (currentW - newW) / 2
         
-        // Animate change
         withAnimation {
             cropRect = CGRect(
                 x: imageRect.minX + sideOffset,
@@ -743,68 +835,140 @@ struct ImageCropView: View {
         
         var newRect = startRect
         
-        switch corner {
-        case .topLeft:
-            newRect.origin.x += translation.width
-            newRect.origin.y += translation.height
-            newRect.size.width -= translation.width
-            newRect.size.height -= translation.height
-            
-        case .topRight:
-            newRect.origin.y += translation.height
-            newRect.size.width += translation.width
-            newRect.size.height -= translation.height
-            
-        case .bottomLeft:
-            newRect.origin.x += translation.width
-            newRect.size.width -= translation.width
-            newRect.size.height += translation.height
-            
-        case .bottomRight:
-            newRect.size.width += translation.width
-            newRect.size.height += translation.height
-        }
-        
-        // Constraints
-        // 1. Min Size
-        if newRect.width < minCropSize {
-            // Adjust origin if needed based on corner
-            if corner == .topLeft || corner == .bottomLeft {
-                newRect.origin.x = startRect.maxX - minCropSize
+        // If ratio is locked, resize proportionally
+        if isRatioLocked, let ratio = lockedRatio {
+            // Calculate diagonal drag distance for proportional scaling
+            let dragDistance: CGFloat
+            switch corner {
+            case .topLeft:
+                dragDistance = (-translation.width - translation.height) / 2
+            case .topRight:
+                dragDistance = (translation.width - translation.height) / 2
+            case .bottomLeft:
+                dragDistance = (-translation.width + translation.height) / 2
+            case .bottomRight:
+                dragDistance = (translation.width + translation.height) / 2
             }
-            newRect.size.width = minCropSize
-        }
-        if newRect.height < minCropSize {
-            if corner == .topLeft || corner == .topRight {
-                newRect.origin.y = startRect.maxY - minCropSize
+            
+            // Calculate new size maintaining aspect ratio
+            var newW = startRect.width + dragDistance * 2 * (ratio >= 1 ? 1 : ratio)
+            var newH = newW / ratio
+            
+            // Apply minimum size constraints
+            if newW < minCropSize {
+                newW = minCropSize
+                newH = newW / ratio
             }
-            newRect.size.height = minCropSize
-        }
-        
-        // 2. Bounds (Image Rect)
-        // This is complex for resizing, simplified constraint:
-        // Ensure newRect is fully contained in imageRect
-        if newRect.minX < imageRect.minX {
-            newRect.size.width -= (imageRect.minX - newRect.minX)
-            newRect.origin.x = imageRect.minX
-        }
-        if newRect.minY < imageRect.minY {
-            newRect.size.height -= (imageRect.minY - newRect.minY)
-            newRect.origin.y = imageRect.minY
-        }
-        if newRect.maxX > imageRect.maxX {
-            newRect.size.width = imageRect.maxX - newRect.minX
-        }
-        if newRect.maxY > imageRect.maxY {
-            newRect.size.height = imageRect.maxY - newRect.minY
+            if newH < minCropSize {
+                newH = minCropSize
+                newW = newH * ratio
+            }
+            
+            // Calculate new origin to keep center or anchor point
+            var newX: CGFloat
+            var newY: CGFloat
+            
+            switch corner {
+            case .topLeft:
+                newX = startRect.maxX - newW
+                newY = startRect.maxY - newH
+            case .topRight:
+                newX = startRect.minX
+                newY = startRect.maxY - newH
+            case .bottomLeft:
+                newX = startRect.maxX - newW
+                newY = startRect.minY
+            case .bottomRight:
+                newX = startRect.minX
+                newY = startRect.minY
+            }
+            
+            newRect = CGRect(x: newX, y: newY, width: newW, height: newH)
+            
+            // Bounds constraints
+            if newRect.minX < imageRect.minX {
+                let diff = imageRect.minX - newRect.minX
+                newRect.origin.x = imageRect.minX
+                newRect.size.width -= diff
+                newRect.size.height = newRect.width / ratio
+            }
+            if newRect.minY < imageRect.minY {
+                let diff = imageRect.minY - newRect.minY
+                newRect.origin.y = imageRect.minY
+                newRect.size.height -= diff
+                newRect.size.width = newRect.height * ratio
+            }
+            if newRect.maxX > imageRect.maxX {
+                newRect.size.width = imageRect.maxX - newRect.minX
+                newRect.size.height = newRect.width / ratio
+            }
+            if newRect.maxY > imageRect.maxY {
+                newRect.size.height = imageRect.maxY - newRect.minY
+                newRect.size.width = newRect.height * ratio
+            }
+            
+        } else {
+            // Free mode - original behavior
+            switch corner {
+            case .topLeft:
+                newRect.origin.x += translation.width
+                newRect.origin.y += translation.height
+                newRect.size.width -= translation.width
+                newRect.size.height -= translation.height
+                
+            case .topRight:
+                newRect.origin.y += translation.height
+                newRect.size.width += translation.width
+                newRect.size.height -= translation.height
+                
+            case .bottomLeft:
+                newRect.origin.x += translation.width
+                newRect.size.width -= translation.width
+                newRect.size.height += translation.height
+                
+            case .bottomRight:
+                newRect.size.width += translation.width
+                newRect.size.height += translation.height
+            }
+            
+            // Constraints
+            // 1. Min Size
+            if newRect.width < minCropSize {
+                if corner == .topLeft || corner == .bottomLeft {
+                    newRect.origin.x = startRect.maxX - minCropSize
+                }
+                newRect.size.width = minCropSize
+            }
+            if newRect.height < minCropSize {
+                if corner == .topLeft || corner == .topRight {
+                    newRect.origin.y = startRect.maxY - minCropSize
+                }
+                newRect.size.height = minCropSize
+            }
+            
+            // 2. Bounds
+            if newRect.minX < imageRect.minX {
+                newRect.size.width -= (imageRect.minX - newRect.minX)
+                newRect.origin.x = imageRect.minX
+            }
+            if newRect.minY < imageRect.minY {
+                newRect.size.height -= (imageRect.minY - newRect.minY)
+                newRect.origin.y = imageRect.minY
+            }
+            if newRect.maxX > imageRect.maxX {
+                newRect.size.width = imageRect.maxX - newRect.minX
+            }
+            if newRect.maxY > imageRect.maxY {
+                newRect.size.height = imageRect.maxY - newRect.minY
+            }
+            
+            // If resizing freely, clear the preset ratio
+            if selectedRatio != nil {
+                selectedRatio = nil
+            }
         }
         
         cropRect = newRect
-        
-        // If resizing freely, clear the preset ratio
-        if selectedRatio != nil {
-            selectedRatio = nil
-        }
     }
     
     private func resizeCropRectByEdge(edge: Edge, translation: CGSize) {

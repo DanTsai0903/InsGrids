@@ -80,9 +80,13 @@ class GridViewModel: ObservableObject {
             // 1. Downsample for Display (Proxy)
             guard let displayImage = downsample(data: data, maxDimension: 1200) else { continue }
             
-            var canvasImage = CanvasImage(
+            // Use center position, or fallback to reasonable default if canvasSize is zero
+            let centerX = canvasSize.width > 0 ? canvasSize.width / 2 : 200
+            let centerY = canvasSize.height > 0 ? canvasSize.height / 2 : 250
+            
+            let canvasImage = CanvasImage(
                 image: displayImage,
-                position: CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                position: CGPoint(x: centerX, y: centerY)
             )
             
             // 2. Save Original to Disk
@@ -90,6 +94,10 @@ class GridViewModel: ObservableObject {
             
             canvasImages.append(canvasImage)
         }
+        
+        // Force SwiftUI to recognize the view state change
+        // This helps stabilize the view before any crop operations
+        objectWillChange.send()
     }
     
     /// Remove image by ID
@@ -393,6 +401,8 @@ class GridViewModel: ObservableObject {
             
             // 3. Save Tiles
             var successCount = 0
+            let tileCount = tiles.count
+            
             for tile in tiles {
                 autoreleasepool {
                     let semaphore = DispatchSemaphore(value: 0)
@@ -404,14 +414,17 @@ class GridViewModel: ObservableObject {
                     }
                     
                     _ = semaphore.wait(timeout: .now() + 30)
-                    if saveSuccess { successCount += 1 }
+                    if saveSuccess {
+                        successCount += 1
+                    }
                 }
             }
             
             // 4. Finish on Main Actor
+            let finalCount = successCount
             await MainActor.run { [weak self] in
                 self?.isProcessing = false
-                completion(successCount == tiles.count, successCount)
+                completion(finalCount == tileCount, finalCount)
             }
         }
     }

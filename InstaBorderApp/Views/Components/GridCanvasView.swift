@@ -171,6 +171,7 @@ struct FreeformCanvasView: View {
                         pendingDeleteImageId = canvasImage.id
                     }
                 )
+                .id(canvasImage.id) // Force proper view identity
             }
             
             // Grid overlay

@@ -1,4 +1,4 @@
-# Release Notes - Proxy Image Workflow & Grid Editing v1.0
+# Release Notes - Proxy Image Workflow & Grid Editing v2.0.0
 
 This major update introduces a complete architectural overhaul for image handling ("Proxy Workflow") to solve memory crashes with high-resolution photos, along with powerful new editing features.
 
