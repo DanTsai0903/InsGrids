@@ -326,6 +326,7 @@ struct SingleImageView: View {
     @State private var gestureRotationRaw: Angle = .zero
     @State private var isCurrentlySnappedRotation = false
     @State private var hasBeenBroughtToFront = false
+    @State private var processedImage: UIImage? // Rendered adjustments
     
     var body: some View {
         let imageSize = calculateImageSize()
@@ -349,7 +350,7 @@ struct SingleImageView: View {
             canvasSize: canvasSize
         )
         
-        Image(uiImage: canvasImage.image)
+        Image(uiImage: processedImage ?? canvasImage.image)
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(width: imageSize.width, height: imageSize.height)
@@ -369,6 +370,29 @@ struct SingleImageView: View {
                 dragGesture
                     .simultaneously(with: transformGesture)
             )
+            .task(id: canvasImage.adjustments) {
+                await updateImage()
+            }
+            .task(id: canvasImage.image) {
+                await updateImage()
+            }
+    }
+    
+    private func updateImage() async {
+        if !canvasImage.adjustments.hasAdjustments {
+            processedImage = nil
+            return
+        }
+        
+        // Capture values to avoid actor isolation issues if accessed in detached task
+        let original = canvasImage.image
+        let adjustments = canvasImage.adjustments
+        
+        let result = await Task.detached(priority: .userInitiated) {
+             return PhotoEditorEngine.shared.render(image: original, adjustments: adjustments)
+        }.value
+        
+        processedImage = result
     }
     
     private func calculateImageSize() -> CGSize {

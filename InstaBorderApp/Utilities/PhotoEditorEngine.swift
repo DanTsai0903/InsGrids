@@ -9,6 +9,9 @@ final class PhotoEditorEngine {
     /// Shared CIContext for rendering (Metal-backed for performance)
     private let context: CIContext
     
+    /// Shared instance for efficient reuse
+    static let shared = PhotoEditorEngine()
+    
     init() {
         // Use Metal for GPU-accelerated rendering
         if let metalDevice = MTLCreateSystemDefaultDevice() {
@@ -132,21 +135,35 @@ final class PhotoEditorEngine {
         if let filterName = adjustments.filterName,
            let filter = CIFilter(name: filterName) {
             
-            filter.setValue(output, forKey: kCIInputImageKey)
+            // Capture pre-filter state for blending
+            let preFilterImage = output
             
-            if let filtered = filter.outputImage {
-                // Apply intensity if less than 1.0
-                if adjustments.filterIntensity < 1.0 {
-                    // Mix filtered result with original (output) based on intensity
-                    // CIDissolveTransition: t=0 is source(image), t=1 is target
-                    // We want: t=0 -> output (unfiltered), t=1 -> filtered
-                    let blender = CIFilter.dissolveTransition()
-                    blender.inputImage = output         // Start state (0.0)
-                    blender.targetImage = filtered      // End state (1.0)
-                    blender.time = Float(adjustments.filterIntensity)
-                    output = blender.outputImage ?? filtered
+            filter.setValue(output, forKey: kCIInputImageKey)
+            if let result = filter.outputImage {
+                let intensity = CGFloat(adjustments.filterIntensity)
+                
+                if intensity >= 0.99 {
+                    // Full intensity
+                    output = result
+                } else if intensity <= 0.01 {
+                    // Zero intensity (skip filter)
+                    output = preFilterImage
                 } else {
-                    output = filtered
+                    // Blend: result * intensity + preFilter * (1-intensity)
+                    // We use simple alpha blending: set result alpha to intensity, then composit over preFilter
+                    let opacityFilter = CIFilter.colorMatrix()
+                    opacityFilter.inputImage = result
+                    opacityFilter.rVector = CIVector(x: 1, y: 0, z: 0, w: 0)
+                    opacityFilter.gVector = CIVector(x: 0, y: 1, z: 0, w: 0)
+                    opacityFilter.bVector = CIVector(x: 0, y: 0, z: 1, w: 0)
+                    opacityFilter.aVector = CIVector(x: 0, y: 0, z: 0, w: intensity) // Processed image usually opaque
+                    
+                    if let semiTransparent = opacityFilter.outputImage {
+                        let compositor = CIFilter.sourceOverCompositing()
+                        compositor.inputImage = semiTransparent
+                        compositor.backgroundImage = preFilterImage
+                        output = compositor.outputImage ?? result
+                    }
                 }
             }
         }

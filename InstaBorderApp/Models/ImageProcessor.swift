@@ -8,7 +8,7 @@ class ImageProcessor {
     // This prevents memory crashes on devices like iPhone 13 mini
     private let maxOutputPixels: CGFloat = 12_000_000
     
-    func processImage(_ image: UIImage, configuration: BorderConfiguration) -> UIImage? {
+    func processImage(_ image: UIImage, configuration: BorderConfiguration, adjustments: PhotoAdjustments? = nil) -> UIImage? {
         let targetRatio = configuration.aspectRatio
         let scale = configuration.imageScale  // 0.3 to 1.0
         
@@ -81,7 +81,13 @@ class ImageProcessor {
                 let x = (outputWidth - imageWidth) / 2
                 let y = (outputHeight - imageHeight) / 2
                 
-                image.draw(in: CGRect(x: x, y: y, width: imageWidth, height: imageHeight))
+                // Apply adjustments if present
+                var finalImage = image
+                if let adjustments = adjustments, adjustments.hasAdjustments {
+                     finalImage = PhotoEditorEngine.shared.render(image: image, adjustments: adjustments)
+                }
+                
+                finalImage.draw(in: CGRect(x: x, y: y, width: imageWidth, height: imageHeight))
             }
         }
     }

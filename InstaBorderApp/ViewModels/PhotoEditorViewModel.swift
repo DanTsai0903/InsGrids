@@ -6,6 +6,7 @@ class PhotoEditorViewModel: ObservableObject {
     @Published var processedThumbnails: [UIImage] = []
     @Published var configuration = BorderConfiguration()
     @Published var isProcessing = false
+    @Published var adjustments: [PhotoAdjustments] = []
     
     private var originalImages: [UIImage] = []
     private var thumbnails: [UIImage] = []
@@ -13,6 +14,7 @@ class PhotoEditorViewModel: ObservableObject {
     
     func addImages(_ images: [UIImage]) {
         self.originalImages = images
+        self.adjustments = Array(repeating: PhotoAdjustments(), count: images.count)
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -57,15 +59,22 @@ class PhotoEditorViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             guard let self = self else { return }
             let config = self.configuration
+            let currentAdjustments = self.adjustments
             
-            let processed = self.thumbnails.compactMap { image in
+            // Ensure bounds
+            let count = min(self.thumbnails.count, currentAdjustments.count)
+            
+            var processedResults: [UIImage] = []
+            for i in 0..<count {
                 autoreleasepool {
-                    return ImageProcessor.shared.processImage(image, configuration: config)
+                    if let res = ImageProcessor.shared.processImage(self.thumbnails[i], configuration: config, adjustments: currentAdjustments[i]) {
+                        processedResults.append(res)
+                    }
                 }
             }
             
             DispatchQueue.main.async {
-                self.processedThumbnails = processed
+                self.processedThumbnails = processedResults
             }
         }
     }
@@ -97,9 +106,10 @@ class PhotoEditorViewModel: ObservableObject {
                 // Use autoreleasepool to free memory after each image
                 autoreleasepool {
                     let originalImage = self.originalImages[i]
+                    let adjustment = i < self.adjustments.count ? self.adjustments[i] : nil
                     
                     // Process
-                    guard let processed = ImageProcessor.shared.processImage(originalImage, configuration: currentConfig) else {
+                    guard let processed = ImageProcessor.shared.processImage(originalImage, configuration: currentConfig, adjustments: adjustment) else {
                         return // continue to next image
                     }
                     
@@ -133,6 +143,39 @@ class PhotoEditorViewModel: ObservableObject {
         originalImages.removeAll()
         thumbnails.removeAll()
         processedThumbnails.removeAll()
+    }
+    
+    
+    // MARK: - Photo Editor Helpers
+    
+    func getOriginalImage(at index: Int) -> UIImage? {
+        guard index >= 0 && index < originalImages.count else { return nil }
+        return originalImages[index]
+    }
+    
+    func updateAdjustment(at index: Int, adjustment: PhotoAdjustments) {
+        guard index >= 0 && index < adjustments.count else { return }
+        adjustments[index] = adjustment
+        // Trigger reprocessing of specific thumbnail for performance
+        processThumbnail(at: index)
+    }
+    
+    private func processThumbnail(at index: Int) {
+        guard index < thumbnails.count else { return }
+        let thumb = thumbnails[index]
+        let config = configuration
+        let adj = adjustments[index]
+        
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            guard let self = self else { return }
+            if let processed = ImageProcessor.shared.processImage(thumb, configuration: config, adjustments: adj) {
+                DispatchQueue.main.async {
+                    if index < self.processedThumbnails.count {
+                        self.processedThumbnails[index] = processed
+                    }
+                }
+            }
+        }
     }
     
     var imageCount: Int {

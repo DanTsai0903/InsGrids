@@ -5,19 +5,21 @@
 ## ✨ Features
 
 - **Freeform Grid Layout**: Create Instagram aesthetics by splitting images across NxM grids (1x2, 2x3, 3x3, up to 6x6).
+- **Advanced Photo Editor**: Built-in editor with Lightroom-style adjustments (Exposure, Contrast, Highlights, Shadows, etc.) and professional filters.
 - **Pro Crop Tool**: Advanced overlay-based cropping with **Locked Ratio Mode** (auto-locks 1:1, 4:5, 16:9) for precise composition.
 - **Smart Gestures**: Drag to arrange, pinch to zoom/rotate, and double-tap to reset.
 - **Image Slicing**: Automatically splits your composition into perfect 4:5 aspect ratio tiles for Instagram posting.
 - **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution for export.
 - **Memory Optimized**: Handles high-resolution images (e.g., 48MP ProRAW) using advanced memory management and background tiled rendering.
 - **Auto-Save & Restore**: Never lose your work - editing sessions are automatically saved and restored.
+- **iPad Support**: Fully optimized for iPad with support for all interface orientations (Landscape & Portrait).
 - **Privacy Focused**: No cloud uploads, all processing happens on-device.
 - **Localization**: Supports English and Traditional Chinese (繁體中文).
 
 ## 📱 Requirements
 
-- iOS 16.0+
-- Xcode 15.0+
+- iOS 26.0+
+- Xcode 26.0+
 - Swift 5.9+
 
 ## 🛠 Installation
@@ -107,6 +109,7 @@ Free accounts have a 7-day expiration. To keep the app working:
    - Tap "+" to add photos.
    - **Move**: Drag photos to any cell.
    - **Transform**: Pinch to zoom or rotate images within cells.
+   - **Edit**: Tap a photo -> "Edit" to adjust exposure, contrast, or apply filters.
    - **Crop**: Tap a photo -> "Crop" to use the locked-ratio crop tool.
    - **Layer**: Tap to bring an image to the front.
 3. **Customize**:
@@ -154,6 +157,7 @@ InsGrids/
 ## 🚀 Technical Highlights
 
 - **Proxy Image Workflow**: Implements a "Low-Res Edit, High-Res Export" architecture. 48MP images are cached to disk, and lightweight 1200px proxies are used for fluid UI performance.
+- **Metal-Accelerated Editing**: The Photo Editor uses `CIContext` backed by Metal to render adjustments (tone curves, filters, blending) in real-time at 60fps.
 - **Tiled Rendering**: Exports are processed in background threads using tiled rendering. High-res assets are dynamically loaded and released for each tile to strictly control memory usage (OOM prevention).
 - **Auto-Save System**: Robust state persistence using file system storage for images and UserDefaults for metadata, surviving app termination.
 - **Safe Layout**: Advanced geometry calculations for crop and canvas management.

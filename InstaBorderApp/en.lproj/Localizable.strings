@@ -98,9 +98,9 @@
 "adjust.blacks" = "Blacks";
 "adjust.saturation" = "Saturation";
 "adjust.warmth" = "Warmth";
-"adjust.intensity" = "Intensity";
 "adjust.vignette" = "Vignette";
 "adjust.sharpness" = "Sharpness";
+"adjust.strength" = "Strength";
 
 // Filters
 "filter.none" = "None";

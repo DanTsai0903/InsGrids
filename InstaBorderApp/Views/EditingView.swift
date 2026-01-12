@@ -12,6 +12,12 @@ struct EditingView: View {
     @State private var showColorSheet = false
     @State private var showPresetsSheet = false
     @State private var isSaving = false
+    
+    // Photo Editor State
+    @State private var showPhotoEditor = false
+    @State private var selectedImageIndex: Int = 0
+    @State private var editingAdjustments = PhotoAdjustments()
+    
     @Environment(\.dismiss) var dismiss
     
     private var ratioLabel: String {
@@ -63,10 +69,28 @@ struct EditingView: View {
                 
                 LazyVGrid(columns: cols, spacing: 1) {
                     ForEach(0..<viewModel.processedThumbnails.count, id: \.self) { i in
-                        Image(uiImage: viewModel.processedThumbnails[i])
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .overlay(Rectangle().stroke(Color.gray.opacity(0.3), lineWidth: 0.5))
+                        ZStack(alignment: .bottomTrailing) {
+                            Image(uiImage: viewModel.processedThumbnails[i])
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .overlay(Rectangle().stroke(Color.gray.opacity(0.3), lineWidth: 0.5))
+                            
+                            // Edit Indicator
+                            Button {
+                                openEditor(at: i)
+                            } label: {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.6))
+                                    .clipShape(Circle())
+                            }
+                            .padding(8)
+                        }
+                        .onTapGesture {
+                            openEditor(at: i)
+                        }
                     }
                 }
             }
@@ -152,6 +176,27 @@ struct EditingView: View {
             )
             .presentationDetents([.medium, .large])
         }
+        .fullScreenCover(isPresented: $showPhotoEditor) {
+            if let original = viewModel.getOriginalImage(at: selectedImageIndex) {
+                PhotoEditorView(
+                    originalImage: original,
+                    initialAdjustments: editingAdjustments,
+                    onSave: { finalAdjustments in
+                        viewModel.updateAdjustment(at: selectedImageIndex, adjustment: finalAdjustments)
+                        showPhotoEditor = false
+                    },
+                    onCancel: {
+                        showPhotoEditor = false
+                    }
+                )
+            } else {
+                Text("Error loading image")
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+                    .onTapGesture { showPhotoEditor = false }
+            }
+        }
         .overlay(
             Group {
                 if isSaving || viewModel.isProcessing {
@@ -187,6 +232,17 @@ struct EditingView: View {
                 : NSLocalizedString("alert.saveFailed", comment: "")
             showingSaveSuccess = true
         }
+    }
+    
+    private func openEditor(at index: Int) {
+        selectedImageIndex = index
+        // Clone existing adjustments if within range, otherwise default
+        if index < viewModel.adjustments.count {
+            editingAdjustments = viewModel.adjustments[index]
+        } else {
+            editingAdjustments = PhotoAdjustments()
+        }
+        showPhotoEditor = true
     }
 }
 

@@ -13,7 +13,7 @@ struct PhotoEditorView: View {
     @State private var selectedTab: EditorTab = .adjust
     @State private var isProcessing = false
     @State private var showingOriginal = false  // Toggle to show original vs edited
-    @State private var editingFilterIntensity = false // Toggle for filter intensity slider
+    @State private var showFilterIntensitySlider = false // Toggle for filter strength slider
     
     private let engine = PhotoEditorEngine()
     
@@ -267,105 +267,103 @@ struct PhotoEditorView: View {
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
-                }
             }
         }
+    }
     
     // MARK: - Filters Panel
     private var filtersPanel: some View {
-        VStack {
-            if editingFilterIntensity && adjustments.filterName != nil {
-                // Intensity Slider Mode
-                VStack(spacing: 12) {
+        VStack(spacing: 12) {
+            // Intensity Slider (appears when tapping selected filter again)
+            if showFilterIntensitySlider && adjustments.filterName != nil {
+                VStack(spacing: 4) {
                     HStack {
-                        Text(NSLocalizedString("editor.filter", comment: "") + " " + NSLocalizedString("adjust.intensity", value: "Intensity", comment: ""))
+                        Text(NSLocalizedString("adjust.strength", value: "Strength", comment: ""))
                             .font(.caption)
-                            .foregroundColor(.white)
+                            .foregroundColor(.gray)
                         Spacer()
-                        Button {
-                            editingFilterIntensity = false
-                        } label: {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.white)
-                                .font(.title2)
-                        }
+                        Text(String(format: "%.0f%%", adjustments.filterIntensity * 100))
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
                     .padding(.horizontal)
                     
                     Slider(value: $adjustments.filterIntensity, in: 0...1)
-                        .tint(.white)
+                        .tint(.blue)
                         .padding(.horizontal)
                 }
-                .frame(height: 120)
-                .transition(.opacity)
-            } else {
-                // Filter List Mode
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        // "None" option
-                        filterButton(name: NSLocalizedString("filter.none", comment: "None filter"), filterName: nil)
-                        
-                        // All available filters
-                        ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
-                            filterButton(name: NSLocalizedString(filter.localizationKey, comment: ""), filterName: filter.name)
-                        }
+                .transition(.scale.combined(with: .opacity))
+                .padding(.top, 8)
+            }
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    // "None" option
+                    filterButton(name: NSLocalizedString("filter.none", comment: "None filter"), filterName: nil)
+                    
+                    // All available filters
+                    ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
+                        filterButton(name: NSLocalizedString(filter.localizationKey, comment: ""), filterName: filter.name)
                     }
-                    .padding()
                 }
-                .frame(height: 120)
-                .transition(.opacity)
+                .padding()
             }
         }
+        .frame(minHeight: 120) // Allow growth for slider
     }
     
     private func filterButton(name: String, filterName: String?) -> some View {
         let isSelected = adjustments.filterName == filterName
         let displayImage: UIImage? = {
             guard let thumb = filterThumbnail else { return nil }
-            // If this button represents a specific filter, apply it to the thumbnail
-            if let fName = filterName {
-                let engine = PhotoEditorEngine()
-                return engine.generateFilterThumbnail(image: thumb, filterName: fName)
-            } else {
-                return thumb // "None" shows original
+            if let fn = filterName {
+                return engine.generateFilterThumbnail(image: thumb, filterName: fn)
             }
+            return thumb
         }()
         
         return Button {
-            if isSelected && filterName != nil {
-                // Tap again on selected filter -> Edit Intensity
-                withAnimation {
-                    editingFilterIntensity = true
+            if adjustments.filterName == filterName {
+                // Toggle slider if filter is already selected and not nil
+                if filterName != nil {
+                    withAnimation {
+                        showFilterIntensitySlider.toggle()
+                    }
                 }
             } else {
                 // Select new filter
+                adjustments.filterName = filterName
+                adjustments.filterIntensity = 1.0 // Reset to full strength
                 withAnimation {
-                    adjustments.filterName = filterName
-                    adjustments.filterIntensity = 1.0 // Reset intensity on switch
-                    editingFilterIntensity = false    // Exit edit mode if switching
+                    showFilterIntensitySlider = false // Auto-hide
                 }
             }
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
+                // Thumbnail
                 if let img = displayImage {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
                         .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(isSelected ? Color.yellow : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
                         )
                 } else {
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 8)
                         .fill(Color.gray.opacity(0.3))
                         .frame(width: 60, height: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
                 }
                 
                 Text(name)
-                    .font(.caption)
-                    .foregroundColor(isSelected ? .yellow : .white)
+                    .font(.caption2)
+                    .foregroundColor(isSelected ? .blue : .white)
             }
         }
     }

@@ -14,6 +14,16 @@
 - [x] 2.3 Implement Adjustment Sliders UI (Exposure, Contrast, Highlights, Shadows, Whites, Blacks)
     - [x] 2.3.1 Reorder sliders to match Lightroom
     - [x] 2.3.2 Implemented View Original & Reset All
+- [x] Implement filter intensity slider
+  - [x] Add `filterIntensity` to model
+  - [x] Implement intensity blending in `PhotoEditorEngine`
+  - [x] Add UI slider in `PhotoEditorView` (appears on second tap)
+  - [x] Add "Strength" localization
+- [x] Fix canvas preview not showing adjustments
+  - [x] Update `SingleImageView` to render processed image
+  - [x] Optimize rendering with `PhotoEditorEngine.shared`
+- [x] Verify crop/edit interaction
+  - [x] Validated data flow: Crop updates base image, adjustments re-applied.
 - [x] 2.4 Implement Filter Selector UI (Horizontal scroll)
 - [x] 2.5 Connect UI sliders to `PhotoEditorEngine` with debounce/throttling
 
