@@ -129,6 +129,14 @@ class GridViewModel: ObservableObject {
         }
     }
     
+    /// Update photo adjustments (brightness, contrast, filters, etc.)
+    func updateAdjustments(_ id: UUID, adjustments: PhotoAdjustments) {
+        saveSnapshot()
+        if let index = canvasImages.firstIndex(where: { $0.id == id }) {
+            canvasImages[index].adjustments = adjustments
+        }
+    }
+    
     /// Move image to front (top layer) by ID
     func bringToFront(_ id: UUID) {
         guard let index = canvasImages.firstIndex(where: { $0.id == id }) else { return }
@@ -548,6 +556,12 @@ class GridViewModel: ObservableObject {
                 // Fallback to proxy if original missing
                 if drawImage == nil {
                     drawImage = item.image
+                }
+                
+                // Apply photo adjustments (brightness, contrast, filters, etc.)
+                if let img = drawImage, item.adjustments.hasAdjustments {
+                    let engine = PhotoEditorEngine()
+                    drawImage = engine.render(image: img, adjustments: item.adjustments)
                 }
                 
                 if let finalImage = drawImage {

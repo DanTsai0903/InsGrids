@@ -1,0 +1,274 @@
+import SwiftUI
+import Combine
+
+/// Full-screen photo editor with adjustments and filters
+struct PhotoEditorView: View {
+    let originalImage: UIImage
+    let onSave: (PhotoAdjustments) -> Void
+    let onCancel: () -> Void
+    
+    @State private var adjustments: PhotoAdjustments
+    @State private var previewImage: UIImage?
+    @State private var selectedTab: EditorTab = .adjust
+    @State private var isProcessing = false
+    
+    private let engine = PhotoEditorEngine()
+    private let previewDebouncer = PassthroughSubject<PhotoAdjustments, Never>()
+    
+    /// Small thumbnail for filter previews
+    @State private var filterThumbnail: UIImage?
+    
+    enum EditorTab {
+        case adjust
+        case filter
+    }
+    
+    init(originalImage: UIImage, initialAdjustments: PhotoAdjustments = PhotoAdjustments(), onSave: @escaping (PhotoAdjustments) -> Void, onCancel: @escaping () -> Void) {
+        self.originalImage = originalImage
+        self.onSave = onSave
+        self.onCancel = onCancel
+        self._adjustments = State(initialValue: initialAdjustments)
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header Bar
+            headerBar
+            
+            // Image Preview
+            imagePreview
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Bottom Controls
+            VStack(spacing: 0) {
+                // Tab Selector
+                tabSelector
+                
+                // Content based on selected tab
+                if selectedTab == .adjust {
+                    adjustmentsPanel
+                } else {
+                    filtersPanel
+                }
+            }
+            .background(Color.black.opacity(0.95))
+        }
+        .background(Color.black.edgesIgnoringSafeArea(.all))
+        .onAppear {
+            // Generate downsampled preview image
+            let size = CGSize(width: 800, height: 800 * (originalImage.size.height / originalImage.size.width))
+            let renderer = UIGraphicsImageRenderer(size: size)
+            let downsampledPreview = renderer.image { _ in
+                originalImage.draw(in: CGRect(origin: .zero, size: size))
+            }
+            
+            // Generate even smaller thumbnail for filter previews
+            let thumbSize = CGSize(width: 80, height: 80 * (originalImage.size.height / originalImage.size.width))
+            let thumbRenderer = UIGraphicsImageRenderer(size: thumbSize)
+            filterThumbnail = thumbRenderer.image { _ in
+                originalImage.draw(in: CGRect(origin: .zero, size: thumbSize))
+            }
+            
+            previewImage = downsampledPreview
+            updatePreview()
+        }
+        .onChange(of: adjustments) { _, newValue in
+            updatePreview()
+        }
+    }
+    
+    // MARK: - Header Bar
+    private var headerBar: some View {
+        HStack {
+            Button(action: onCancel) {
+                Text(NSLocalizedString("button.cancel", comment: "Cancel"))
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+            
+            Text(NSLocalizedString("title.edit", value: "Edit", comment: "Edit Title"))
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Button {
+                onSave(adjustments)
+            } label: {
+                Text(NSLocalizedString("button.done", comment: "Done"))
+                    .fontWeight(.semibold)
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding()
+        .background(Color.black)
+    }
+    
+    // MARK: - Image Preview
+    private var imagePreview: some View {
+        GeometryReader { geometry in
+            if let preview = previewImage {
+                Image(uiImage: preview)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+            } else {
+                ProgressView()
+                    .tint(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .padding()
+    }
+    
+    // MARK: - Tab Selector
+    private var tabSelector: some View {
+        HStack(spacing: 0) {
+            tabButton(title: NSLocalizedString("editor.adjust", value: "Adjust", comment: "Adjust tab"), tab: .adjust)
+            tabButton(title: NSLocalizedString("editor.filter", value: "Filter", comment: "Filter tab"), tab: .filter)
+        }
+        .padding(.top, 8)
+    }
+    
+    private func tabButton(title: String, tab: EditorTab) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tab
+            }
+        } label: {
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(selectedTab == tab ? .semibold : .regular)
+                    .foregroundColor(selectedTab == tab ? .white : .gray)
+                
+                Rectangle()
+                    .fill(selectedTab == tab ? Color.blue : Color.clear)
+                    .frame(height: 2)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    // MARK: - Adjustments Panel
+    private var adjustmentsPanel: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                adjustmentSlider(name: NSLocalizedString("adjust.brightness", value: "Brightness", comment: ""), 
+                               value: $adjustments.brightness, range: -0.5...0.5, defaultValue: 0)
+                adjustmentSlider(name: NSLocalizedString("adjust.contrast", value: "Contrast", comment: ""), 
+                               value: $adjustments.contrast, range: 0.5...1.5, defaultValue: 1)
+                adjustmentSlider(name: NSLocalizedString("adjust.saturation", value: "Saturation", comment: ""), 
+                               value: $adjustments.saturation, range: 0...2, defaultValue: 1)
+                adjustmentSlider(name: NSLocalizedString("adjust.exposure", value: "Exposure", comment: ""), 
+                               value: $adjustments.exposure, range: -2...2, defaultValue: 0)
+                adjustmentSlider(name: NSLocalizedString("adjust.warmth", value: "Warmth", comment: ""), 
+                               value: $adjustments.warmth, range: -1...1, defaultValue: 0)
+                adjustmentSlider(name: NSLocalizedString("adjust.vignette", value: "Vignette", comment: ""), 
+                               value: $adjustments.vignette, range: 0...2, defaultValue: 0)
+                adjustmentSlider(name: NSLocalizedString("adjust.sharpness", value: "Sharpness", comment: ""), 
+                               value: $adjustments.sharpness, range: 0...1, defaultValue: 0)
+            }
+            .padding()
+        }
+        .frame(height: 220)
+    }
+    
+    private func adjustmentSlider(name: String, value: Binding<Double>, range: ClosedRange<Double>, defaultValue: Double) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(name)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Spacer()
+                Text(String(format: "%.2f", value.wrappedValue))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .frame(width: 50, alignment: .trailing)
+            }
+            
+            HStack {
+                Slider(value: value, in: range)
+                    .tint(.blue)
+                
+                // Reset button
+                Button {
+                    value.wrappedValue = defaultValue
+                } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Filters Panel
+    private var filtersPanel: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                // "None" option
+                filterButton(name: "None", filterName: nil)
+                
+                // All available filters
+                ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
+                    filterButton(name: filter.displayName, filterName: filter.name)
+                }
+            }
+            .padding()
+        }
+        .frame(height: 120)
+    }
+    
+    private func filterButton(name: String, filterName: String?) -> some View {
+        let isSelected = adjustments.filterName == filterName
+        let displayImage: UIImage? = {
+            guard let thumb = filterThumbnail else { return nil }
+            if let fn = filterName {
+                return engine.generateFilterThumbnail(image: thumb, filterName: fn)
+            }
+            return thumb
+        }()
+        
+        return Button {
+            adjustments.filterName = filterName
+        } label: {
+            VStack(spacing: 4) {
+                // Thumbnail
+                if let img = displayImage {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        )
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 60, height: 60)
+                }
+                
+                Text(name)
+                    .font(.caption2)
+                    .foregroundColor(isSelected ? .blue : .white)
+            }
+        }
+    }
+    
+    // MARK: - Preview Update
+    private func updatePreview() {
+        guard let baseImage = previewImage else { return }
+        
+        // Debounce rendering to avoid UI stutter
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = engine.render(image: baseImage, adjustments: adjustments)
+            DispatchQueue.main.async {
+                previewImage = result
+            }
+        }
+    }
+}

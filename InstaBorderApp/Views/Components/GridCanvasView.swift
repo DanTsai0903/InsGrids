@@ -9,6 +9,9 @@ struct CanvasImage: Identifiable {
     var position: CGPoint = .zero  // Center position on canvas
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
+    
+    // Photo adjustments (brightness, contrast, filters, etc.)
+    var adjustments: PhotoAdjustments = PhotoAdjustments()
 }
 
 /// Codable version of CanvasImage for persistence (Metadata only)
@@ -18,6 +21,7 @@ struct SavedCanvasImage: Codable {
     let positionY: CGFloat
     let scale: CGFloat
     let rotationDegrees: Double
+    let adjustments: PhotoAdjustments
     
     init(from canvasImage: CanvasImage) {
         self.id = canvasImage.id
@@ -25,6 +29,7 @@ struct SavedCanvasImage: Codable {
         self.positionY = canvasImage.position.y
         self.scale = canvasImage.scale
         self.rotationDegrees = canvasImage.rotation.degrees
+        self.adjustments = canvasImage.adjustments
     }
     
     // toCanvasImage will now be handled by ViewModel which knows where the images are stored
@@ -41,6 +46,7 @@ struct FreeformCanvasView: View {
     var onBringToFront: (UUID) -> Void
     var onDeleteImage: ((UUID) -> Void)? = nil
     var onCropImage: ((UUID) -> Void)? = nil
+    var onEditImage: ((UUID) -> Void)? = nil  // Photo adjustments & filters
     var onImageManipulationStart: (() -> Void)? = nil
     
     // Canvas gesture states
@@ -79,19 +85,32 @@ struct FreeformCanvasView: View {
                         }
                 )
                 
-                // Centered delete button overlay
-                // Centered action buttons overlay (Delete & Crop)
+                // Centered action buttons overlay (Edit, Crop & Delete)
                 if let id = pendingDeleteImageId {
-                    HStack(spacing: 40) {
+                    HStack(spacing: 30) {
+                        // Edit Button (Photo Adjustments & Filters)
+                        Button {
+                            pendingDeleteImageId = nil
+                            onEditImage?(id)
+                        } label: {
+                            ZStack {
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.purple)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+                        }
+                        
                         // Crop Button
                         Button {
                             pendingDeleteImageId = nil
                             onCropImage?(id)
                         } label: {
                             ZStack {
-                                Circle().fill(Color.white).frame(width: 80, height: 80)
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
                                 Image(systemName: "crop")
-                                    .font(.system(size: 36, weight: .bold))
+                                    .font(.system(size: 30, weight: .bold))
                                     .foregroundColor(.blue)
                             }
                             .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
@@ -105,9 +124,9 @@ struct FreeformCanvasView: View {
                             pendingDeleteImageId = nil
                         } label: {
                             ZStack {
-                                Circle().fill(Color.white).frame(width: 80, height: 80)
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
                                 Image(systemName: "trash.fill")
-                                    .font(.system(size: 36, weight: .bold))
+                                    .font(.system(size: 30, weight: .bold))
                                     .foregroundColor(.red)
                             }
                             .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)

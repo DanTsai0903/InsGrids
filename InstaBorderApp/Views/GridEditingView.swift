@@ -35,6 +35,12 @@ struct GridEditingView: View {
     @State private var cropImage: UIImage? = nil  // Pre-captured image for crop
     @State private var showCropSheet = false
     
+    // Photo Editor - adjustments & filters
+    @State private var editImageId: UUID? = nil
+    @State private var editImage: UIImage? = nil
+    @State private var editAdjustments: PhotoAdjustments = PhotoAdjustments()
+    @State private var showPhotoEditor = false
+    
     var body: some View {
         VStack(spacing: 0) {
             // Top toolbar
@@ -81,6 +87,21 @@ struct GridEditingView: View {
                         // Small delay for view stabilization
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             showCropSheet = true
+                        }
+                    },
+                    onEditImage: { id in
+                        pendingDeleteImageId = nil
+                        
+                        // Find the canvas image and get its current adjustments
+                        guard let canvasImage = viewModel.canvasImages.first(where: { $0.id == id }) else { return }
+                        
+                        // Use the proxy image for the editor (performance)
+                        editImageId = id
+                        editImage = canvasImage.image
+                        editAdjustments = canvasImage.adjustments
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            showPhotoEditor = true
                         }
                     },
                     onImageManipulationStart: {
@@ -201,6 +222,29 @@ struct GridEditingView: View {
                 )
                 .transition(.opacity)
                 .zIndex(1000)
+            }
+        }
+        // Photo Editor overlay - full-screen editing with adjustments and filters
+        .overlay {
+            if showPhotoEditor, let imageToEdit = editImage, let id = editImageId {
+                PhotoEditorView(
+                    originalImage: imageToEdit,
+                    initialAdjustments: editAdjustments,
+                    onSave: { newAdjustments in
+                        // Update adjustments in model
+                        viewModel.updateAdjustments(id, adjustments: newAdjustments)
+                        editImageId = nil
+                        editImage = nil
+                        showPhotoEditor = false
+                    },
+                    onCancel: {
+                        editImageId = nil
+                        editImage = nil
+                        showPhotoEditor = false
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(1001)
             }
         }
     }
