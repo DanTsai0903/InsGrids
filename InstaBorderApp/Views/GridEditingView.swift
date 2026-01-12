@@ -397,6 +397,7 @@ struct ImageCropView: View {
     @State private var isRatioLocked = false // Whether aspect ratio is locked
     @State private var lockedRatio: CGFloat? = nil // The locked aspect ratio (width/height)
     @State private var isDraggingCropRect = false // Hide lock icon while dragging
+    @State private var rotationAngle: Double = 0.0 // Rotation angle in degrees (-45 to 45)
     
     private let touchTarget: CGFloat = 30
     private let minCropSize: CGFloat = 50
@@ -437,6 +438,7 @@ struct ImageCropView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: viewSize.width, height: viewSize.height)
+                            .rotationEffect(.degrees(rotationAngle))
                             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                         
                         // Crop overlay (only show when cropRect is valid)
@@ -490,6 +492,40 @@ struct ImageCropView: View {
                     }
                 }
             }
+            .background(Color.black)
+            
+            // Rotation Slider
+            VStack(spacing: 4) {
+                HStack {
+                    Image(systemName: "rotate.left")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Slider(value: $rotationAngle, in: -45...45, step: 0.1)
+                        .tint(.white)
+                    Image(systemName: "rotate.right")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal, 20)
+                
+                HStack {
+                    Text(String(format: "%.1f°", rotationAngle))
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    Spacer()
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            rotationAngle = 0
+                        }
+                    } label: {
+                        Text(NSLocalizedString("button.reset", value: "Reset", comment: "Reset rotation"))
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+            .padding(.vertical, 8)
             .background(Color.black)
             
             // Bottom Toolbar (Ratios)
@@ -1060,7 +1096,43 @@ struct ImageCropView: View {
             return
         }
         
-        let newImage = UIImage(cgImage: croppedCG, scale: originalImage.scale, orientation: originalImage.imageOrientation)
-        onCrop(newImage)
+        let croppedImage = UIImage(cgImage: croppedCG, scale: originalImage.scale, orientation: originalImage.imageOrientation)
+        
+        // 4. Apply rotation if needed
+        if abs(rotationAngle) > 0.1 {
+            let rotatedImage = rotateImage(croppedImage, byDegrees: rotationAngle)
+            onCrop(rotatedImage)
+        } else {
+            onCrop(croppedImage)
+        }
+    }
+    
+    /// Rotates an image by the given degrees
+    private func rotateImage(_ image: UIImage, byDegrees degrees: Double) -> UIImage {
+        let radians = CGFloat(degrees * .pi / 180)
+        
+        // Calculate new size after rotation
+        var newSize = CGRect(origin: .zero, size: image.size)
+            .applying(CGAffineTransform(rotationAngle: radians))
+            .size
+        newSize.width = abs(newSize.width)
+        newSize.height = abs(newSize.height)
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { context in
+            let cgContext = context.cgContext
+            
+            // Move origin to center
+            cgContext.translateBy(x: newSize.width / 2, y: newSize.height / 2)
+            // Rotate
+            cgContext.rotate(by: radians)
+            // Draw image centered
+            image.draw(in: CGRect(
+                x: -image.size.width / 2,
+                y: -image.size.height / 2,
+                width: image.size.width,
+                height: image.size.height
+            ))
+        }
     }
 }
