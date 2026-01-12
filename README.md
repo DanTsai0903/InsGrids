@@ -4,22 +4,20 @@
 
 ## ✨ Features
 
-- **Freeform Canvas**: Arrange photos freely in a customizable grid (2x2, 3x3, etc.)
-- **Advanced Cropping**: Crop images directly on the canvas with aspect ratio presets (1:1, 4:5, 16:9, etc.)
-- **Smart Gestures**: Drag to move, pinch to zoom/rotate, and intuitive delete interactions
-- **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution
-- **Tiled Export**: Export high-resolution grids (up to 12MP per tile) using background tiled rendering
-- **Auto-Save & Restore**: Your work is automatically saved and can be restored if the app is closed
-- **Undo/Redo**: Full undo history support for all canvas operations
-- **Memory Optimized**: Handles high-resolution images (e.g., 48MP ProRAW) using advanced memory management
-- **Privacy Focused**: Uses iOS Photo Picker with minimal permissions
-- **Presets**: Save your favorite aspect ratio, scale, and color settings for quick access
-- **Localization**: Supports English and Traditional Chinese (繁體中文)
+- **Freeform Grid Layout**: Create Instagram aesthetics by splitting images across NxM grids (1x2, 2x3, 3x3, up to 6x6).
+- **Pro Crop Tool**: Advanced overlay-based cropping with **Locked Ratio Mode** (auto-locks 1:1, 4:5, 16:9) for precise composition.
+- **Smart Gestures**: Drag to arrange, pinch to zoom/rotate, and double-tap to reset.
+- **Image Slicing**: Automatically splits your composition into perfect 4:5 aspect ratio tiles for Instagram posting.
+- **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution for export.
+- **Memory Optimized**: Handles high-resolution images (e.g., 48MP ProRAW) using advanced memory management and background tiled rendering.
+- **Auto-Save & Restore**: Never lose your work - editing sessions are automatically saved and restored.
+- **Privacy Focused**: No cloud uploads, all processing happens on-device.
+- **Localization**: Supports English and Traditional Chinese (繁體中文).
 
 ## 📱 Requirements
 
-- iOS 26.0+
-- Xcode 26.0+
+- iOS 16.0+
+- Xcode 15.0+
 - Swift 5.9+
 
 ## 🛠 Installation
@@ -104,16 +102,19 @@ Free accounts have a 7-day expiration. To keep the app working:
 
 ## 🎯 Usage
 
-1. **Select Photos**: Tap the "+" button freely add photos to your grid
-2. **Arrange**: 
-   - **Move**: Drag photos to rearrange
-   - **Zoom/Rotate**: Pinch with two fingers
-   - **Crop**: Tap a photo -> Crop icon
-   - **Delete**: Drag photo to the bottom trash can or long press
-3. **Customize Grid**:
-   - Tap the grid button (e.g. "2x2") to change layout columns/rows
-   - Tap the color circle to change background color
-4. **Export**: Tap "Export" to save the high-resolution grid tiles to your library
+1. **Choose Layout**: Select "Freeform Grid" and set your desired columns/rows (e.g., 3 columns x 2 rows).
+2. **Add & Arrange**:
+   - Tap "+" to add photos.
+   - **Move**: Drag photos to any cell.
+   - **Transform**: Pinch to zoom or rotate images within cells.
+   - **Crop**: Tap a photo -> "Crop" to use the locked-ratio crop tool.
+   - **Layer**: Tap to bring an image to the front.
+3. **Customize**:
+   - Change background color using the color picker.
+   - Adjust grid dimensions dynamically.
+4. **Export**:
+   - Tap "Export" to automatically slice the grid.
+   - The app saves individual 4:5 tiles to your Photo Library in the correct posting order (1, 2, 3...).
 
 ## 🌍 Localization
 
@@ -131,14 +132,15 @@ InsGrids/
 │   ├── Models/
 │   │   ├── CanvasImage.swift
 │   │   ├── GridAutoSaveConfig.swift
-│   │   └── ImageProcessor.swift
+│   │   ├── GridLayout.swift
+│   │   └── GridProcessor.swift
 │   ├── ViewModels/
 │   │   └── GridViewModel.swift
 │   ├── Views/
-│   │   ├── GridEditingView.swift
+│   │   ├── ContentView.swift
+│   │   ├── GridEditingView.swift (Contains ImageCropView)
 │   │   ├── Components/
 │   │   │   ├── FreeformCanvasView.swift
-│   │   │   ├── ImageCropView.swift
 │   │   │   └── GridCanvasView.swift
 │   ├── Utilities/
 │   │   └── ImageExporter.swift
