@@ -14,7 +14,9 @@ struct PhotoEditorView: View {
     @State private var isProcessing = false
     
     private let engine = PhotoEditorEngine()
-    private let previewDebouncer = PassthroughSubject<PhotoAdjustments, Never>()
+    
+    // Debounce publisher for throttling preview updates
+    @State private var adjustmentsPublisher = PassthroughSubject<PhotoAdjustments, Never>()
     
     /// Small thumbnail for filter previews
     @State private var filterThumbnail: UIImage?
@@ -56,8 +58,8 @@ struct PhotoEditorView: View {
         }
         .background(Color.black.edgesIgnoringSafeArea(.all))
         .onAppear {
-            // Generate downsampled preview image
-            let size = CGSize(width: 800, height: 800 * (originalImage.size.height / originalImage.size.width))
+            // Generate downsampled preview image (500px for performance)
+            let size = CGSize(width: 500, height: 500 * (originalImage.size.height / originalImage.size.width))
             let renderer = UIGraphicsImageRenderer(size: size)
             let downsampledPreview = renderer.image { _ in
                 originalImage.draw(in: CGRect(origin: .zero, size: size))
@@ -76,6 +78,13 @@ struct PhotoEditorView: View {
             updatePreview()
         }
         .onChange(of: adjustments) { _, newValue in
+            // Send to debounced publisher instead of direct update
+            adjustmentsPublisher.send(newValue)
+        }
+        .onReceive(
+            adjustmentsPublisher
+                .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+        ) { _ in
             updatePreview()
         }
     }
@@ -267,7 +276,7 @@ struct PhotoEditorView: View {
         // Always render from the CLEAN original to prevent stacking
         guard let baseImage = originalPreviewImage else { return }
         
-        // Debounce rendering to avoid UI stutter
+        // Render on background thread (already debounced by Combine)
         DispatchQueue.global(qos: .userInitiated).async {
             let result = engine.render(image: baseImage, adjustments: adjustments)
             DispatchQueue.main.async {
