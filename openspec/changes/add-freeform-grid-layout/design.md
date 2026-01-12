@@ -35,14 +35,14 @@ Instagram's current post format uses **4:5 aspect ratio** (portrait), not 1:1 sq
 5. **Memory Safety**: Maintain existing memory management patterns
 6. **Emoji Support**: Allow emoji overlays on individual cells
 7. **Auto-Save**: Automatically preserve editing sessions
-8. **Grid Presets**: Integrate with existing preset system for quick layout reuse
+38. **Grid Presets**: ~~Integrate with existing preset system for quick layout reuse~~ (ABORTED: Not frequently used in freeform mode)
 
 ### Non-Goals
 
-1. **Automatic Layout Suggestions**: No AI-powered layout recommendations (future feature)
-2. **Advanced Editing**: No filters or stickers beyond emoji overlays
-3. **Direct Instagram Posting**: No API integration with Instagram (user posts manually)
-4. **Collaborative Grids**: No multi-user or cloud sync features
+41. **Automatic Layout Suggestions**: No AI-powered layout recommendations (future feature)
+42. **Advanced Editing**: No filters or stickers beyond emoji overlays
+43. **Direct Instagram Posting**: No API integration with Instagram (user posts manually)
+44. **Collaborative Grids**: No multi-user or cloud sync features
 
 ## Decisions
 
@@ -72,7 +72,6 @@ struct GridCell: Codable {
 
 **Rationale**:
 - Follows existing `BorderConfiguration` pattern (struct + Codable)
-- Enables preset support for grid layouts (save/load via PresetManager)
 - Enables auto-save functionality via UserDefaults
 - Clean separation between layout config and actual image data
 - Emoji stored as String (native Swift emoji support)
@@ -167,33 +166,14 @@ Example for 2x3 grid:
 - Consistent memory profile with current app behavior
 - Prevents memory spikes even for large grids (e.g., 4×6 = 24 tiles)
 
-### Decision 6: Grid Preset Integration
+### Decision 6: Grid Preset Integration (ABORTED)
 
-**Choice**: Extend existing PresetManager to support GridLayout presets
-
-**Implementation**:
-```swift
-enum PresetType: Codable {
-    case border(BorderConfiguration)
-    case grid(GridLayout)
-}
-
-struct Preset: Codable {
-    var id: UUID
-    var name: String
-    var type: PresetType
-    var createdDate: Date
-}
-```
+**Status**: ABORTED
 
 **Rationale**:
-- Reuses existing preset infrastructure
-- Unified preset UI (filter by type)
-- Consistent user experience
-
-**Alternatives Considered**:
-- **Separate GridPresetManager**: More code duplication
-- **No preset support**: Missed opportunity for user convenience
+- Feature deemed low priority for freeform grid workflow
+- Users typically create unique, one-off grid compositions
+- Reduces maintenance complexity
 
 ---
 
@@ -215,6 +195,52 @@ struct Preset: Codable {
 **Alternatives Considered**:
 - **Document-based storage**: Overkill for single session
 - **Manual save only**: Risk of data loss on app crash
+
+---
+
+### Decision 8: Emoji Rendering
+
+**Choice**: Render emoji as text using CoreGraphics string drawing
+
+**Implementation**:
+```swift
+let emojiText = "😊"
+let attributes: [NSAttributedString.Key: Any] = [
+    .font: UIFont.systemFont(ofSize: 120),
+    .foregroundColor: UIColor.white
+]
+emojiText.draw(at: CGPoint(x: 100, y: 100), withAttributes: attributes)
+```
+
+**Position**: Center of cell, above image layer
+
+**Rationale**:
+- Native Swift emoji support
+- No external libraries needed
+- Consistent rendering across devices
+
+**Alternatives Considered**:
+- **Emoji picker library**: Unnecessary dependency
+- **Image-based emoji**: Accessibility issues
+
+### Decision 9: Crop Functionality
+
+**Choice**: Overlay-based crop view with Locked Ratio Mode
+
+**Implementation**:
+- **Presentation**: `overlay` instead of `sheet` (fixes SwiftUI modal crash issues)
+- **Locked Ratio Mode**:
+    - Auto-locks when specific ratio (e.g., 1:1, 4:5) is selected
+    - Displays lock icon on crop rectangle
+    - Corners resize proportionally maintaining aspect ratio
+    - Hides side handles in locked mode
+    - Lock icon hides temporarily during dragging for better visibility
+- **Unlock**: Tap lock icon or select "Free" mode
+
+**Rationale**:
+- Locked ratio ensures precise cropping for specific formats (e.g., 4:5 for Instagram)
+- Overlay approach avoids complex SwiftUI sheet lifecycle bugs
+- Improving crop UX prevents user frustration with accidental aspect ratio changes
 
 ---
 

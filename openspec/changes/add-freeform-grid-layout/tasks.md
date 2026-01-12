@@ -109,5 +109,11 @@
 - [ ] 13.3 Update architecture diagram in README
 - [ ] 13.4 Document 4:5 aspect ratio requirement
 - [ ] 13.5 Document emoji feature
-- [ ] 13.6 Document preset integration
+- [~] 13.6 Document preset integration (Aborted)
 - [ ] 13.7 Document auto-save behavior
+
+## 14. UX Improvements
+- [x] 14.1 Fix cropping crash using overlay presentation (Avoid SwiftUI sheet lifecycle issues)
+- [x] 14.2 Implement "Locked Ratio Mode" for cropping (1:1, 4:5 auto-lock)
+- [x] 14.3 Add lock/unlock toggle button on crop rectangle
+- [x] 14.4 Hide lock icon while dragging crop rectangle for better visibility
