@@ -212,11 +212,11 @@ struct PhotoEditorView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 // "None" option
-                filterButton(name: "None", filterName: nil)
+                filterButton(name: NSLocalizedString("filter.none", comment: "None filter"), filterName: nil)
                 
                 // All available filters
                 ForEach(PhotoAdjustments.availableFilters, id: \.name) { filter in
-                    filterButton(name: filter.displayName, filterName: filter.name)
+                    filterButton(name: NSLocalizedString(filter.localizationKey, comment: ""), filterName: filter.name)
                 }
             }
             .padding()

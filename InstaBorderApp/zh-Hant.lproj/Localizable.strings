@@ -83,3 +83,28 @@
 "button.delete" = "刪除";
 "grid.deleteImage.title" = "刪除圖片？";
 "title.crop" = "裁剪圖片";
+
+// Photo Editor
+"title.edit" = "編輯";
+"editor.adjust" = "調整";
+"editor.filter" = "濾鏡";
+
+// Adjustments
+"adjust.brightness" = "亮度";
+"adjust.contrast" = "對比";
+"adjust.saturation" = "飽和度";
+"adjust.exposure" = "曝光";
+"adjust.warmth" = "色溫";
+"adjust.vignette" = "暗角";
+"adjust.sharpness" = "銳利度";
+
+// Filters
+"filter.none" = "無";
+"filter.chrome" = "鉻黃";
+"filter.fade" = "褪色";
+"filter.instant" = "即時";
+"filter.mono" = "單色";
+"filter.noir" = "黑白";
+"filter.process" = "沖印";
+"filter.tonal" = "色調";
+"filter.transfer" = "轉印";

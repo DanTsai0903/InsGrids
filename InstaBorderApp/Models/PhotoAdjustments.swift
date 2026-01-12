@@ -52,14 +52,15 @@ struct PhotoAdjustments: Codable, Equatable {
     }
     
     /// Available filter presets using CIPhotoEffect filters
-    static let availableFilters: [(name: String, displayName: String)] = [
-        ("CIPhotoEffectChrome", "Chrome"),
-        ("CIPhotoEffectFade", "Fade"),
-        ("CIPhotoEffectInstant", "Instant"),
-        ("CIPhotoEffectMono", "Mono"),
-        ("CIPhotoEffectNoir", "Noir"),
-        ("CIPhotoEffectProcess", "Process"),
-        ("CIPhotoEffectTonal", "Tonal"),
-        ("CIPhotoEffectTransfer", "Transfer")
+    /// name: CIFilter name, localizationKey: key for NSLocalizedString
+    static let availableFilters: [(name: String, localizationKey: String)] = [
+        ("CIPhotoEffectChrome", "filter.chrome"),
+        ("CIPhotoEffectFade", "filter.fade"),
+        ("CIPhotoEffectInstant", "filter.instant"),
+        ("CIPhotoEffectMono", "filter.mono"),
+        ("CIPhotoEffectNoir", "filter.noir"),
+        ("CIPhotoEffectProcess", "filter.process"),
+        ("CIPhotoEffectTonal", "filter.tonal"),
+        ("CIPhotoEffectTransfer", "filter.transfer")
     ]
 }

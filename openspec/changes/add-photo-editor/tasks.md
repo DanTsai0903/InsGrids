@@ -29,5 +29,5 @@
 - [ ] 5.2 Verify memory usage during export with heavy filters
 
 ## 6. Localization
-- [ ] 6.1 Localize adjustment names (Brightness, Contrast, etc.)
-- [ ] 6.2 Localize filter names
+- [x] 6.1 Localize adjustment names (Brightness, Contrast, etc.)
+- [x] 6.2 Localize filter names

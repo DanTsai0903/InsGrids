@@ -83,3 +83,28 @@
 "button.delete" = "Delete";
 "grid.deleteImage.title" = "Delete Image?";
 "title.crop" = "Crop Image";
+
+// Photo Editor
+"title.edit" = "Edit";
+"editor.adjust" = "Adjust";
+"editor.filter" = "Filter";
+
+// Adjustments
+"adjust.brightness" = "Brightness";
+"adjust.contrast" = "Contrast";
+"adjust.saturation" = "Saturation";
+"adjust.exposure" = "Exposure";
+"adjust.warmth" = "Warmth";
+"adjust.vignette" = "Vignette";
+"adjust.sharpness" = "Sharpness";
+
+// Filters
+"filter.none" = "None";
+"filter.chrome" = "Chrome";
+"filter.fade" = "Fade";
+"filter.instant" = "Instant";
+"filter.mono" = "Mono";
+"filter.noir" = "Noir";
+"filter.process" = "Process";
+"filter.tonal" = "Tonal";
+"filter.transfer" = "Transfer";
