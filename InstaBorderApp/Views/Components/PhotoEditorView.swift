@@ -8,7 +8,8 @@ struct PhotoEditorView: View {
     let onCancel: () -> Void
     
     @State private var adjustments: PhotoAdjustments
-    @State private var previewImage: UIImage?
+    @State private var originalPreviewImage: UIImage?  // Clean original for rendering base
+    @State private var displayedPreviewImage: UIImage? // Rendered preview with adjustments
     @State private var selectedTab: EditorTab = .adjust
     @State private var isProcessing = false
     
@@ -69,7 +70,9 @@ struct PhotoEditorView: View {
                 originalImage.draw(in: CGRect(origin: .zero, size: thumbSize))
             }
             
-            previewImage = downsampledPreview
+            // Keep clean original for rendering base
+            originalPreviewImage = downsampledPreview
+            displayedPreviewImage = downsampledPreview
             updatePreview()
         }
         .onChange(of: adjustments) { _, newValue in
@@ -108,7 +111,7 @@ struct PhotoEditorView: View {
     // MARK: - Image Preview
     private var imagePreview: some View {
         GeometryReader { geometry in
-            if let preview = previewImage {
+            if let preview = displayedPreviewImage {
                 Image(uiImage: preview)
                     .resizable()
                     .scaledToFit()
@@ -261,13 +264,14 @@ struct PhotoEditorView: View {
     
     // MARK: - Preview Update
     private func updatePreview() {
-        guard let baseImage = previewImage else { return }
+        // Always render from the CLEAN original to prevent stacking
+        guard let baseImage = originalPreviewImage else { return }
         
         // Debounce rendering to avoid UI stutter
         DispatchQueue.global(qos: .userInitiated).async {
             let result = engine.render(image: baseImage, adjustments: adjustments)
             DispatchQueue.main.async {
-                previewImage = result
+                displayedPreviewImage = result
             }
         }
     }
