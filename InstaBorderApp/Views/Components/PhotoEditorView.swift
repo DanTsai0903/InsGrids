@@ -58,8 +58,8 @@ struct PhotoEditorView: View {
         }
         .background(Color.black.edgesIgnoringSafeArea(.all))
         .onAppear {
-            // Generate downsampled preview image (500px for performance)
-            let size = CGSize(width: 500, height: 500 * (originalImage.size.height / originalImage.size.width))
+            // Generate downsampled preview image (400px for performance)
+            let size = CGSize(width: 400, height: 400 * (originalImage.size.height / originalImage.size.width))
             let renderer = UIGraphicsImageRenderer(size: size)
             let downsampledPreview = renderer.image { _ in
                 originalImage.draw(in: CGRect(origin: .zero, size: size))
@@ -83,7 +83,7 @@ struct PhotoEditorView: View {
         }
         .onReceive(
             adjustmentsPublisher
-                .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+                .debounce(for: .milliseconds(20), scheduler: DispatchQueue.main)
         ) { _ in
             updatePreview()
         }
