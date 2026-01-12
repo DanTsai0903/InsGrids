@@ -3,7 +3,7 @@
 - [x] 1.2 Create `GridCell` model (position, assigned image, scale, offset, emoji, backgroundColor)
 - [x] 1.3 Create `GridProcessor` with image slicing method
 - [x] 1.4 Add tile generation with proper 4:5 aspect ratio per cell
-- [ ] 1.5 Test GridProcessor with various image sizes and grid dimensions
+- [x] 1.5 Test GridProcessor with various image sizes and grid dimensions
 - [x] 1.6 Add emoji rendering to GridProcessor using CoreGraphics
 
 ## 2. View Models
@@ -22,7 +22,7 @@
 - [x] 3.3 Add validation for grid size limits (max 6×6)
 - [x] 3.4 Create `GridCanvasView` with 4:5 ratio grid overlay
 - [x] 3.5 Add drag-and-drop gesture handlers for image placement
-- [ ] 3.6 Implement pinch-to-zoom for image scaling within cells
+- [x] 3.6 Implement pinch-to-zoom for image scaling within cells
 - [x] 3.7 Add visual indicators for empty vs filled cells
 - [x] 3.8 Create grid preview with Instagram-style 4:5 spacing
 - [x] 3.9 Create `EmojiPickerView` component
@@ -37,7 +37,7 @@
 - [x] 4.5 Add image library panel at bottom for available images
 - [x] 4.6 Integrate EmojiPickerView as modal sheet
 - [x] 4.7 Add background color picker UI
-- [ ] 4.8 Add auto-save indicator (small icon showing "Saved" status)
+- [x] 4.8 Add auto-save indicator (small icon showing "Saved" status)
 
 ## 5. Navigation Integration
 - [x] 5.1 Modify `ContentView` to add "Freeform Grid" mode button
