@@ -12,6 +12,7 @@ struct PhotoEditorView: View {
     @State private var displayedPreviewImage: UIImage? // Rendered preview with adjustments
     @State private var selectedTab: EditorTab = .adjust
     @State private var isProcessing = false
+    @State private var showingOriginal = false  // Toggle to show original vs edited
     
     private let engine = PhotoEditorEngine()
     
@@ -91,7 +92,7 @@ struct PhotoEditorView: View {
     
     // MARK: - Header Bar
     private var headerBar: some View {
-        HStack {
+        HStack(spacing: 12) {
             Button(action: onCancel) {
                 Text(NSLocalizedString("button.cancel", comment: "Cancel"))
                     .foregroundColor(.white)
@@ -99,9 +100,29 @@ struct PhotoEditorView: View {
             
             Spacer()
             
+            // Reset button
+            Button {
+                withAnimation {
+                    adjustments.reset()
+                }
+            } label: {
+                Image(systemName: "arrow.counterclockwise")
+                    .foregroundColor(adjustments.hasAdjustments ? .white : .gray)
+            }
+            .disabled(!adjustments.hasAdjustments)
+            
+            // Title
             Text(NSLocalizedString("title.edit", value: "Edit", comment: "Edit Title"))
                 .font(.headline)
                 .foregroundColor(.white)
+            
+            // Compare (show original) button
+            Button {
+                showingOriginal.toggle()
+            } label: {
+                Image(systemName: showingOriginal ? "eye.fill" : "eye")
+                    .foregroundColor(showingOriginal ? .blue : .white)
+            }
             
             Spacer()
             
@@ -120,11 +141,28 @@ struct PhotoEditorView: View {
     // MARK: - Image Preview
     private var imagePreview: some View {
         GeometryReader { geometry in
-            if let preview = displayedPreviewImage {
+            // Choose image based on compare toggle
+            let imageToShow = showingOriginal ? originalPreviewImage : displayedPreviewImage
+            
+            if let preview = imageToShow {
                 Image(uiImage: preview)
                     .resizable()
                     .scaledToFit()
                     .frame(width: geometry.size.width, height: geometry.size.height)
+                    // Visual indicator for "Original" mode
+                    .overlay(
+                        showingOriginal ? 
+                            Text("ORIGINAL")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(6)
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(4)
+                                .padding()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            : nil
+                    )
             } else {
                 ProgressView()
                     .tint(.white)
