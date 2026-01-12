@@ -13,7 +13,7 @@ final class PhotoEditorEngine {
         // Use Metal for GPU-accelerated rendering
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             self.context = CIContext(mtlDevice: metalDevice, options: [
-                .cacheIntermediates: false,
+                .cacheIntermediates: true,  // Cache intermediate results for better performance
                 .priorityRequestLow: false
             ])
         } else {
@@ -44,6 +44,11 @@ final class PhotoEditorEngine {
     
     /// Apply the full filter chain based on adjustments
     private func applyFilterChain(to input: CIImage, adjustments: PhotoAdjustments) -> CIImage {
+        // Early return if no adjustments (performance optimization)
+        guard adjustments.hasAdjustments else {
+            return input
+        }
+        
         var output = input
         
         // 1. Exposure
