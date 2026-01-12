@@ -21,13 +21,19 @@ This major update introduces a complete architectural overhaul for image handlin
 - **Customizable Grids**: Support for 2x2, 2x3, 3x3 layouts and more.
 - **Auto-Layout**: Canvas automatically adjusts aspect ratio based on grid dimensions.
 
+### 🎨 Advanced Photo Editor
+- **Lightroom-Style Adjustments**: Fine-tune your photos with Exposure, Contrast, Highlights, Shadows, Whites, and Blacks sliders.
+- **Professional Filters**: Apply stunning presets with adjustable intensity (tap filter again to adjust).
+- **Real-Time Metal Rendering**: All edits are previewed instantly on the canvas at 60fps.
+
 ## 🛠 Improvements & Fixes
 - **Auto-Save 2.0**: Migrated image storage from `UserDefaults` (which caused crashes) to the file system. Your work is now safely saved even if the app quits.
 - **iPad Support**: Optimized layout and orientation settings for iPad multitasking.
 - **Gesture Refinement**: Improved pinch-to-zoom and drag mechanics.
 
 ## ⚠️ Known Issues
-- **Crop View Crash**: In rare cases, tapping "Crop" immediately after adding a large photo may cause a crash. **Workaround**: Move or zoom the photo slightly before cropping.
+## ⚠️ Known Issues
+- None at this time.
 
 ## 📱 Requirements
 - iOS 26.0+
