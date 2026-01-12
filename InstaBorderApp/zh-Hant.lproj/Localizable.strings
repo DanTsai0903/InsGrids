@@ -90,10 +90,13 @@
 "editor.filter" = "濾鏡";
 
 // Adjustments
-"adjust.brightness" = "亮度";
+"adjust.exposure" = "曝光度";
 "adjust.contrast" = "對比";
+"adjust.highlights" = "亮部";
+"adjust.shadows" = "陰影";
+"adjust.whites" = "白色";
+"adjust.blacks" = "黑色";
 "adjust.saturation" = "飽和度";
-"adjust.exposure" = "曝光";
 "adjust.warmth" = "色溫";
 "adjust.vignette" = "暗角";
 "adjust.sharpness" = "銳利度";

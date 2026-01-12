@@ -202,23 +202,39 @@ struct PhotoEditorView: View {
     }
     
     // MARK: - Adjustments Panel
+    // MARK: - Adjustments Panel
     private var adjustmentsPanel: some View {
         ScrollView {
             VStack(spacing: 16) {
-                adjustmentSlider(name: NSLocalizedString("adjust.brightness", value: "Brightness", comment: ""), 
-                               value: $adjustments.brightness, range: -0.5...0.5, defaultValue: 0)
-                adjustmentSlider(name: NSLocalizedString("adjust.contrast", value: "Contrast", comment: ""), 
-                               value: $adjustments.contrast, range: 0.5...1.5, defaultValue: 1)
-                adjustmentSlider(name: NSLocalizedString("adjust.saturation", value: "Saturation", comment: ""), 
-                               value: $adjustments.saturation, range: 0...2, defaultValue: 1)
-                adjustmentSlider(name: NSLocalizedString("adjust.exposure", value: "Exposure", comment: ""), 
-                               value: $adjustments.exposure, range: -2...2, defaultValue: 0)
-                adjustmentSlider(name: NSLocalizedString("adjust.warmth", value: "Warmth", comment: ""), 
-                               value: $adjustments.warmth, range: -1...1, defaultValue: 0)
-                adjustmentSlider(name: NSLocalizedString("adjust.vignette", value: "Vignette", comment: ""), 
-                               value: $adjustments.vignette, range: 0...2, defaultValue: 0)
-                adjustmentSlider(name: NSLocalizedString("adjust.sharpness", value: "Sharpness", comment: ""), 
-                               value: $adjustments.sharpness, range: 0...1, defaultValue: 0)
+                // LIGHT (亮) Group like Lightroom
+                Group {
+                    adjustmentSlider(name: NSLocalizedString("adjust.exposure", value: "Exposure", comment: ""), 
+                                   value: $adjustments.exposure, range: -2...2, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.contrast", value: "Contrast", comment: ""), 
+                                   value: $adjustments.contrast, range: 0.5...1.5, defaultValue: 1)
+                    adjustmentSlider(name: NSLocalizedString("adjust.highlights", value: "Highlights", comment: ""), 
+                                   value: $adjustments.highlights, range: -1...1, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.shadows", value: "Shadows", comment: ""), 
+                                   value: $adjustments.shadows, range: -1...1, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.whites", value: "Whites", comment: ""), 
+                                   value: $adjustments.whites, range: -1...1, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.blacks", value: "Blacks", comment: ""), 
+                                   value: $adjustments.blacks, range: -1...1, defaultValue: 0)
+                }
+                
+                Divider().background(Color.gray.opacity(0.3))
+                
+                // COLOR / DETAIL Group
+                Group {
+                    adjustmentSlider(name: NSLocalizedString("adjust.saturation", value: "Saturation", comment: ""), 
+                                   value: $adjustments.saturation, range: 0...2, defaultValue: 1)
+                    adjustmentSlider(name: NSLocalizedString("adjust.warmth", value: "Warmth", comment: ""), 
+                                   value: $adjustments.warmth, range: -1...1, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.vignette", value: "Vignette", comment: ""), 
+                                   value: $adjustments.vignette, range: 0...2, defaultValue: 0)
+                    adjustmentSlider(name: NSLocalizedString("adjust.sharpness", value: "Sharpness", comment: ""), 
+                                   value: $adjustments.sharpness, range: 0...1, defaultValue: 0)
+                }
             }
             .padding()
         }

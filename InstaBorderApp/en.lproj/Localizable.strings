@@ -90,10 +90,13 @@
 "editor.filter" = "Filter";
 
 // Adjustments
-"adjust.brightness" = "Brightness";
-"adjust.contrast" = "Contrast";
-"adjust.saturation" = "Saturation";
 "adjust.exposure" = "Exposure";
+"adjust.contrast" = "Contrast";
+"adjust.highlights" = "Highlights";
+"adjust.shadows" = "Shadows";
+"adjust.whites" = "Whites";
+"adjust.blacks" = "Blacks";
+"adjust.saturation" = "Saturation";
 "adjust.warmth" = "Warmth";
 "adjust.vignette" = "Vignette";
 "adjust.sharpness" = "Sharpness";

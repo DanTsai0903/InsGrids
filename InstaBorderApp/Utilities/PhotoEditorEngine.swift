@@ -51,7 +51,7 @@ final class PhotoEditorEngine {
         
         var output = input
         
-        // 1. Exposure
+        // 1. Exposure (Global exposure)
         if adjustments.exposure != 0.0 {
             let filter = CIFilter.exposureAdjust()
             filter.inputImage = output
@@ -70,17 +70,48 @@ final class PhotoEditorEngine {
             output = filter.outputImage ?? output
         }
         
-        // 3. Basic Adjustments (Brightness, Contrast, Saturation)
-        if adjustments.brightness != 0.0 || adjustments.contrast != 1.0 || adjustments.saturation != 1.0 {
+        // 3. Contrast & Saturation (Removed Brightness)
+        if adjustments.contrast != 1.0 || adjustments.saturation != 1.0 {
             let filter = CIFilter.colorControls()
             filter.inputImage = output
-            filter.brightness = Float(adjustments.brightness)
             filter.contrast = Float(adjustments.contrast)
             filter.saturation = Float(adjustments.saturation)
             output = filter.outputImage ?? output
         }
         
-        // 4. Vignette
+        // 4. Tone Curve (Highlights, Shadows, Whites, Blacks)
+        if adjustments.highlights != 0.0 || adjustments.shadows != 0.0 || adjustments.whites != 0.0 || adjustments.blacks != 0.0 {
+            // Mapping Logic:
+            // Blacks: Affects point (0.0), shifting Y based on value
+            // Shadows: Affects point (0.25), shifting Y
+            // Midtone: Fixed at (0.5, 0.5)
+            // Highlights: Affects point (0.75), shifting Y
+            // Whites: Affects point (1.0), shifting Y (clipping point)
+            
+            // Scale factors (tuned for UX feel)
+            let blacksOffset = adjustments.blacks * 0.15
+            let shadowsOffset = adjustments.shadows * 0.15
+            let highlightsOffset = adjustments.highlights * 0.15
+            let whitesOffset = adjustments.whites * 0.15 // Whites usually effectively clips or dims
+            
+            // CIFilterBuiltins expects CGPoint, not CIVector
+            let p0 = CGPoint(x: 0.0, y: max(0.0, 0.0 + blacksOffset)) // Clamp blacks >= 0
+            let p1 = CGPoint(x: 0.25, y: 0.25 + shadowsOffset)
+            let p2 = CGPoint(x: 0.5, y: 0.5) // Anchor mid
+            let p3 = CGPoint(x: 0.75, y: 0.75 + highlightsOffset)
+            let p4 = CGPoint(x: 1.0, y: max(0.0, 1.0 + whitesOffset))
+            
+            let filter = CIFilter.toneCurve()
+            filter.inputImage = output
+            filter.point0 = p0
+            filter.point1 = p1
+            filter.point2 = p2
+            filter.point3 = p3
+            filter.point4 = p4
+            output = filter.outputImage ?? output
+        }
+        
+        // 5. Vignette (Post-tone mapping)
         if adjustments.vignette > 0.0 {
             let filter = CIFilter.vignette()
             filter.inputImage = output
@@ -89,7 +120,7 @@ final class PhotoEditorEngine {
             output = filter.outputImage ?? output
         }
         
-        // 5. Sharpness
+        // 6. Sharpness
         if adjustments.sharpness > 0.0 {
             let filter = CIFilter.sharpenLuminance()
             filter.inputImage = output
@@ -97,7 +128,7 @@ final class PhotoEditorEngine {
             output = filter.outputImage ?? output
         }
         
-        // 6. Preset Filter (e.g., CIPhotoEffectMono)
+        // 7. Preset Filter (e.g., CIPhotoEffectMono)
         if let filterName = adjustments.filterName,
            let filter = CIFilter(name: filterName) {
             filter.setValue(output, forKey: kCIInputImageKey)
