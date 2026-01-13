@@ -4,11 +4,13 @@
 
 ## ✨ Features
 
+- **Layout Templates**: Instagram Layout-style collages with predefined templates (2-4 photos). Customize borders, spacing, corner radius, aspect ratio, and background color.
 - **Freeform Grid Layout**: Create Instagram aesthetics by splitting images across NxM grids (1x2, 2x3, 3x3, up to 6x6).
 - **Advanced Photo Editor**: Built-in editor with Lightroom-style adjustments (Exposure, Contrast, Highlights, Shadows, etc.) and professional filters.
 - **Pro Crop Tool**: Advanced overlay-based cropping with **Locked Ratio Mode** (auto-locks 1:1, 4:5, 16:9) for precise composition.
 - **Smart Gestures**: Drag to arrange, pinch to zoom/rotate, and double-tap to reset.
 - **Image Slicing**: Automatically splits your composition into perfect 4:5 aspect ratio tiles for Instagram posting.
+- **iCloud Photos Support**: Seamlessly download and use photos stored in iCloud with visual progress indicator.
 - **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution for export.
 - **Memory Optimized**: Handles high-resolution images (e.g., 48MP ProRAW) using advanced memory management and background tiled rendering.
 - **Auto-Save & Restore**: Never lose your work - editing sessions are automatically saved and restored.
@@ -136,17 +138,24 @@ InsGrids/
 │   │   ├── CanvasImage.swift
 │   │   ├── GridAutoSaveConfig.swift
 │   │   ├── GridLayout.swift
-│   │   └── GridProcessor.swift
+│   │   ├── GridProcessor.swift
+│   │   ├── LayoutTemplate.swift
+│   │   └── LayoutConfiguration.swift
 │   ├── ViewModels/
-│   │   └── GridViewModel.swift
+│   │   ├── GridViewModel.swift
+│   │   └── LayoutEditorViewModel.swift
 │   ├── Views/
 │   │   ├── ContentView.swift
 │   │   ├── GridEditingView.swift (Contains ImageCropView)
+│   │   ├── LayoutTemplateSelectView.swift
+│   │   ├── LayoutEditorView.swift
 │   │   ├── Components/
 │   │   │   ├── FreeformCanvasView.swift
-│   │   │   └── GridCanvasView.swift
+│   │   │   ├── GridCanvasView.swift
+│   │   │   └── LayoutPhotoPickerView.swift
 │   ├── Utilities/
-│   │   └── ImageExporter.swift
+│   │   ├── ImageExporter.swift
+│   │   └── PhotoEditorEngine.swift
 │   ├── en.lproj/
 │   ├── zh-Hant.lproj/
 │   └── Assets.xcassets/

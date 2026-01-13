@@ -112,3 +112,11 @@
 "filter.process" = "Process";
 "filter.tonal" = "Tonal";
 "filter.transfer" = "Transfer";
+
+// Layout Feature
+"button.layout" = "Layout";
+"layout.selectTemplate" = "Select Template";
+"layout.editor" = "Layout";
+"label.background" = "Background";
+"alert.saved" = "Image saved successfully";
+"status.icloudDownload" = "Downloading from iCloud...";

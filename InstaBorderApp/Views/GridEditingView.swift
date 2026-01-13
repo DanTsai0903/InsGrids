@@ -40,6 +40,9 @@ struct GridEditingView: View {
     @State private var editImage: UIImage? = nil
     @State private var editAdjustments: PhotoAdjustments = PhotoAdjustments()
     @State private var showPhotoEditor = false
+
+    // iCloud loading state
+    @State private var isLoadingPhotos = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -201,6 +204,15 @@ struct GridEditingView: View {
                     Text(NSLocalizedString("grid.exporting", comment: "Exporting tiles..."))
                         .foregroundColor(.white)
                 }
+            } else if isLoadingPhotos {
+                Color.black.opacity(0.7).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(.white)
+                    Text(NSLocalizedString("status.icloudDownload", comment: ""))
+                        .foregroundColor(.white)
+                }
             }
         }
         // Crop overlay - renders within same view hierarchy, avoiding modal issues
@@ -336,7 +348,16 @@ struct GridEditingView: View {
     // MARK: - Actions
     
     private func loadImages(from items: [PhotosPickerItem]) {
+        isLoadingPhotos = true
+
         Task {
+            defer {
+                Task { @MainActor in
+                    isLoadingPhotos = false
+                    selectedPhotos.removeAll()
+                }
+            }
+
             var loadedData: [Data] = []
             for item in items {
                 if let data = try? await item.loadTransferable(type: Data.self) {
@@ -345,7 +366,6 @@ struct GridEditingView: View {
             }
             await MainActor.run {
                 viewModel.addImages(loadedData, canvasSize: canvasSize)
-                selectedPhotos.removeAll()
             }
         }
     }

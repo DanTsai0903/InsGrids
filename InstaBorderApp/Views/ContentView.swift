@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var viewModel = PhotoEditorViewModel()
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var showEditor = false
+    @State private var isLoadingPhotos = false
     
     var body: some View {
         NavigationStack {
@@ -87,6 +88,24 @@ struct ContentView: View {
                         )
                     }
                     
+                    // Layout Button
+                    NavigationLink(destination: LayoutTemplateSelectView()) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.grid.2x2")
+                                .font(.headline)
+                            Text(NSLocalizedString("button.layout", comment: ""))
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(width: 220, height: 56)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(28)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    
                     // Footer
                     Text(NSLocalizedString("footer.features", comment: ""))
                         .font(.caption)
@@ -98,28 +117,47 @@ struct ContentView: View {
             .navigationDestination(isPresented: $showEditor) {
                 EditingView(viewModel: viewModel)
             }
+            .overlay {
+                if isLoadingPhotos {
+                    Color.black.opacity(0.7).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView().tint(.white).scaleEffect(1.3)
+                        Text(NSLocalizedString("status.icloudDownload", comment: ""))
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                    }
+                }
+            }
         }
     }
     
     private func loadImages(from items: [PhotosPickerItem]) {
         guard !items.isEmpty else { return }
-        
+
+        isLoadingPhotos = true
+
         Task {
+            defer {
+                Task { @MainActor in
+                    isLoadingPhotos = false
+                    selectedItems = []
+                }
+            }
+
             var loadedImages: [UIImage] = []
-            
+
             for item in items {
                 if let data = try? await item.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
                     loadedImages.append(image)
                 }
             }
-            
+
             if !loadedImages.isEmpty {
                 await MainActor.run {
                     viewModel.clearAll()
                     viewModel.addImages(loadedImages)
                     showEditor = true
-                    selectedItems = [] 
                 }
             }
         }
