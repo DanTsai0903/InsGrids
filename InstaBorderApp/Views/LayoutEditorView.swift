@@ -8,6 +8,7 @@ struct LayoutEditorView: View {
     @StateObject private var viewModel: LayoutEditorViewModel
     @State private var showRatioSheet = false
     @State private var showColorSheet = false
+    @State private var showBorderSheet = false
     @State private var isSaving = false
     @State private var showingSaveSuccess = false
     @State private var saveMessage = ""
@@ -76,6 +77,17 @@ struct LayoutEditorView: View {
         .sheet(isPresented: $showColorSheet) {
             ColorSheet(currentColor: $viewModel.config.backgroundColor) {}
                 .presentationDetents([.height(220)])
+        }
+        .sheet(isPresented: $showBorderSheet) {
+            BorderSheet(
+                outerBorderWidth: $viewModel.config.outerBorderWidth,
+                innerSpacing: $viewModel.config.innerSpacing,
+                cornerRadius: $viewModel.config.cornerRadius,
+                onEditingChanged: { editing in
+                    if editing { viewModel.saveSnapshot() }
+                }
+            )
+            .presentationDetents([.height(280)])
         }
         .overlay(savingOverlay)
         .alert(NSLocalizedString("alert.complete", comment: ""), isPresented: $showingSaveSuccess) {
@@ -387,40 +399,6 @@ struct LayoutEditorView: View {
     
     private var controlsView: some View {
         VStack(spacing: 16) {
-            // Sliders
-            VStack(spacing: 12) {
-                SliderControl(
-                    icon: "square.on.square",
-                    value: $viewModel.config.outerBorderWidth,
-                    range: 0...50,
-                    label: String(format: "%.0f", viewModel.config.outerBorderWidth),
-                    onEditingChanged: { editing in
-                        if editing { viewModel.saveSnapshot() }
-                    }
-                )
-
-                SliderControl(
-                    icon: "square.split.2x2",
-                    value: $viewModel.config.innerSpacing,
-                    range: 0...30,
-                    label: String(format: "%.0f", viewModel.config.innerSpacing),
-                    onEditingChanged: { editing in
-                        if editing { viewModel.saveSnapshot() }
-                    }
-                )
-
-                SliderControl(
-                    icon: "circle",
-                    value: $viewModel.config.cornerRadius,
-                    range: 0...50,
-                    label: String(format: "%.0f", viewModel.config.cornerRadius),
-                    onEditingChanged: { editing in
-                        if editing { viewModel.saveSnapshot() }
-                    }
-                )
-            }
-            .padding(.horizontal, 20)
-
             // Action Buttons
             HStack(spacing: 40) {
                 Button(action: {
@@ -446,6 +424,19 @@ struct LayoutEditorView: View {
                             .frame(width: 24, height: 24)
                             .overlay(Circle().stroke(Color.white, lineWidth: 2))
                         Text(NSLocalizedString("label.background", comment: ""))
+                            .font(.caption.bold())
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                Button(action: {
+                    viewModel.saveSnapshot()  // Save before border change
+                    showBorderSheet = true
+                }) {
+                    VStack(spacing: 6) {
+                        Image(systemName: "square.on.square.dashed")
+                            .font(.system(size: 22))
+                        Text(NSLocalizedString("label.border", comment: ""))
                             .font(.caption.bold())
                     }
                     .foregroundColor(.white)
@@ -663,6 +654,71 @@ struct LayoutSlotView: View {
             }
         }
         .frame(width: contentSize.width, height: contentSize.height)
+    }
+}
+
+// MARK: - Border Sheet
+struct BorderSheet: View {
+    @Binding var outerBorderWidth: CGFloat
+    @Binding var innerSpacing: CGFloat
+    @Binding var cornerRadius: CGFloat
+    var onEditingChanged: ((Bool) -> Void)?
+    
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            HStack {
+                Text(NSLocalizedString("label.border", comment: ""))
+                    .font(.headline)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top)
+            
+            // Sliders
+            VStack(spacing: 16) {
+                SliderControl(
+                    icon: "square.on.square",
+                    value: $outerBorderWidth,
+                    range: 0...50,
+                    label: String(format: "%.0f", outerBorderWidth),
+                    onEditingChanged: onEditingChanged
+                )
+                
+                SliderControl(
+                    icon: "square.split.2x2",
+                    value: $innerSpacing,
+                    range: 0...30,
+                    label: String(format: "%.0f", innerSpacing),
+                    onEditingChanged: onEditingChanged
+                )
+                
+                SliderControl(
+                    icon: "circle",
+                    value: $cornerRadius,
+                    range: 0...50,
+                    label: String(format: "%.0f", cornerRadius),
+                    onEditingChanged: onEditingChanged
+                )
+            }
+            .padding(.horizontal, 20)
+            
+            // Done Button
+            Button(NSLocalizedString("button.done", comment: "")) {
+                dismiss()
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(Color.blue)
+            .cornerRadius(10)
+            .padding(.horizontal, 20)
+            
+            Spacer()
+        }
     }
 }
 
