@@ -22,6 +22,10 @@ struct LayoutEditorView: View {
     @State private var cropImage: UIImage? = nil
     @State private var showCropOverlay = false
     @State private var isLoadingPhoto = false
+    
+    // Canvas zoom state
+    @State private var canvasScale: CGFloat = 1.0
+    @GestureState private var gesturePinchScale: CGFloat = 1.0
 
     @Environment(\.dismiss) var dismiss
     
@@ -220,6 +224,7 @@ struct LayoutEditorView: View {
             let canvasWidth = geometry.size.width - 40
             let canvasHeight = canvasWidth / viewModel.config.aspectRatio
             let canvasSize = CGSize(width: canvasWidth, height: canvasHeight)
+            let effectiveScale = canvasScale * gesturePinchScale
             
             // Content area (with outer border inset)
             let contentSize = CGSize(
@@ -228,52 +233,29 @@ struct LayoutEditorView: View {
             )
             
             ZStack {
-                // Background - tap to deselect active slot
-                Rectangle()
-                    .fill(viewModel.config.backgroundColor)
-                    .frame(width: canvasSize.width, height: canvasSize.height)
+                // Full area background for gesture capture
+                Color.black
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onTapGesture {
                         activeSlotIndex = nil
                         manipulatingSlotIndex = nil
                     }
-
-                // Content container - centered in canvas
-                ZStack {
-                    ForEach(0..<template.slots.count, id: \.self) { index in
-                        let photo = viewModel.photos[index]
-                        LayoutSlotView(
-                            shape: template.slots[index],
-                            photo: photo,
-                            contentSize: contentSize,
-                            edgeInsets: template.edgeInsets(for: index, innerSpacing: viewModel.config.innerSpacing),
-                            cornerRadius: viewModel.config.cornerRadius,
-                            sharedPointIndices: template.movablePointIndices(for: index),
-                            isActive: activeSlotIndex == index || manipulatingSlotIndex == index,
-                            onBeginGesture: {
-                                activeSlotIndex = nil  // Dismiss action buttons on drag
-                                manipulatingSlotIndex = index  // Show blue lines during manipulation
-                                viewModel.saveSnapshot()
-                            },
-                            onEndGesture: {
-                                manipulatingSlotIndex = nil  // Hide blue lines when done
-                            },
-                            onUpdate: { scale, offset in
-                                viewModel.updatePhoto(at: index, scale: scale, offset: offset)
-                            },
-                            onLongPress: {
-                                activeSlotIndex = index  // Only long-press shows action buttons
-                            },
-                            onAddPhoto: {
-                                slotToAddPhoto = index
-                                showPhotoPicker = true
-                            }
-                        )
-                        // Force complete view recreation when photo changes
-                        .id("\(photo.id)-\(photo.version)")
-                    }
+                
+                ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                    canvasContent(
+                        canvasSize: canvasSize,
+                        contentSize: contentSize,
+                        effectiveScale: effectiveScale
+                    )
                 }
-                .frame(width: contentSize.width, height: contentSize.height)
-
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { _ in
+                            activeSlotIndex = nil
+                            manipulatingSlotIndex = nil
+                        }
+                )
+                
                 // Action buttons overlay (Edit, Crop, Delete) - shown when slot with photo is active
                 if let index = activeSlotIndex, viewModel.photos[index].hasImage {
                     HStack(spacing: 30) {
@@ -331,10 +313,76 @@ struct LayoutEditorView: View {
                     }
                 }
             }
-            .frame(width: canvasSize.width, height: canvasSize.height)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color.black)
+    }
+    
+    @ViewBuilder
+    private func canvasContent(canvasSize: CGSize, contentSize: CGSize, effectiveScale: CGFloat) -> some View {
+        ZStack {
+            // Background with canvas zoom gesture
+            Rectangle()
+                .fill(viewModel.config.backgroundColor)
+                .frame(width: canvasSize.width, height: canvasSize.height)
+                .onTapGesture {
+                    activeSlotIndex = nil
+                    manipulatingSlotIndex = nil
+                }
+                .simultaneousGesture(
+                    MagnificationGesture()
+                        .updating($gesturePinchScale) { value, state, _ in
+                            state = value
+                        }
+                        .onChanged { _ in
+                            activeSlotIndex = nil
+                            manipulatingSlotIndex = nil
+                        }
+                        .onEnded { value in
+                            canvasScale *= value
+                            canvasScale = max(0.3, min(4.0, canvasScale))
+                        }
+                )
+            
+            // Content container - centered in canvas
+            ZStack {
+                ForEach(0..<template.slots.count, id: \.self) { index in
+                    let photo = viewModel.photos[index]
+                    LayoutSlotView(
+                        shape: template.slots[index],
+                        photo: photo,
+                        contentSize: contentSize,
+                        edgeInsets: template.edgeInsets(for: index, innerSpacing: viewModel.config.innerSpacing),
+                        cornerRadius: viewModel.config.cornerRadius,
+                        sharedPointIndices: template.movablePointIndices(for: index),
+                        isActive: activeSlotIndex == index || manipulatingSlotIndex == index,
+                        onBeginGesture: {
+                            activeSlotIndex = nil  // Dismiss action buttons on drag
+                            manipulatingSlotIndex = index  // Show blue lines during manipulation
+                            viewModel.saveSnapshot()
+                        },
+                        onEndGesture: {
+                            manipulatingSlotIndex = nil  // Hide blue lines when done
+                        },
+                        onUpdate: { scale, offset in
+                            viewModel.updatePhoto(at: index, scale: scale, offset: offset)
+                        },
+                        onLongPress: {
+                            activeSlotIndex = index  // Only long-press shows action buttons
+                        },
+                        onAddPhoto: {
+                            slotToAddPhoto = index
+                            showPhotoPicker = true
+                        }
+                    )
+                    // Force complete view recreation when photo changes
+                    .id("\(photo.id)-\(photo.version)")
+                }
+            }
+            .frame(width: contentSize.width, height: contentSize.height)
+        }
+        .frame(width: canvasSize.width, height: canvasSize.height)
+        .scaleEffect(effectiveScale, anchor: .center)
+        .frame(width: canvasSize.width * effectiveScale, height: canvasSize.height * effectiveScale)
     }
     
     private var controlsView: some View {
