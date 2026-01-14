@@ -25,7 +25,8 @@ class LayoutEditorViewModel: ObservableObject {
         if config.outerBorderWidth != defaultConfig.outerBorderWidth ||
            config.innerSpacing != defaultConfig.innerSpacing ||
            config.cornerRadius != defaultConfig.cornerRadius ||
-           config.aspectRatio != defaultConfig.aspectRatio {
+           config.aspectRatio != defaultConfig.aspectRatio ||
+           !config.dimensionOverrides.isEmpty {
             return true
         }
         // Check photo transforms
@@ -127,6 +128,37 @@ class LayoutEditorViewModel: ObservableObject {
         photos[index].offset = offset
     }
     
+    // MARK: - Draggable Lines
+    
+    /// Returns the list of interior lines that can be dragged to resize slots
+    var draggableLines: [DraggableLine] {
+        template.detectDraggableLines()
+    }
+    
+    /// Returns slots with dimension overrides applied
+    var appliedSlots: [LayoutSlotShape] {
+        template.appliedSlots(with: config.dimensionOverrides)
+    }
+    
+    /// Minimum slot edge as fraction of canvas dimension
+    private let minSlotEdge: CGFloat = 0.1
+    
+    /// Update the position of a draggable line, respecting minimum constraints
+    func updateLinePosition(_ line: DraggableLine, to newPosition: CGFloat) {
+        // Clamp position to valid range (min 10%, max 90%)
+        let clampedPosition = min(max(newPosition, minSlotEdge), 1.0 - minSlotEdge)
+        
+        // Save snapshot before first change in a drag session
+        // (The view should call saveSnapshot at drag start)
+        
+        config.dimensionOverrides.setPosition(clampedPosition, for: line.overrideKey)
+    }
+    
+    /// Get the current position of a draggable line (with any overrides applied)
+    func currentLinePosition(_ line: DraggableLine) -> CGFloat {
+        config.dimensionOverrides.position(for: line.overrideKey) ?? line.position
+    }
+    
     func renderAndSave(completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
@@ -184,8 +216,9 @@ class LayoutEditorViewModel: ObservableObject {
             // Translate to content origin (accounting for outer border)
             context.cgContext.translateBy(x: config.outerBorderWidth * scale, y: config.outerBorderWidth * scale)
             
-            // Draw each slot
-            for (index, slot) in template.slots.enumerated() {
+            // Draw each slot (using applied slots with dimension overrides)
+            let slotsToRender = appliedSlots
+            for (index, slot) in slotsToRender.enumerated() {
                 guard index < photos.count else { continue }
 
                 let photo = photos[index]

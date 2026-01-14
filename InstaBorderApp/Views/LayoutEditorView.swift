@@ -12,8 +12,8 @@ struct LayoutEditorView: View {
     @State private var isSaving = false
     @State private var showingSaveSuccess = false
     @State private var saveMessage = ""
-    @State private var activeSlotIndex: Int? = nil  // For action buttons (long-press only)
-    @State private var manipulatingSlotIndex: Int? = nil  // For blue lines (during drag/pinch)
+    @State private var activeSlotIndex: Int? = nil  // For blue border and drag handles (tap or manipulation)
+    @State private var showActionButtons: Bool = false  // For action buttons (long-press only)
     @State private var slotToAddPhoto: Int? = nil
     @State private var showPhotoPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
@@ -250,7 +250,7 @@ struct LayoutEditorView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onTapGesture {
                         activeSlotIndex = nil
-                        manipulatingSlotIndex = nil
+                        showActionButtons = false
                     }
                 
                 ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -263,19 +263,19 @@ struct LayoutEditorView: View {
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 1)
                         .onChanged { _ in
-                            activeSlotIndex = nil
-                            manipulatingSlotIndex = nil
+                            showActionButtons = false
                         }
                 )
                 
-                // Action buttons overlay (Edit, Crop, Delete) - shown when slot with photo is active
-                if let index = activeSlotIndex, viewModel.photos[index].hasImage {
+                // Action buttons overlay (Edit, Crop, Delete) - shown on long-press
+                if showActionButtons, let index = activeSlotIndex, viewModel.photos[index].hasImage {
                     HStack(spacing: 30) {
                         // Edit Button (Photo Adjustments)
                         Button {
                             editingSlotIndex = index
                             showPhotoEditor = true
                             activeSlotIndex = nil
+                            showActionButtons = false
                         } label: {
                             ZStack {
                                 Circle().fill(Color.white).frame(width: 70, height: 70)
@@ -293,6 +293,7 @@ struct LayoutEditorView: View {
                             cropSlotIndex = index
                             cropImage = imageToEdit
                             activeSlotIndex = nil
+                            showActionButtons = false
                             // Small delay for view stabilization
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 showCropOverlay = true
@@ -313,6 +314,7 @@ struct LayoutEditorView: View {
                             generator.notificationOccurred(.success)
                             viewModel.removePhoto(at: index)
                             activeSlotIndex = nil
+                            showActionButtons = false
                         } label: {
                             ZStack {
                                 Circle().fill(Color.white).frame(width: 70, height: 70)
@@ -331,6 +333,8 @@ struct LayoutEditorView: View {
     
     @ViewBuilder
     private func canvasContent(canvasSize: CGSize, contentSize: CGSize, effectiveScale: CGFloat) -> some View {
+        let slotsToRender = viewModel.appliedSlots
+        
         ZStack {
             // Background with canvas zoom gesture
             Rectangle()
@@ -338,7 +342,7 @@ struct LayoutEditorView: View {
                 .frame(width: canvasSize.width, height: canvasSize.height)
                 .onTapGesture {
                     activeSlotIndex = nil
-                    manipulatingSlotIndex = nil
+                    showActionButtons = false
                 }
                 .simultaneousGesture(
                     MagnificationGesture()
@@ -346,8 +350,7 @@ struct LayoutEditorView: View {
                             state = value
                         }
                         .onChanged { _ in
-                            activeSlotIndex = nil
-                            manipulatingSlotIndex = nil
+                            showActionButtons = false
                         }
                         .onEnded { value in
                             canvasScale *= value
@@ -357,29 +360,34 @@ struct LayoutEditorView: View {
             
             // Content container - centered in canvas
             ZStack {
-                ForEach(0..<template.slots.count, id: \.self) { index in
+                ForEach(0..<slotsToRender.count, id: \.self) { index in
                     let photo = viewModel.photos[index]
                     LayoutSlotView(
-                        shape: template.slots[index],
+                        shape: slotsToRender[index],
                         photo: photo,
                         contentSize: contentSize,
                         edgeInsets: template.edgeInsets(for: index, innerSpacing: viewModel.config.innerSpacing),
                         cornerRadius: viewModel.config.cornerRadius,
                         sharedPointIndices: template.movablePointIndices(for: index),
-                        isActive: activeSlotIndex == index || manipulatingSlotIndex == index,
-                        onBeginGesture: {
-                            activeSlotIndex = nil  // Dismiss action buttons on drag
-                            manipulatingSlotIndex = index  // Show blue lines during manipulation
-                            viewModel.saveSnapshot()
+                        isActive: activeSlotIndex == index,
+                        onTap: {
+                            // Tap sets active slot and shows drag handles
+                            activeSlotIndex = index
+                            showActionButtons = false
                         },
-                        onEndGesture: {
-                            manipulatingSlotIndex = nil  // Hide blue lines when done
+                        onBeginGesture: {
+                            // Dismiss action buttons on drag, keep drag handles visible
+                            showActionButtons = false
+                            activeSlotIndex = index
+                            viewModel.saveSnapshot()
                         },
                         onUpdate: { scale, offset in
                             viewModel.updatePhoto(at: index, scale: scale, offset: offset)
                         },
                         onLongPress: {
-                            activeSlotIndex = index  // Only long-press shows action buttons
+                            // Long-press shows action buttons
+                            activeSlotIndex = index
+                            showActionButtons = true
                         },
                         onAddPhoto: {
                             slotToAddPhoto = index
@@ -389,6 +397,13 @@ struct LayoutEditorView: View {
                     // Force complete view recreation when photo changes
                     .id("\(photo.id)-\(photo.version)")
                 }
+
+                // Draggable lines overlay - show handles when slot is active
+                DraggableLinesOverlay(
+                    viewModel: viewModel,
+                    contentSize: contentSize,
+                    activeSlotIndex: activeSlotIndex
+                )
             }
             .frame(width: contentSize.width, height: contentSize.height)
         }
@@ -503,8 +518,8 @@ struct LayoutSlotView: View {
     let cornerRadius: CGFloat
     let sharedPointIndices: Set<Int>?
     let isActive: Bool
+    var onTap: (() -> Void)? = nil
     let onBeginGesture: () -> Void
-    var onEndGesture: (() -> Void)? = nil
     let onUpdate: (CGFloat, CGSize) -> Void
     var onLongPress: (() -> Void)? = nil
     var onAddPhoto: (() -> Void)? = nil
@@ -608,6 +623,9 @@ struct LayoutSlotView: View {
                     .position(x: boundingRect.midX, y: boundingRect.midY)
                     .clipShape(shapePath)
                     .contentShape(shapePath)  // Limit hit testing to the actual shape
+                    .onTapGesture {
+                        onTap?()
+                    }
                     .simultaneousGesture(
                         LongPressGesture(minimumDuration: 0.5)
                             .onEnded { _ in
@@ -631,7 +649,6 @@ struct LayoutSlotView: View {
                                 dragOffset = .zero
                                 hasStartedGesture = false
                                 onUpdate(scale, offset)
-                                onEndGesture?()
                             }
                     )
                     .gesture(
@@ -648,7 +665,6 @@ struct LayoutSlotView: View {
                                 pinchScale = 1.0
                                 hasStartedGesture = false
                                 onUpdate(scale, offset)
-                                onEndGesture?()
                             }
                     )
             }

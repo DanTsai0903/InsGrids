@@ -41,5 +41,5 @@ Users currently have to leave the app to apply filters or adjust photo propertie
 - Users can fine-tune visual consistency across grid tiles.
 
 ### Compatibility
-- Will require updating the persistence model (`BorderConfiguration` and `CanvasImage`) to store adjustment data.
+- Will require updating the persistence model (`BorderConfiguration` and `CanvasImage`) to store adjustment data.p
 - Migration strategy needed for existing saved states (default to no adjustments).

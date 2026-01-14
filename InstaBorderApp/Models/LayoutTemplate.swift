@@ -348,6 +348,145 @@ struct LayoutTemplate: Identifiable {
         }
         return count
     }
+    
+    // MARK: - Draggable Lines Detection
+    
+    /// Detect interior lines that can be dragged to resize adjacent slots.
+    /// Lines pointing to slot corners are excluded to preserve slot shapes.
+    func detectDraggableLines() -> [DraggableLine] {
+        var lineSegments: [String: Set<Int>] = [:]  // lineKey -> affected slot indices
+        let threshold: CGFloat = 0.001
+
+        for (i, slot) in slots.enumerated() {
+            let bounds = slot.boundingRect
+
+            // Check each slot's edges against other slots
+            for (j, otherSlot) in slots.enumerated() {
+                guard j > i else { continue }  // Avoid duplicates
+                let otherBounds = otherSlot.boundingRect
+
+                // Check for horizontal shared edge (vertical divider)
+                // Right edge of slot i touches left edge of slot j
+                if abs(bounds.maxX - otherBounds.minX) < threshold &&
+                   bounds.minY < otherBounds.maxY && bounds.maxY > otherBounds.minY {
+                    let position = bounds.maxX
+                    let lineKey = "v\(String(format: "%.4f", position))"
+
+                    // Check if line points to corner
+                    let startY = max(bounds.minY, otherBounds.minY)
+                    let endY = min(bounds.maxY, otherBounds.maxY)
+                    let startPoint = CGPoint(x: position, y: startY)
+                    let endPoint = CGPoint(x: position, y: endY)
+
+                    if !DraggableLine.pointsToCorner(startPoint: startPoint, endPoint: endPoint, slots: slots) {
+                        // Accumulate affected slot indices for this line position
+                        if lineSegments[lineKey] == nil {
+                            lineSegments[lineKey] = []
+                        }
+                        lineSegments[lineKey]?.insert(i)
+                        lineSegments[lineKey]?.insert(j)
+                    }
+                }
+
+                // Check for vertical shared edge (horizontal divider)
+                // Bottom edge of slot i touches top edge of slot j
+                if abs(bounds.maxY - otherBounds.minY) < threshold &&
+                   bounds.minX < otherBounds.maxX && bounds.maxX > otherBounds.minX {
+                    let position = bounds.maxY
+                    let lineKey = "h\(String(format: "%.4f", position))"
+
+                    // Check if line points to corner
+                    let startX = max(bounds.minX, otherBounds.minX)
+                    let endX = min(bounds.maxX, otherBounds.maxX)
+                    let startPoint = CGPoint(x: startX, y: position)
+                    let endPoint = CGPoint(x: endX, y: position)
+
+                    if !DraggableLine.pointsToCorner(startPoint: startPoint, endPoint: endPoint, slots: slots) {
+                        // Accumulate affected slot indices for this line position
+                        if lineSegments[lineKey] == nil {
+                            lineSegments[lineKey] = []
+                        }
+                        lineSegments[lineKey]?.insert(i)
+                        lineSegments[lineKey]?.insert(j)
+                    }
+                }
+            }
+        }
+
+        // Create draggable lines from accumulated segments
+        var lines: [DraggableLine] = []
+        for (lineKey, affectedIndices) in lineSegments {
+            guard lineKey.count > 1 else { continue }
+            let orientationChar = lineKey.first!
+            let position = CGFloat(Double(String(lineKey.dropFirst())) ?? 0)
+            let orientation: LineOrientation = orientationChar == "h" ? .horizontal : .vertical
+
+            lines.append(DraggableLine(
+                id: lineKey,
+                orientation: orientation,
+                position: position,
+                affectedSlotIndices: Array(affectedIndices).sorted()
+            ))
+        }
+
+        return lines
+    }
+    
+    /// Apply dimension overrides to slots and return modified slot shapes.
+    func appliedSlots(with overrides: DimensionOverrides) -> [LayoutSlotShape] {
+        guard !overrides.isEmpty else { return slots }
+        
+        var modifiedSlots = slots
+        
+        for (key, newPosition) in overrides.linePositions {
+            guard key.count > 1 else { continue }
+            let orientationChar = key.first!
+            let originalPosition = CGFloat(Double(String(key.dropFirst())) ?? 0)
+            
+            let isHorizontal = orientationChar == "h"
+            
+            // Adjust affected slots
+            for (i, slot) in modifiedSlots.enumerated() {
+                switch slot {
+                case .rectangle(var rect):
+                    if isHorizontal {
+                        // Horizontal line at originalPosition moved to newPosition
+                        // Affects slots above (maxY == originalPosition) and below (minY == originalPosition)
+                        if abs(rect.maxY - originalPosition) < 0.001 {
+                            // Slot above the line - adjust height
+                            let newHeight = newPosition - rect.minY
+                            rect = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: newHeight)
+                            modifiedSlots[i] = .rectangle(rect)
+                        } else if abs(rect.minY - originalPosition) < 0.001 {
+                            // Slot below the line - adjust origin and height
+                            let newHeight = rect.maxY - newPosition
+                            rect = CGRect(x: rect.minX, y: newPosition, width: rect.width, height: newHeight)
+                            modifiedSlots[i] = .rectangle(rect)
+                        }
+                    } else {
+                        // Vertical line at originalPosition moved to newPosition
+                        // Affects slots left (maxX == originalPosition) and right (minX == originalPosition)
+                        if abs(rect.maxX - originalPosition) < 0.001 {
+                            // Slot left of the line - adjust width
+                            let newWidth = newPosition - rect.minX
+                            rect = CGRect(x: rect.minX, y: rect.minY, width: newWidth, height: rect.height)
+                            modifiedSlots[i] = .rectangle(rect)
+                        } else if abs(rect.minX - originalPosition) < 0.001 {
+                            // Slot right of the line - adjust origin and width
+                            let newWidth = rect.maxX - newPosition
+                            rect = CGRect(x: newPosition, y: rect.minY, width: newWidth, height: rect.height)
+                            modifiedSlots[i] = .rectangle(rect)
+                        }
+                    }
+                case .polygon:
+                    // Polygons are not resizable via draggable lines
+                    continue
+                }
+            }
+        }
+        
+        return modifiedSlots
+    }
 
 }
 
@@ -415,7 +554,108 @@ extension LayoutTemplate {
             .rectangle(CGRect(x: 0, y: 2.0/3.0, width: 1, height: 1.0/3.0))
         ]
     )
-    
+
+    static let leftVert2Right1 = LayoutTemplate(
+        id: "leftVert2Right1",
+        name: "Left 2 Vertical + Right 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 1))
+        ]
+    )
+
+    static let left1RightVert2 = LayoutTemplate(
+        id: "left1RightVert2",
+        name: "Left 1 + Right 2 Vertical",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 1)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0.5, width: 0.5, height: 0.5))
+        ]
+    )
+
+    static let top1BottomHoriz2 = LayoutTemplate(
+        id: "top1BottomHoriz2",
+        name: "Top 1 + Bottom 2 Horizontal",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0.5, width: 0.5, height: 0.5))
+        ]
+    )
+
+    static let topHoriz2Bottom1 = LayoutTemplate(
+        id: "topHoriz2Bottom1",
+        name: "Top 2 Horizontal + Bottom 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 1, height: 0.5))
+        ]
+    )
+
+    static let diagonal3 = LayoutTemplate(
+        id: "diagonal3",
+        name: "Diagonal 3-Way",
+        slots: [
+            // Top triangle
+            .polygon(points: [
+                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
+                CGPoint(x: 1, y: 0),    // index 1 - FIXED (top-right corner)
+                CGPoint(x: 0.5, y: 0.5) // index 2 - moves (center)
+            ]),
+            // Bottom-left triangle
+            .polygon(points: [
+                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
+                CGPoint(x: 0.5, y: 0.5), // index 1 - moves (center)
+                CGPoint(x: 0, y: 1)     // index 2 - FIXED (bottom-left corner)
+            ]),
+            // Bottom-right triangle
+            .polygon(points: [
+                CGPoint(x: 1, y: 0),    // index 0 - FIXED (top-right corner)
+                CGPoint(x: 1, y: 1),    // index 1 - FIXED (bottom-right corner)
+                CGPoint(x: 0.5, y: 0.5) // index 2 - moves (center)
+            ])
+        ],
+        fixedPointIndices: [
+            [0, 1],  // Slot 0: top-left and top-right corners are fixed
+            [0, 2],  // Slot 1: top-left and bottom-left corners are fixed
+            [0, 1]   // Slot 2: top-right and bottom-right corners are fixed
+        ]
+    )
+
+    static let slantedDiagonal3 = LayoutTemplate(
+        id: "slantedDiagonal3",
+        name: "Slanted 3-Way",
+        slots: [
+            // Left slanted triangle
+            .polygon(points: [
+                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
+                CGPoint(x: 0.3, y: 0),  // index 1 - moves
+                CGPoint(x: 0, y: 1)     // index 2 - FIXED (bottom-left corner)
+            ]),
+            // Top-right quadrilateral
+            .polygon(points: [
+                CGPoint(x: 0.3, y: 0),  // index 0 - moves
+                CGPoint(x: 1, y: 0),    // index 1 - FIXED (top-right corner)
+                CGPoint(x: 0.7, y: 1),  // index 2 - moves
+                CGPoint(x: 0, y: 1)     // index 3 - moves
+            ]),
+            // Bottom-right triangle
+            .polygon(points: [
+                CGPoint(x: 1, y: 0),    // index 0 - FIXED (top-right corner)
+                CGPoint(x: 1, y: 1),    // index 1 - FIXED (bottom-right corner)
+                CGPoint(x: 0.7, y: 1)   // index 2 - moves
+            ])
+        ],
+        fixedPointIndices: [
+            [0, 2],     // Slot 0: top-left and bottom-left corners are fixed
+            [1],        // Slot 1: top-right corner is fixed
+            [0, 1]      // Slot 2: top-right and bottom-right corners are fixed
+        ]
+    )
+
     // 4-slot templates
     static let grid2x2 = LayoutTemplate(
         id: "grid2x2",
@@ -430,7 +670,7 @@ extension LayoutTemplate {
     
     static let allTemplates: [LayoutTemplate] = [
         grid2x1, grid1x2, diagonal2,
-        grid3x1, grid1x3,
+        grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1, diagonal3, slantedDiagonal3,
         grid2x2
     ]
     

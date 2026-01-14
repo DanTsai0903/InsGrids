@@ -1,26 +1,28 @@
 # Release Notes - InsGrids v2.1.0
 
-This update introduces the new Layout feature and improved iCloud support.
+## 🎨 Introducing Layouts: A New Way to Create
 
-## 🚀 New Features
+We are thrilled to launch **Layouts**, a powerful new feature designed to help you create stunning photo collages with ease and precision.
 
-### 📐 Layout Templates
-- **Instagram Layout-Style Collages**: Create beautiful photo collages with predefined templates supporting 2-4 photos.
-- **6 Template Styles**: Choose from grid, column, and row-based layouts.
-- **Full Customization**: Adjust outer border, inner spacing, corner radius, aspect ratio (1:1, 4:5, 16:9, 9:16), and background color.
-- **Photo Manipulation**: Pan and zoom individual photos within their slots.
-- **Edit & Crop**: Long-press any photo to access Edit (adjustments/filters) or Crop tools.
-- **Undo & Reset**: Full undo stack and reset to defaults functionality.
+### 📐 Smart Templates
+*   **Versatile Grids**: Instantly combine 2 to 4 photos into beautiful layouts. Choose from classic Grids, Rows, or Columns.
+*   **Auto-Adapt**: Templates intelligently adjust to look perfect in any aspect ratio—whether it's Square (1:1), Portrait (4:5), Landscape (16:9), or Story (9:16).
 
-### ☁️ iCloud Photos Support
-- **Seamless iCloud Downloads**: Photos stored in iCloud are automatically downloaded when selected.
-- **Visual Progress Indicator**: "Downloading from iCloud..." overlay shown during photo downloads across the entire app.
+### 🛠 Powerful Customization
+Take full control of your design with our unified "Border" panel:
+*   **Outer Border**: Adjust the frame width around your collage.
+*   **Inner Spacing**: Fine-tune the gap between photos.
+*   **Corner Radius**: Go from sharp modern edges to soft rounded corners.
 
-## 🐛 Bug Fixes
+### 🔍 Enhanced Editing Experience
+*   **Canvas Zoom**: Pinch to zoom out for a full view or zoom in to perfect the tiniest details.
+*   **Photo Manipulation**: Pan and zoom individual photos within their slots.
+*   **Pro Crop & Rotate**: Long-press any photo to access the new Crop tool, featuring a **±45° Rotation Slider** to fix horizons or add creative tilts.
+*   **Undo/Redo**: Experiment freely with a full history stack.
 
-- **Fixed**: Photos not appearing after re-adding to deleted Layout slots (race condition with PhotosPicker).
-- **Fixed**: Proper state reset when photo selection fails or is cancelled.
+### ☁️ Seamless iCloud Support
+*   Select photos directly from your iCloud library with automatic downloading and visual progress indicators.
 
-## 📱 Requirements
-- iOS 26.0+
-- Xcode 26.0+
+---
+
+We hope you enjoy this update! If you love InsGrids, please consider leaving us a review.
