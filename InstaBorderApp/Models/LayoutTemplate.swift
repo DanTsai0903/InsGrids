@@ -595,67 +595,6 @@ extension LayoutTemplate {
         ]
     )
 
-    static let diagonal3 = LayoutTemplate(
-        id: "diagonal3",
-        name: "Diagonal 3-Way",
-        slots: [
-            // Top triangle
-            .polygon(points: [
-                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
-                CGPoint(x: 1, y: 0),    // index 1 - FIXED (top-right corner)
-                CGPoint(x: 0.5, y: 0.5) // index 2 - moves (center)
-            ]),
-            // Bottom-left triangle
-            .polygon(points: [
-                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
-                CGPoint(x: 0.5, y: 0.5), // index 1 - moves (center)
-                CGPoint(x: 0, y: 1)     // index 2 - FIXED (bottom-left corner)
-            ]),
-            // Bottom-right triangle
-            .polygon(points: [
-                CGPoint(x: 1, y: 0),    // index 0 - FIXED (top-right corner)
-                CGPoint(x: 1, y: 1),    // index 1 - FIXED (bottom-right corner)
-                CGPoint(x: 0.5, y: 0.5) // index 2 - moves (center)
-            ])
-        ],
-        fixedPointIndices: [
-            [0, 1],  // Slot 0: top-left and top-right corners are fixed
-            [0, 2],  // Slot 1: top-left and bottom-left corners are fixed
-            [0, 1]   // Slot 2: top-right and bottom-right corners are fixed
-        ]
-    )
-
-    static let slantedDiagonal3 = LayoutTemplate(
-        id: "slantedDiagonal3",
-        name: "Slanted 3-Way",
-        slots: [
-            // Left slanted triangle
-            .polygon(points: [
-                CGPoint(x: 0, y: 0),    // index 0 - FIXED (top-left corner)
-                CGPoint(x: 0.3, y: 0),  // index 1 - moves
-                CGPoint(x: 0, y: 1)     // index 2 - FIXED (bottom-left corner)
-            ]),
-            // Top-right quadrilateral
-            .polygon(points: [
-                CGPoint(x: 0.3, y: 0),  // index 0 - moves
-                CGPoint(x: 1, y: 0),    // index 1 - FIXED (top-right corner)
-                CGPoint(x: 0.7, y: 1),  // index 2 - moves
-                CGPoint(x: 0, y: 1)     // index 3 - moves
-            ]),
-            // Bottom-right triangle
-            .polygon(points: [
-                CGPoint(x: 1, y: 0),    // index 0 - FIXED (top-right corner)
-                CGPoint(x: 1, y: 1),    // index 1 - FIXED (bottom-right corner)
-                CGPoint(x: 0.7, y: 1)   // index 2 - moves
-            ])
-        ],
-        fixedPointIndices: [
-            [0, 2],     // Slot 0: top-left and bottom-left corners are fixed
-            [1],        // Slot 1: top-right corner is fixed
-            [0, 1]      // Slot 2: top-right and bottom-right corners are fixed
-        ]
-    )
-
     // 4-slot templates
     static let grid2x2 = LayoutTemplate(
         id: "grid2x2",
@@ -667,11 +606,66 @@ extension LayoutTemplate {
             .rectangle(CGRect(x: 0.5, y: 0.5, width: 0.5, height: 0.5))
         ]
     )
-    
+
+    static let top1Bottom3Horiz = LayoutTemplate(
+        id: "top1Bottom3Horiz",
+        name: "Top 1 + Bottom 3 Horizontal",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1, height: 0.6)),
+            .rectangle(CGRect(x: 0, y: 0.6, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0.6, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0.6, width: 1.0/3.0, height: 0.4))
+        ]
+    )
+
+    static let left1Right3Mixed = LayoutTemplate(
+        id: "left1Right3Mixed",
+        name: "Left 1 + Right 3 Mixed",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 1)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.4)),
+            .rectangle(CGRect(x: 0.5, y: 0.4, width: 0.25, height: 0.6)),
+            .rectangle(CGRect(x: 0.75, y: 0.4, width: 0.25, height: 0.6))
+        ]
+    )
+
+    static let left3VertRight1 = LayoutTemplate(
+        id: "left3VertRight1",
+        name: "Left 3 Vertical + Right 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.33, height: 1.0/3.0)),
+            .rectangle(CGRect(x: 0, y: 1.0/3.0, width: 0.33, height: 1.0/3.0)),
+            .rectangle(CGRect(x: 0, y: 2.0/3.0, width: 0.33, height: 1.0/3.0)),
+            .rectangle(CGRect(x: 0.33, y: 0, width: 0.67, height: 1))
+        ]
+    )
+
+    static let left2NarrowRight2Wide = LayoutTemplate(
+        id: "left2NarrowRight2Wide",
+        name: "Left 2 Narrow + Right 2 Wide",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.25, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 0.25, height: 0.5)),
+            .rectangle(CGRect(x: 0.25, y: 0, width: 0.375, height: 1)),
+            .rectangle(CGRect(x: 0.625, y: 0, width: 0.375, height: 1))
+        ]
+    )
+
+    static let asymmetric2x2 = LayoutTemplate(
+        id: "asymmetric2x2",
+        name: "Asymmetric 2x2",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 0.5, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.35)),
+            .rectangle(CGRect(x: 0.5, y: 0.35, width: 0.5, height: 0.65))
+        ]
+    )
+
     static let allTemplates: [LayoutTemplate] = [
         grid2x1, grid1x2, diagonal2,
-        grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1, diagonal3, slantedDiagonal3,
-        grid2x2
+        grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1,
+        grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2
     ]
     
     static func templates(withSlotCount count: Int) -> [LayoutTemplate] {

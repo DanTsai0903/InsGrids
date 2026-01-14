@@ -23,7 +23,11 @@ struct LayoutEditorView: View {
     @State private var cropImage: UIImage? = nil
     @State private var showCropOverlay = false
     @State private var isLoadingPhoto = false
-    
+
+    // Switch mode state
+    @State private var isSwitchMode = false
+    @State private var switchSourceSlotIndex: Int? = nil
+
     // Canvas zoom state
     @State private var canvasScale: CGFloat = 1.0
     @GestureState private var gesturePinchScale: CGFloat = 1.0
@@ -324,6 +328,24 @@ struct LayoutEditorView: View {
                             }
                             .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
+
+                        // Switch Button
+                        Button {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            isSwitchMode = true
+                            switchSourceSlotIndex = index
+                            activeSlotIndex = nil
+                            showActionButtons = false
+                        } label: {
+                            ZStack {
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
+                                Image(systemName: "arrow.left.arrow.right")
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(.blue)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+                        }
                     }
                 }
             }
@@ -370,10 +392,26 @@ struct LayoutEditorView: View {
                         cornerRadius: viewModel.config.cornerRadius,
                         sharedPointIndices: template.movablePointIndices(for: index),
                         isActive: activeSlotIndex == index,
+                        isSwitchSource: isSwitchMode && switchSourceSlotIndex == index,
+                        isSwitchMode: isSwitchMode,
                         onTap: {
-                            // Tap sets active slot and shows drag handles
-                            activeSlotIndex = index
-                            showActionButtons = false
+                            if isSwitchMode, let sourceIndex = switchSourceSlotIndex {
+                                // In switch mode: swap photos with animation
+                                if index != sourceIndex {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        viewModel.swapPhotos(slotA: sourceIndex, slotB: index)
+                                    }
+                                    let generator = UINotificationFeedbackGenerator()
+                                    generator.notificationOccurred(.success)
+                                }
+                                // Exit switch mode
+                                isSwitchMode = false
+                                switchSourceSlotIndex = nil
+                            } else {
+                                // Normal mode: tap sets active slot and shows drag handles
+                                activeSlotIndex = index
+                                showActionButtons = false
+                            }
                         },
                         onBeginGesture: {
                             // Dismiss action buttons on drag, keep drag handles visible
@@ -518,6 +556,8 @@ struct LayoutSlotView: View {
     let cornerRadius: CGFloat
     let sharedPointIndices: Set<Int>?
     let isActive: Bool
+    var isSwitchSource: Bool = false
+    var isSwitchMode: Bool = false
     var onTap: (() -> Void)? = nil
     let onBeginGesture: () -> Void
     let onUpdate: (CGFloat, CGSize) -> Void
@@ -547,6 +587,25 @@ struct LayoutSlotView: View {
                 .stroke(Color.blue, lineWidth: 6)
                 .opacity(isActive ? 1 : 0)
         )
+        .overlay(
+            // Switch mode indicators
+            Group {
+                if isSwitchSource {
+                    // Orange glow for source slot
+                    shapePath
+                        .stroke(Color.orange, lineWidth: 8)
+                        .shadow(color: .orange.opacity(0.6), radius: 10)
+                        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isSwitchSource)
+                } else if isSwitchMode && photo.hasImage {
+                    // Green glow for potential target slots
+                    shapePath
+                        .stroke(Color.green.opacity(0.5), lineWidth: 6)
+                        .shadow(color: .green.opacity(0.3), radius: 8)
+                }
+            }
+        )
+        .scaleEffect(isSwitchSource ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3), value: isSwitchSource)
         .onAppear {
             // Initialize from photo's saved transform
             scale = photo.scale

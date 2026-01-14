@@ -116,6 +116,7 @@
 // Layout Feature
 "button.layout" = "拼圖";
 "layout.selectTemplate" = "選擇版型";
+"layout.filter.all" = "所有";
 "layout.editor" = "編輯拼圖";
 "label.background" = "背景";
 "alert.saved" = "已成功儲存圖片";

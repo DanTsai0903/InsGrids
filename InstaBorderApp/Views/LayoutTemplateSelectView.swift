@@ -11,6 +11,7 @@ private struct EditorData: Identifiable {
 struct LayoutTemplateSelectView: View {
     @State private var pickerTemplate: LayoutTemplate?
     @State private var editorData: EditorData?
+    @State private var selectedFilter: Int? = nil // nil = "All", otherwise slot count
 
     @Environment(\.dismiss) var dismiss
 
@@ -18,6 +19,13 @@ struct LayoutTemplateSelectView: View {
         let grouped = Dictionary(grouping: LayoutTemplate.allTemplates, by: { $0.slotCount })
         return grouped.sorted(by: { $0.key < $1.key }).map { (slotCount: $0.key, templates: $0.value) }
     }()
+
+    private var filteredTemplates: [(slotCount: Int, templates: [LayoutTemplate])] {
+        if let filter = selectedFilter {
+            return groupedTemplates.filter { $0.slotCount == filter }
+        }
+        return groupedTemplates
+    }
 
     var body: some View {
         ZStack {
@@ -43,27 +51,52 @@ struct LayoutTemplateSelectView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 8)
 
+                // Filter Bar
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        // "All" button
+                        FilterButton(
+                            title: NSLocalizedString("layout.filter.all", comment: "All"),
+                            isSelected: selectedFilter == nil,
+                            action: { selectedFilter = nil }
+                        )
+
+                        // Number buttons (1-6)
+                        ForEach(1...6, id: \.self) { count in
+                            FilterButton(
+                                title: "\(count)",
+                                isSelected: selectedFilter == count,
+                                action: { selectedFilter = count }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .padding(.vertical, 12)
+
                 // Template List
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        ForEach(groupedTemplates, id: \.slotCount) { group in
+                        ForEach(filteredTemplates, id: \.slotCount) { group in
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("\(group.slotCount) Photos")
                                     .font(.headline)
                                     .foregroundColor(.gray)
                                     .padding(.horizontal, 20)
 
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(group.templates) { template in
-                                            TemplatePreviewCard(template: template)
-                                                .onTapGesture {
-                                                    pickerTemplate = template
-                                                }
-                                        }
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible(), spacing: 12),
+                                    GridItem(.flexible(), spacing: 12),
+                                    GridItem(.flexible(), spacing: 12)
+                                ], spacing: 12) {
+                                    ForEach(group.templates) { template in
+                                        TemplatePreviewCard(template: template)
+                                            .onTapGesture {
+                                                pickerTemplate = template
+                                            }
                                     }
-                                    .padding(.horizontal, 20)
                                 }
+                                .padding(.horizontal, 20)
                             }
                         }
                     }
@@ -90,6 +123,24 @@ struct LayoutTemplateSelectView: View {
         }
         .fullScreenCover(item: $editorData) { data in
             LayoutEditorView(template: data.template, images: data.images)
+        }
+    }
+}
+
+struct FilterButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(isSelected ? Color.blue : Color.gray.opacity(0.3))
+                .clipShape(Capsule())
         }
     }
 }

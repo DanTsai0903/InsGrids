@@ -78,6 +78,27 @@ class LayoutEditorViewModel: ObservableObject {
         photos[index].version += 1  // Trigger view update
     }
 
+    /// Swap photos between two slots
+    func swapPhotos(slotA: Int, slotB: Int) {
+        guard slotA < photos.count && slotB < photos.count else { return }
+        saveSnapshot()
+
+        // Swap images
+        let tempImage = photos[slotA].image
+        photos[slotA].image = photos[slotB].image
+        photos[slotB].image = tempImage
+
+        // Reset transforms after swap
+        photos[slotA].scale = 1.0
+        photos[slotA].offset = .zero
+        photos[slotB].scale = 1.0
+        photos[slotB].offset = .zero
+
+        // Increment versions to trigger view updates
+        photos[slotA].version += 1
+        photos[slotB].version += 1
+    }
+
     // MARK: - Undo/Reset
 
     /// Save current state before making changes
