@@ -31,6 +31,12 @@ struct LayoutEditorView: View {
     // Canvas zoom state
     @State private var canvasScale: CGFloat = 1.0
     @GestureState private var gesturePinchScale: CGFloat = 1.0
+    
+    // Text and sticker editing
+    @State private var showTextEditor = false
+    @State private var showStickerPicker = false
+    @State private var editingTextElement: TextElement? = nil
+    @State private var currentCanvasSize: CGSize = CGSize(width: 300, height: 375)
 
     @Environment(\.dismiss) var dismiss
     
@@ -108,6 +114,41 @@ struct LayoutEditorView: View {
             if !isShowing && selectedPhotoItem == nil {
                 slotToAddPhoto = nil
             }
+        }
+        // Text Editor sheet
+        .sheet(isPresented: $showTextEditor) {
+            TextEditorView(
+                textElement: $editingTextElement,
+                onSave: { textElement in
+                    var element = textElement
+                    if element.position == .zero {
+                        // Default to center of canvas
+                        element.position = CGPoint(x: currentCanvasSize.width / 2, y: currentCanvasSize.height / 2)
+                    }
+                    if let existing = editingTextElement {
+                        viewModel.updateTextElement(existing.id, with: element)
+                    } else {
+                        viewModel.addTextElement(element)
+                    }
+                    editingTextElement = nil
+                }
+            )
+        }
+        // Sticker Picker sheet
+        .sheet(isPresented: $showStickerPicker) {
+            StickerPickerView(
+                onSelect: { stickerElement in
+                    // Close sheet first, then add element
+                    showStickerPicker = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        viewModel.addStickerElement(stickerElement)
+                    }
+                },
+                canvasCenter: CGPoint(x: currentCanvasSize.width / 2, y: currentCanvasSize.height / 2),
+                onDismiss: {
+                    showStickerPicker = false
+                }
+            )
         }
     }
 
@@ -247,6 +288,13 @@ struct LayoutEditorView: View {
                 width: canvasSize.width - 2 * viewModel.config.outerBorderWidth,
                 height: canvasSize.height - 2 * viewModel.config.outerBorderWidth
             )
+            
+            // Store content size for text/sticker positioning
+            let _ = Task { @MainActor in
+                if currentCanvasSize != contentSize {
+                    currentCanvasSize = contentSize
+                }
+            }
             
             ZStack {
                 // Full area background for gesture capture
@@ -442,6 +490,85 @@ struct LayoutEditorView: View {
                     contentSize: contentSize,
                     activeSlotIndex: activeSlotIndex
                 )
+                
+                // Text elements layer (above slots)
+                ForEach($viewModel.textElements) { $element in
+                    TextElementView(
+                        element: $element,
+                        canvasSize: contentSize,
+                        isSelected: viewModel.selectedElementId == element.id,
+                        onSelect: {
+                            viewModel.selectElement(element.id)
+                        },
+                        onManipulate: {
+                            viewModel.saveSnapshot()
+                        },
+                        onDoubleTap: {
+                            editingTextElement = element
+                            showTextEditor = true
+                        },
+                        onUpdatePosition: { newPosition in
+                            viewModel.updateTextPosition(element.id, position: newPosition)
+                        },
+                        onUpdateScale: { newScale in
+                            viewModel.updateTextScale(element.id, scale: newScale)
+                        },
+                        onUpdateRotation: { newRotation in
+                            viewModel.updateTextRotation(element.id, rotation: newRotation)
+                        }
+                    )
+                }
+                
+                // Sticker elements layer
+                ForEach($viewModel.stickerElements) { $element in
+                    StickerElementView(
+                        element: $element,
+                        canvasSize: contentSize,
+                        isSelected: viewModel.selectedElementId == element.id,
+                        onSelect: {
+                            viewModel.selectElement(element.id)
+                        },
+                        onManipulate: {
+                            viewModel.saveSnapshot()
+                        },
+                        onUpdatePosition: { newPosition in
+                            viewModel.updateStickerPosition(element.id, position: newPosition)
+                        },
+                        onUpdateScale: { newScale in
+                            viewModel.updateStickerScale(element.id, scale: newScale)
+                        },
+                        onUpdateRotation: { newRotation in
+                            viewModel.updateStickerRotation(element.id, rotation: newRotation)
+                        }
+                    )
+                }
+                
+                // Delete button for selected element
+                if let elementId = viewModel.selectedElementId {
+                    let isTextElement = viewModel.textElements.contains { $0.id == elementId }
+                    let isStickerElement = viewModel.stickerElements.contains { $0.id == elementId }
+                    
+                    if isTextElement || isStickerElement {
+                        Button {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.success)
+                            
+                            if isTextElement {
+                                viewModel.removeTextElement(elementId)
+                            } else if isStickerElement {
+                                viewModel.removeStickerElement(elementId)
+                            }
+                        } label: {
+                            ZStack {
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
+                                Image(systemName: "trash.fill")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.red)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+                        }
+                    }
+                }
             }
             .frame(width: contentSize.width, height: contentSize.height)
         }
@@ -490,6 +617,33 @@ struct LayoutEditorView: View {
                         Image(systemName: "square.on.square.dashed")
                             .font(.system(size: 22))
                         Text(NSLocalizedString("label.border", comment: ""))
+                            .font(.caption.bold())
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                // Add Text button
+                Button {
+                    editingTextElement = nil
+                    showTextEditor = true
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: "textformat")
+                            .font(.system(size: 22))
+                        Text(NSLocalizedString("Add Text", comment: ""))
+                            .font(.caption.bold())
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                // Add Sticker button
+                Button {
+                    showStickerPicker = true
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(systemName: "face.smiling")
+                            .font(.system(size: 22))
+                        Text(NSLocalizedString("Add Sticker", comment: ""))
                             .font(.caption.bold())
                     }
                     .foregroundColor(.white)

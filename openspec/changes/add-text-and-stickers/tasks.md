@@ -1,5 +1,7 @@
 # Implementation Tasks
 
+**Note**: Tasks are organized by implementation phase (models → UI → rendering → export → testing) rather than by capability. Text and sticker elements share common infrastructure (CanvasElement model, gestures, persistence, export), so they are implemented together where it makes sense, but they are **separate functional areas** defined in distinct spec deltas (`text-elements` and `sticker-elements`).
+
 ## 1. Data Model & Architecture
 
 - [ ] 1.1 Create `InstaBorderApp/Models/CanvasElement.swift` with enum supporting Image, Text, and Sticker cases
@@ -77,8 +79,13 @@
 
 - [ ] 3.2 Add font picker with common system fonts
   - Use Picker with ForEach over available fonts
-  - Fonts: "SF Pro Text", "Helvetica Neue", "Georgia", "Courier New", "Times New Roman", "Arial"
+  - Fonts: "SF Pro Text", "Helvetica Neue", "Georgia", "Courier New", "Times New Roman", "Arial", "Menlo"
   - Display font name in its own font style in picker
+
+- [ ] 3.2.1 Add font availability validation
+  - Create runtime check: `UIFont(name: fontName, size: 24) != nil`
+  - Fallback to "SF Pro Text" if requested font unavailable
+  - Ensure compatibility across iOS 13+ versions
 
 - [ ] 3.3 Add font size slider with real-time preview
   - Slider range: 12pt to 72pt, step 1pt
@@ -108,9 +115,10 @@
   - Default: text="Double tap to edit", font="SF Pro Text", size=24pt, color=black, position=canvas center
 
 - [ ] 3.8 Enable editing existing text elements
-  - In GridCanvasView, add .onTapGesture(count: 2) to text elements
+  - In GridCanvasView, add .onTapGesture(count: 2) to text elements (double-tap pattern)
   - On double-tap: set selectedElement and show TextEditorView sheet with current values
   - Save changes on "Done", discard on sheet dismiss without changes
+  - Note: Double-tap avoids conflict with drag gesture, follows iOS conventions
 
 ## 4. Sticker Picker UI
 
@@ -126,18 +134,18 @@
 
 - [ ] 4.3 Create `IconPickerView.swift` for SF Symbols
   - Create categories dictionary mapping category names to SF Symbol arrays
-  - Categories and symbols:
-    - "Arrows": ["arrow.up", "arrow.down", "arrow.left", "arrow.right", "arrow.up.circle.fill", etc.]
-    - "Shapes": ["circle.fill", "square.fill", "triangle.fill", "heart.fill", "star.fill", etc.]
-    - "Communication": ["message.fill", "phone.fill", "envelope.fill", "paperplane.fill", etc.]
-    - "Weather": ["sun.max.fill", "cloud.fill", "cloud.rain.fill", "moon.stars.fill", etc.]
-    - "Nature": ["leaf.fill", "flame.fill", "drop.fill", "snowflake", etc.]
-    - "Objects": ["lightbulb.fill", "camera.fill", "music.note", "gift.fill", etc.]
+  - Categories and symbols (15-20 per category):
+    - "Arrows": ["arrow.up", "arrow.down", "arrow.left", "arrow.right", "arrow.up.circle.fill", "arrow.down.circle.fill", "arrow.left.circle.fill", "arrow.right.circle.fill", "arrow.turn.up.right", "arrow.turn.down.left", "arrow.uturn.backward", "arrow.uturn.forward", "arrow.clockwise", "arrow.counterclockwise", "chevron.up", "chevron.down"]
+    - "Shapes": ["circle.fill", "square.fill", "triangle.fill", "heart.fill", "star.fill", "diamond.fill", "hexagon.fill", "octagon.fill", "shield.fill", "flag.fill", "bookmark.fill", "cloud.fill", "moon.fill", "sun.max.fill", "sparkle"]
+    - "Communication": ["message.fill", "phone.fill", "envelope.fill", "paperplane.fill", "bubble.left.fill", "bubble.right.fill", "ellipsis.bubble.fill", "quote.bubble.fill", "text.bubble.fill", "exclamationmark.bubble.fill", "questionmark.bubble.fill", "mic.fill", "speaker.wave.2.fill", "bell.fill", "video.fill"]
+    - "Weather": ["sun.max.fill", "cloud.fill", "cloud.rain.fill", "cloud.snow.fill", "cloud.bolt.fill", "moon.stars.fill", "sparkles", "wind", "tornado", "hurricane", "snowflake", "thermometer.sun.fill", "thermometer.snowflake", "drop.fill", "humidity.fill"]
+    - "Nature": ["leaf.fill", "flame.fill", "drop.fill", "snowflake", "sparkles", "tree.fill", "mountain.2.fill", "sunrise.fill", "sunset.fill", "moon.fill", "star.fill", "cloud.sun.fill", "cloud.moon.fill", "rainbow", "flower"]
+    - "Objects": ["lightbulb.fill", "camera.fill", "music.note", "gift.fill", "book.fill", "bookmark.fill", "graduationcap.fill", "briefcase.fill", "hammer.fill", "wrench.fill", "paintbrush.fill", "cup.and.saucer.fill", "cart.fill", "bag.fill", "key.fill"]
   - Display as scrollable category sections with LazyVGrid (4 columns)
   - Each icon shown at 32pt size with .fill variant where available
 
 - [ ] 4.4 Add search functionality for SF Symbols
-  - TextField at top of Icons tab with search icon
+  - TextField at top of Stickers tab with search icon
   - Filter icons across all categories by name match
   - Show filtered results in single grid (no categories when searching)
   - Clear search on category selection
@@ -192,9 +200,11 @@
   - When element selected (long-press), show action buttons including:
     - "Bring to Front" button (SF Symbol: "square.3.layers.3d.top.filled")
     - "Send to Back" button (SF Symbol: "square.3.layers.3d.bottom.filled")
+  - Apply to ALL element types (images, text, stickers) for consistency
   - On "Bring to Front": move element to end of array (viewModel.elements.append)
   - On "Send to Back": move element to start of array (viewModel.elements.insert(at: 0))
   - Trigger undo snapshot before Z-order change
+  - Update existing image action overlay to include Z-order buttons
 
 ## 6. Gesture Interactions
 
@@ -268,12 +278,12 @@
   - Apply rotation transform around sticker center
   - Draw using context.draw() or UIGraphicsImageRenderer
 
-- [ ] 7.4 Update tile rendering loop to process elements by type
-  - First pass: render all image elements (existing logic)
-  - Second pass: render all sticker elements at correct Z-positions
-  - Third pass: render all text elements at correct Z-positions
-  - Alternatively: single pass rendering elements in array order for correct layering
+- [ ] 7.4 Update tile rendering loop to process elements in Z-order
+  - Single-pass rendering: iterate through elements array in order
+  - Use switch statement on element type to call appropriate render helper
+  - Array order = Z-order, ensures correct layering in export
   - Use autoreleasepool around each tile to prevent memory issues
+  - Set CGContext clip region to tile bounds for cross-tile elements
 
 - [ ] 7.5 Test export scale calculations
   - Canvas size: typically 1080px width (Instagram standard)
@@ -317,8 +327,8 @@
   // Sticker Picker
   "Add Sticker" = "Add Sticker";
   "Emoji" = "Emoji";
-  "Icons" = "Icons";
-  "Search Icons" = "Search Icons";
+  "Stickers" = "Stickers";
+  "Search Stickers" = "Search Stickers";
   "Arrows" = "Arrows";
   "Shapes" = "Shapes";
   "Communication" = "Communication";
@@ -352,8 +362,8 @@
   // Sticker Picker
   "Add Sticker" = "新增貼紙";
   "Emoji" = "表情符號";
-  "Icons" = "圖示";
-  "Search Icons" = "搜尋圖示";
+  "Stickers" = "貼紙";
+  "Search Stickers" = "搜尋貼紙";
   "Arrows" = "箭頭";
   "Shapes" = "形狀";
   "Communication" = "通訊";

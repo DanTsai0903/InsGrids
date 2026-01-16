@@ -38,8 +38,11 @@ struct SavedCanvasImage: Codable {
 /// Freeform canvas where images can be placed and transformed freely
 struct FreeformCanvasView: View {
     @Binding var images: [CanvasImage]
+    @Binding var textElements: [TextElement]
+    @Binding var stickerElements: [StickerElement]
     @Binding var canvasScale: CGFloat
     @Binding var pendingDeleteImageId: UUID?
+    @Binding var selectedElementId: UUID?
     let gridRows: Int
     let gridColumns: Int
     let backgroundColor: Color
@@ -48,6 +51,16 @@ struct FreeformCanvasView: View {
     var onCropImage: ((UUID) -> Void)? = nil
     var onEditImage: ((UUID) -> Void)? = nil  // Photo adjustments & filters
     var onImageManipulationStart: (() -> Void)? = nil
+    var onTextPositionUpdate: ((UUID, CGPoint) -> Void)? = nil
+    var onTextScaleUpdate: ((UUID, CGFloat) -> Void)? = nil
+    var onTextRotationUpdate: ((UUID, Angle) -> Void)? = nil
+    var onStickerPositionUpdate: ((UUID, CGPoint) -> Void)? = nil
+    var onStickerScaleUpdate: ((UUID, CGFloat) -> Void)? = nil
+    var onStickerRotationUpdate: ((UUID, Angle) -> Void)? = nil
+    var onSelectElement: ((UUID) -> Void)? = nil
+    var onDeleteText: ((UUID) -> Void)? = nil
+    var onDeleteSticker: ((UUID) -> Void)? = nil
+    var onEditText: ((UUID) -> Void)? = nil
     
     // Canvas gesture states
     @GestureState private var gesturePinchScale: CGFloat = 1.0
@@ -133,6 +146,34 @@ struct FreeformCanvasView: View {
                         }
                     }
                 }
+                
+                // Delete button for selected text/sticker elements
+                if let elementId = selectedElementId {
+                    // Check if it's a text or sticker element
+                    let isTextElement = textElements.contains { $0.id == elementId }
+                    let isStickerElement = stickerElements.contains { $0.id == elementId }
+                    
+                    if isTextElement || isStickerElement {
+                        Button {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.success)
+                            
+                            if isTextElement {
+                                onDeleteText?(elementId)
+                            } else if isStickerElement {
+                                onDeleteSticker?(elementId)
+                            }
+                        } label: {
+                            ZStack {
+                                Circle().fill(Color.white).frame(width: 70, height: 70)
+                                Image(systemName: "trash.fill")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.red)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+                        }
+                    }
+                }
             }
         }
     }
@@ -146,6 +187,7 @@ struct FreeformCanvasView: View {
                 .frame(width: canvasSize.width, height: gridHeight)
                 .onTapGesture {
                     pendingDeleteImageId = nil
+                    selectedElementId = nil
                 }
                 .simultaneousGesture(
                     MagnificationGesture()
@@ -191,6 +233,59 @@ struct FreeformCanvasView: View {
                     }
                 )
                 .id(canvasImage.id) // Force proper view identity
+            }
+            
+            // Text elements layer
+            ForEach($textElements) { $element in
+                TextElementView(
+                    element: $element,
+                    canvasSize: CGSize(width: canvasSize.width, height: gridHeight),
+                    isSelected: selectedElementId == element.id,
+                    onSelect: {
+                        onSelectElement?(element.id)
+                    },
+                    onManipulate: {
+                        pendingDeleteImageId = nil
+                        onImageManipulationStart?()
+                    },
+                    onDoubleTap: {
+                        // TODO: Open text editor
+                    },
+                    onUpdatePosition: { newPosition in
+                        onTextPositionUpdate?(element.id, newPosition)
+                    },
+                    onUpdateScale: { newScale in
+                        onTextScaleUpdate?(element.id, newScale)
+                    },
+                    onUpdateRotation: { newRotation in
+                        onTextRotationUpdate?(element.id, newRotation)
+                    }
+                )
+            }
+            
+            // Sticker elements layer
+            ForEach($stickerElements) { $element in
+                StickerElementView(
+                    element: $element,
+                    canvasSize: CGSize(width: canvasSize.width, height: gridHeight),
+                    isSelected: selectedElementId == element.id,
+                    onSelect: {
+                        onSelectElement?(element.id)
+                    },
+                    onManipulate: {
+                        pendingDeleteImageId = nil
+                        onImageManipulationStart?()
+                    },
+                    onUpdatePosition: { newPosition in
+                        onStickerPositionUpdate?(element.id, newPosition)
+                    },
+                    onUpdateScale: { newScale in
+                        onStickerScaleUpdate?(element.id, newScale)
+                    },
+                    onUpdateRotation: { newRotation in
+                        onStickerRotationUpdate?(element.id, newRotation)
+                    }
+                )
             }
             
             // Grid overlay

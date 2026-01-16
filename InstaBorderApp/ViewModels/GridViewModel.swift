@@ -11,6 +11,9 @@ class GridViewModel: ObservableObject {
     @Published var columns: Int = 3  // Default 2×3
     @Published var backgroundColor: Color = .white
     @Published var canvasImages: [CanvasImage] = []
+    @Published var textElements: [TextElement] = []
+    @Published var stickerElements: [StickerElement] = []
+    @Published var selectedElementId: UUID? = nil
     @Published var isProcessing = false
     @Published var showRestoreAlert = false
     @Published var autoSaveStatus: String = ""
@@ -147,6 +150,96 @@ class GridViewModel: ObservableObject {
     /// Save current image states for undo (call before changes)
     func saveImageSnapshot() {
         saveSnapshot()
+    }
+    
+    // MARK: - Text Element Management
+    
+    /// Add text element to canvas
+    func addTextElement(_ element: TextElement) {
+        saveSnapshot()
+        textElements.append(element)
+    }
+    
+    /// Update existing text element
+    func updateTextElement(_ id: UUID, with element: TextElement) {
+        saveSnapshot()
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index] = element
+        }
+    }
+    
+    /// Remove text element by ID
+    func removeTextElement(_ id: UUID) {
+        saveSnapshot()
+        textElements.removeAll { $0.id == id }
+    }
+    
+    /// Update text element position
+    func updateTextPosition(_ id: UUID, position: CGPoint) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].position = position
+        }
+    }
+    
+    /// Update text element scale
+    func updateTextScale(_ id: UUID, scale: CGFloat) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].scale = scale
+        }
+    }
+    
+    /// Update text element rotation
+    func updateTextRotation(_ id: UUID, rotation: Angle) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].rotation = rotation
+        }
+    }
+    
+    // MARK: - Sticker Element Management
+    
+    /// Add sticker element to canvas
+    func addStickerElement(_ element: StickerElement) {
+        saveSnapshot()
+        stickerElements.append(element)
+    }
+    
+    /// Remove sticker element by ID
+    func removeStickerElement(_ id: UUID) {
+        saveSnapshot()
+        stickerElements.removeAll { $0.id == id }
+    }
+    
+    /// Update sticker element position
+    func updateStickerPosition(_ id: UUID, position: CGPoint) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].position = position
+        }
+    }
+    
+    /// Update sticker element scale
+    func updateStickerScale(_ id: UUID, scale: CGFloat) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].scale = scale
+        }
+    }
+    
+    /// Update sticker element rotation
+    func updateStickerRotation(_ id: UUID, rotation: Angle) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].rotation = rotation
+        }
+    }
+    
+    // MARK: - Selection
+    
+    /// Select an element
+    func selectElement(_ id: UUID) {
+        selectedElementId = id
+    }
+    
+    /// Deselect current element
+    func deselectElement() {
+        selectedElementId = nil
     }
     
     // MARK: - Undo

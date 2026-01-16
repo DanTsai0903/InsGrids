@@ -121,3 +121,33 @@
 "label.background" = "背景";
 "alert.saved" = "已成功儲存圖片";
 "status.icloudDownload" = "從iCloud下載中...";
+
+// Text Elements
+"Add Text" = "新增文字";
+"Edit Text" = "編輯文字";
+"Text" = "文字";
+"Preview" = "預覽";
+"Font" = "字型";
+"Size" = "大小";
+"Color" = "顏色";
+"Alignment" = "對齊";
+"Background" = "背景";
+"None" = "無";
+"Solid" = "實心";
+"Semi-transparent" = "半透明";
+"Background Color" = "背景顏色";
+"Double tap to edit" = "雙擊以編輯";
+"button.reset" = "重設";
+
+// Sticker Elements
+"Add Sticker" = "新增貼紙";
+"Emoji" = "表情符號";
+"Stickers" = "貼紙";
+"Search Stickers" = "搜尋貼紙";
+"No results" = "沒有結果";
+"Arrows" = "箭頭";
+"Shapes" = "形狀";
+"Communication" = "通訊";
+"Weather" = "天氣";
+"Nature" = "自然";
+"Objects" = "物品";

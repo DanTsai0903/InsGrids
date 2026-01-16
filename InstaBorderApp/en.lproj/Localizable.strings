@@ -121,3 +121,33 @@
 "label.background" = "Background";
 "alert.saved" = "Image saved successfully";
 "status.icloudDownload" = "Downloading from iCloud...";
+
+// Text Elements
+"Add Text" = "Add Text";
+"Edit Text" = "Edit Text";
+"Text" = "Text";
+"Preview" = "Preview";
+"Font" = "Font";
+"Size" = "Size";
+"Color" = "Color";
+"Alignment" = "Alignment";
+"Background" = "Background";
+"None" = "None";
+"Solid" = "Solid";
+"Semi-transparent" = "Semi-transparent";
+"Background Color" = "Background Color";
+"Double tap to edit" = "Double tap to edit";
+"button.reset" = "Reset";
+
+// Sticker Elements
+"Add Sticker" = "Add Sticker";
+"Emoji" = "Emoji";
+"Stickers" = "Stickers";
+"Search Stickers" = "Search Stickers";
+"No results" = "No results";
+"Arrows" = "Arrows";
+"Shapes" = "Shapes";
+"Communication" = "Communication";
+"Weather" = "Weather";
+"Nature" = "Nature";
+"Objects" = "Objects";

@@ -44,6 +44,11 @@ struct GridEditingView: View {
     // iCloud loading state
     @State private var isLoadingPhotos = false
     
+    // Text and sticker element editing
+    @State private var showTextEditor = false
+    @State private var showStickerPicker = false
+    @State private var editingTextElement: TextElement? = nil
+    
     var body: some View {
         VStack(spacing: 0) {
             // Top toolbar
@@ -57,8 +62,11 @@ struct GridEditingView: View {
                 
                 FreeformCanvasView(
                     images: $viewModel.canvasImages,
+                    textElements: $viewModel.textElements,
+                    stickerElements: $viewModel.stickerElements,
                     canvasScale: $canvasScale,
                     pendingDeleteImageId: $pendingDeleteImageId,
+                    selectedElementId: $viewModel.selectedElementId,
                     gridRows: viewModel.rows,
                     gridColumns: viewModel.columns,
                     backgroundColor: viewModel.backgroundColor,
@@ -109,6 +117,42 @@ struct GridEditingView: View {
                     },
                     onImageManipulationStart: {
                         viewModel.saveImageSnapshot()
+                    },
+                    onTextPositionUpdate: { id, position in
+                        viewModel.updateTextPosition(id, position: position)
+                    },
+                    onTextScaleUpdate: { id, scale in
+                        viewModel.updateTextScale(id, scale: scale)
+                    },
+                    onTextRotationUpdate: { id, rotation in
+                        viewModel.updateTextRotation(id, rotation: rotation)
+                    },
+                    onStickerPositionUpdate: { id, position in
+                        viewModel.updateStickerPosition(id, position: position)
+                    },
+                    onStickerScaleUpdate: { id, scale in
+                        viewModel.updateStickerScale(id, scale: scale)
+                    },
+                    onStickerRotationUpdate: { id, rotation in
+                        viewModel.updateStickerRotation(id, rotation: rotation)
+                    },
+                    onSelectElement: { id in
+                        viewModel.selectElement(id)
+                    },
+                    onDeleteText: { id in
+                        viewModel.removeTextElement(id)
+                        viewModel.deselectElement()
+                    },
+                    onDeleteSticker: { id in
+                        viewModel.removeStickerElement(id)
+                        viewModel.deselectElement()
+                    },
+                    onEditText: { id in
+                        // TODO: Open text editor for editing
+                        if let element = viewModel.textElements.first(where: { $0.id == id }) {
+                            editingTextElement = element
+                            showTextEditor = true
+                        }
                     }
                 )
                 .frame(width: geometry.size.width, height: max(gridHeight, geometry.size.height))
@@ -259,6 +303,40 @@ struct GridEditingView: View {
                 .zIndex(1001)
             }
         }
+        // Text Editor sheet
+        .sheet(isPresented: $showTextEditor) {
+            TextEditorView(
+                textElement: $editingTextElement,
+                onSave: { textElement in
+                    var element = textElement
+                    if element.position == .zero {
+                        element.position = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                    }
+                    if let existing = editingTextElement {
+                        viewModel.updateTextElement(existing.id, with: element)
+                    } else {
+                        viewModel.addTextElement(element)
+                    }
+                    editingTextElement = nil
+                }
+            )
+        }
+        // Sticker Picker sheet
+        .sheet(isPresented: $showStickerPicker) {
+            StickerPickerView(
+                onSelect: { stickerElement in
+                    // Close picker first then add element
+                    showStickerPicker = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        viewModel.addStickerElement(stickerElement)
+                    }
+                },
+                canvasCenter: CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2),
+                onDismiss: {
+                    showStickerPicker = false
+                }
+            )
+        }
     }
     
     // MARK: - Top Toolbar
@@ -310,6 +388,29 @@ struct GridEditingView: View {
                     .fill(viewModel.backgroundColor)
                     .frame(width: 22, height: 22)
                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            }
+            
+            // Add Text button
+            Button {
+                pendingDeleteImageId = nil
+                editingTextElement = nil  // Create new
+                showTextEditor = true
+            } label: {
+                Image(systemName: "textformat")
+                    .font(.system(size: 18))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+            }
+            
+            // Add Sticker button
+            Button {
+                pendingDeleteImageId = nil
+                showStickerPicker = true
+            } label: {
+                Image(systemName: "face.smiling")
+                    .font(.system(size: 18))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
             }
             
             Spacer()

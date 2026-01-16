@@ -4,6 +4,9 @@ import Photos
 class LayoutEditorViewModel: ObservableObject {
     @Published var config: LayoutConfiguration
     @Published var photos: [LayoutPhoto]
+    @Published var textElements: [TextElement] = []
+    @Published var stickerElements: [StickerElement] = []
+    @Published var selectedElementId: UUID? = nil
 
     let template: LayoutTemplate
 
@@ -11,6 +14,8 @@ class LayoutEditorViewModel: ObservableObject {
     private struct EditorState {
         let config: LayoutConfiguration
         let photoStates: [(image: UIImage?, scale: CGFloat, offset: CGSize, version: Int)]
+        let textElements: [TextElement]
+        let stickerElements: [StickerElement]
     }
 
     private var undoStack: [EditorState] = []
@@ -105,7 +110,9 @@ class LayoutEditorViewModel: ObservableObject {
     func saveSnapshot() {
         let state = EditorState(
             config: config,
-            photoStates: photos.map { ($0.image, $0.scale, $0.offset, $0.version) }
+            photoStates: photos.map { ($0.image, $0.scale, $0.offset, $0.version) },
+            textElements: textElements,
+            stickerElements: stickerElements
         )
         undoStack.append(state)
         if undoStack.count > maxUndoLevels {
@@ -125,6 +132,8 @@ class LayoutEditorViewModel: ObservableObject {
             photos[index].offset = photoState.offset
             photos[index].version = photoState.version
         }
+        textElements = lastState.textElements
+        stickerElements = lastState.stickerElements
         canUndo = !undoStack.isEmpty
     }
 
@@ -141,6 +150,11 @@ class LayoutEditorViewModel: ObservableObject {
             photos[i].scale = 1.0
             photos[i].offset = .zero
         }
+        
+        // Clear text and sticker elements
+        textElements.removeAll()
+        stickerElements.removeAll()
+        selectedElementId = nil
     }
 
     func updatePhoto(at index: Int, scale: CGFloat, offset: CGSize) {
@@ -178,6 +192,89 @@ class LayoutEditorViewModel: ObservableObject {
     /// Get the current position of a draggable line (with any overrides applied)
     func currentLinePosition(_ line: DraggableLine) -> CGFloat {
         config.dimensionOverrides.position(for: line.overrideKey) ?? line.position
+    }
+    
+    // MARK: - Text Element Management
+    
+    func addTextElement(_ element: TextElement) {
+        saveSnapshot()
+        textElements.append(element)
+    }
+    
+    func updateTextElement(_ id: UUID, with element: TextElement) {
+        saveSnapshot()
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index] = element
+        }
+    }
+    
+    func removeTextElement(_ id: UUID) {
+        saveSnapshot()
+        textElements.removeAll { $0.id == id }
+        if selectedElementId == id {
+            selectedElementId = nil
+        }
+    }
+    
+    func updateTextPosition(_ id: UUID, position: CGPoint) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].position = position
+        }
+    }
+    
+    func updateTextScale(_ id: UUID, scale: CGFloat) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].scale = scale
+        }
+    }
+    
+    func updateTextRotation(_ id: UUID, rotation: Angle) {
+        if let index = textElements.firstIndex(where: { $0.id == id }) {
+            textElements[index].rotation = rotation
+        }
+    }
+    
+    // MARK: - Sticker Element Management
+    
+    func addStickerElement(_ element: StickerElement) {
+        saveSnapshot()
+        stickerElements.append(element)
+    }
+    
+    func removeStickerElement(_ id: UUID) {
+        saveSnapshot()
+        stickerElements.removeAll { $0.id == id }
+        if selectedElementId == id {
+            selectedElementId = nil
+        }
+    }
+    
+    func updateStickerPosition(_ id: UUID, position: CGPoint) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].position = position
+        }
+    }
+    
+    func updateStickerScale(_ id: UUID, scale: CGFloat) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].scale = scale
+        }
+    }
+    
+    func updateStickerRotation(_ id: UUID, rotation: Angle) {
+        if let index = stickerElements.firstIndex(where: { $0.id == id }) {
+            stickerElements[index].rotation = rotation
+        }
+    }
+    
+    // MARK: - Selection
+    
+    func selectElement(_ id: UUID) {
+        selectedElementId = id
+    }
+    
+    func deselectElement() {
+        selectedElementId = nil
     }
     
     func renderAndSave(completion: @escaping (Bool) -> Void) {

@@ -4,7 +4,7 @@
 
 InsGrids currently supports freeform image composition with photo adjustments, but users cannot add text labels, captions, or decorative elements to their compositions. This limits creative expression for social media posts, which commonly combine images with text overlays and decorative stickers. The existing emoji picker component exists but is not integrated into the canvas, leaving a gap in functionality.
 
-Adding comprehensive text and sticker support will enable users to:
+Adding text and sticker support will enable users to:
 - Add captions, titles, and labels directly on the canvas
 - Decorate compositions with emoji, icons, and graphic stickers
 - Create more engaging social media content without external editing tools
@@ -12,41 +12,65 @@ Adding comprehensive text and sticker support will enable users to:
 
 ## What Changes
 
-- **Text Layer System**: Add text canvas elements with full editing capabilities
-  - Text input with font selection (system fonts)
-  - Size adjustment, color picker, and alignment options (left/center/right)
-  - Background fill options (transparent, solid color, semi-transparent)
-  - Full gesture support (drag, scale, rotate) matching image interactions
-  - Integration with existing undo/redo stack and auto-save system
+This change introduces **three new capabilities** to the freeform canvas:
 
-- **Enhanced Sticker System**: Expand beyond emoji to a comprehensive sticker library
-  - Integrate existing EmojiPickerView into canvas as placeable elements
-  - Add SF Symbols icon library with categories (arrows, shapes, symbols, nature, etc.)
-  - Support for custom sticker packs (future extensibility)
-  - Stickers behave like canvas elements (drag, scale, rotate, delete)
-  - Z-order management for layering stickers with images and text
+### 1. Canvas Element Model (Foundation)
+- **Unified Element System**: Create `CanvasElement` enum supporting: Image, Text, Sticker
+- **Shared Transform Properties**: All elements share `id`, `position`, `scale`, `rotation`
+- **Unified Gesture Handling**: Consistent drag, pinch, rotate interactions for all types
+- **Z-Order Management**: Array-based layering with "Bring to Front" / "Send to Back" controls
+- **Migration Support**: Backward compatibility with existing image-only auto-saved sessions
 
-- **Unified Canvas Element Model**: Extend CanvasImage pattern to support multiple element types
-  - Create `CanvasElement` protocol/enum supporting: Image, Text, Sticker
-  - Unified gesture handling and rendering pipeline
-  - Consistent interaction model across all element types
-  - Export pipeline renders all elements at high resolution
+### 2. Text Elements (Independent Capability)
+- **Text Creation and Editing**: Modal editor with multi-line input
+- **Formatting Controls**: 
+  - Font selection (7 system fonts: SF Pro, Helvetica, Georgia, etc.)
+  - Size adjustment (12-72pt slider)
+  - Color picker
+  - Alignment options (left/center/right)
+  - Background options (none/solid/semi-transparent)
+- **Canvas Integration**:
+  - Full gesture support (drag, scale, rotate, snap)
+  - Double-tap to edit existing text
+  - Long-press selection with action overlay (Edit, Delete, Z-order)
+- **Persistence**: Auto-save and grid preset support
+- **Export**: High-resolution CoreText rendering in tiles
 
-- **Localization**: Add English and Traditional Chinese translations for all new UI strings
+### 3. Sticker Elements (Independent Capability)
+- **Sticker Picker**: Modal sheet with two tabs
+  - **Emoji Tab**: Reuses existing EmojiPickerView (8 categories, 20 emoji each)
+  - **Stickers Tab**: SF Symbols library (6 categories, 15-20 symbols each) with search
+- **Canvas Integration**:
+  - Full gesture support (drag, scale, rotate, snap)
+  - Long-press selection with action overlay (Delete, Z-order)
+  - Scale constraints (0.3× to 4.0×) to prevent unusable sizes
+- **Persistence**: Auto-save and grid preset support
+- **Export**: High-resolution rendering (UIImage for SF Symbols, NSAttributedString for emoji)
+- **Migration**: Replaces old emoji-per-cell system with free-form placement
+
+### Cross-Capability Features
+- **Localization**: English and Traditional Chinese translations for all UI
+- **Undo/Redo**: All operations (add, edit, delete, transform, Z-order) integrate with existing stack
+- **Unified Rendering**: Text and stickers render alongside images in correct Z-order during export
 
 ## Impact
 
-- **Affected specs**: `freeform-grid` (add text and sticker requirements)
+- **Affected specs**: 
+  - **NEW**: `canvas-elements` - Unified element model foundation
+  - **NEW**: `text-elements` - Text creation, editing, and formatting
+  - **NEW**: `sticker-elements` - Sticker placement and interaction
+  
 - **Affected code**:
-  - `GridViewModel.swift` - Extend to manage text/sticker elements
-  - `GridCanvasView.swift` - Add rendering for text/sticker layers
-  - `CanvasImage` model - Generalize to `CanvasElement` with element types
-  - `GridEditingView.swift` - Add text/sticker toolbar buttons and editors
-  - `EmojiPickerView.swift` - Integrate into canvas element creation
-  - New files: `TextEditorView.swift`, `StickerPickerView.swift`, `CanvasElement.swift`
-  - `Localizable.strings` (en + zh-Hant) - Add new UI strings
-  - Auto-save persistence - Extend `GridAutoSaveConfig` to save text/sticker data
-  - Export pipeline - Render text/stickers at high resolution in tile export
+  - `GridViewModel.swift` - Add `elements: [CanvasElement]` array, element management methods
+  - `GridCanvasView.swift` - Render multiple element types, unified gestures
+  - New model: `CanvasElement.swift` - Enum with Image/Text/Sticker cases
+  - New views: `TextEditorView.swift`, `TextElementView.swift`
+  - New views: `StickerPickerView.swift`, `StickerElementView.swift`, `IconPickerView.swift`
+  - `EmojiPickerView.swift` - Integrate into sticker system
+  - `GridEditingView.swift` - Add "Add Text" and "Add Sticker" toolbar buttons
+  - `Localizable.strings` (en + zh-Hant) - Add UI strings for both capabilities
+  - Auto-save: Extend `GridAutoSaveConfig` to serialize `CanvasElement` array
+  - Export: Update `generateTiles()` to render text/stickers at high resolution
 
 - **Memory considerations**: Text and stickers are lightweight compared to images, minimal impact expected
-- **Backward compatibility**: Existing auto-saved grids without text/stickers will load normally
+- **Backward compatibility**: Existing auto-saved grids migrate automatically to new element model

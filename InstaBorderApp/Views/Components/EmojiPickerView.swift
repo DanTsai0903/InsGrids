@@ -31,7 +31,7 @@ struct EmojiPickerView: View {
                 
                 Button {
                     onClear()
-                    dismiss()
+                    // Parent controls dismissal
                 } label: {
                     Text(NSLocalizedString("emoji.picker.clear", comment: "Clear"))
                         .foregroundColor(.red)
@@ -66,7 +66,7 @@ struct EmojiPickerView: View {
                     ForEach(emojis[selectedCategory].1, id: \.self) { emoji in
                         Button {
                             onSelect(emoji)
-                            dismiss()
+                            // Parent controls dismissal
                         } label: {
                             Text(emoji)
                                 .font(.system(size: 36))
