@@ -19,6 +19,7 @@ struct TextEditorView: View {
     @State private var backgroundOpacity: Double = 1.0
     @State private var showFontPicker: Bool = false
     @State private var isSliderActive: Bool = false
+    @State private var sliderTimer: Timer? = nil
     
     // Color picker states
     @State private var showColorPalette: Bool = false
@@ -104,29 +105,24 @@ struct TextEditorView: View {
                             }
                             
                             // Styled text input with native blinking cursor
-                            Group {
-                                if backgroundType != .none {
-                                    TextField("", text: $text, axis: .vertical)
-                                        .font(fontForCurrentSelection(size: fontSize))
-                                        .foregroundColor(textColor)
-                                        .multilineTextAlignment(alignment)
-                                        .tint(textColor) // Cursor color matches text
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
-                                        .cornerRadius(4)
-                                        .focused($isTextFieldFocused)
-                                        .fixedSize() // Wrap content only
-                                } else {
-                                    TextField("", text: $text, axis: .vertical)
-                                        .font(fontForCurrentSelection(size: fontSize))
-                                        .foregroundColor(textColor)
-                                        .multilineTextAlignment(alignment)
-                                        .tint(textColor) // Cursor color matches text
-                                        .focused($isTextFieldFocused)
-                                }
-                            }
-                            .frame(minWidth: text.isEmpty ? 2 : nil) // Just cursor width when empty
+                            // Use same TextField for both cases, apply background conditionally
+                            TextField("", text: $text, axis: .vertical)
+                                .font(fontForCurrentSelection(size: fontSize))
+                                .foregroundColor(textColor)
+                                .multilineTextAlignment(alignment)
+                                .tint(textColor) // Cursor color matches text
+                                .padding(.horizontal, backgroundType != .none ? 8 : 0)
+                                .padding(.vertical, backgroundType != .none ? 4 : 0)
+                                .background(
+                                    Group {
+                                        if backgroundType != .none {
+                                            backgroundColor
+                                                .opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
+                                                .cornerRadius(4)
+                                        }
+                                    }
+                                )
+                                .focused($isTextFieldFocused)
                             .onTapGesture {
                                 // Tap on text to focus input
                                 if !isEyedropperActive {
@@ -374,17 +370,17 @@ struct TextEditorView: View {
                 .rotationEffect(.degrees(-90))
                 .frame(width: min(screenHeight * 0.4, 250), height: 44)
                 .accentColor(.white)
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in
-                            if !isSliderActive {
-                                isSliderActive = true
-                            }
-                        }
-                        .onEnded { _ in
+                .onChange(of: fontSize) { _, _ in
+                    // Slider is being used - activate animation
+                    isSliderActive = true
+                    // Reset timer on each change
+                    sliderTimer?.invalidate()
+                    sliderTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+                        withAnimation {
                             isSliderActive = false
                         }
-                )
+                    }
+                }
         }
     }
     
