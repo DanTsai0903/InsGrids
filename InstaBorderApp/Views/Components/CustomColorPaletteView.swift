@@ -82,15 +82,16 @@ struct CustomColorPaletteView: View {
                 TabView(selection: $currentPage) {
                     colorGrid(colors: basicColors)
                         .tag(0)
-                
-                colorGrid(colors: warmColors)
-                    .tag(1)
-                
-                colorGrid(colors: coolColors)
-                    .tag(2)
+                    
+                    colorGrid(colors: warmColors)
+                        .tag(1)
+                    
+                    colorGrid(colors: coolColors)
+                        .tag(2)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                .frame(height: 90)
             }
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .frame(height: 90)
         }
         .padding(.vertical, 8)
     }
