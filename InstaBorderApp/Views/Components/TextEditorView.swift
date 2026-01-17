@@ -18,6 +18,7 @@ struct TextEditorView: View {
     @State private var backgroundColor: Color = .white
     @State private var backgroundOpacity: Double = 1.0
     @State private var showFontPicker: Bool = false
+    @State private var isSliderActive: Bool = false
     
     // Color picker states
     @State private var showColorPalette: Bool = false
@@ -115,6 +116,7 @@ struct TextEditorView: View {
                                         .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
                                         .cornerRadius(4)
                                         .focused($isTextFieldFocused)
+                                        .fixedSize() // Wrap content only
                                 } else {
                                     TextField("", text: $text, axis: .vertical)
                                         .font(fontForCurrentSelection(size: fontSize))
@@ -185,9 +187,10 @@ struct TextEditorView: View {
                         .opacity(isEyedropperActive ? 0 : 1) // Hide bottom controls
                 }
                 
-                // Vertical size slider on right edge
+                // Vertical size slider on LEFT edge with slide animation
                 verticalSizeSlider(screenHeight: geometry.size.height)
-                    .position(x: geometry.size.width - 40, y: geometry.size.height / 2)
+                    .position(x: isSliderActive ? 50 : 20, y: geometry.size.height / 2)
+                    .animation(.easeInOut(duration: 0.2), value: isSliderActive)
                     .opacity(isEyedropperActive ? 0 : 1) // Hide slider
                 
                 // Eyedropper overlay
@@ -371,6 +374,17 @@ struct TextEditorView: View {
                 .rotationEffect(.degrees(-90))
                 .frame(width: min(screenHeight * 0.4, 250), height: 44)
                 .accentColor(.white)
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in
+                            if !isSliderActive {
+                                isSliderActive = true
+                            }
+                        }
+                        .onEnded { _ in
+                            isSliderActive = false
+                        }
+                )
         }
     }
     
