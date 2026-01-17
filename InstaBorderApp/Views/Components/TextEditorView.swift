@@ -123,10 +123,8 @@ struct TextEditorView: View {
                                     }
                                 )
                                 .focused($isTextFieldFocused)
-                                // CRITICAL: fixedSize forces TextField to use intrinsic content width
-                                // This makes background wrap only the text, not expand to full width
-                                .fixedSize(horizontal: true, vertical: false)
-                                .frame(minWidth: text.isEmpty ? 20 : nil) // Minimum width for cursor visibility
+                                // NOTE: We removed fixedSize because it makes TextField invisible when empty
+                                // Background may extend full width in editor, but TextElement on canvas uses Text view which wraps correctly
                             .onTapGesture {
                                 // Tap on text to focus input
                                 if !isEyedropperActive {
