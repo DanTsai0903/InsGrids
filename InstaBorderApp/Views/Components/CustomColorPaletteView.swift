@@ -61,37 +61,27 @@ struct CustomColorPaletteView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // Eyedropper button row
-            HStack {
+            // Swipeable color pages with eyedropper
+            HStack(spacing: 12) {
+                // Eyedropper button (icon only)
                 Button {
                     onEyedropperTap()
                 } label: {
-                    HStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 36, height: 36)
                         Image(systemName: "eyedropper")
-                            .font(.system(size: 16))
-                        Text(NSLocalizedString("吸取顏色", comment: "Pick color"))
-                            .font(.system(size: 14))
+                            .font(.system(size: 18))
+                            .foregroundColor(.white)
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(16)
                 }
+                .padding(.leading, 16)
                 
-                Spacer()
-                
-                // Page indicator text
-                Text(pageTitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            .padding(.horizontal, 16)
-            
-            // Swipeable color pages
-            TabView(selection: $currentPage) {
-                colorGrid(colors: basicColors)
-                    .tag(0)
+                // Color grid section
+                TabView(selection: $currentPage) {
+                    colorGrid(colors: basicColors)
+                        .tag(0)
                 
                 colorGrid(colors: warmColors)
                     .tag(1)
@@ -103,15 +93,6 @@ struct CustomColorPaletteView: View {
             .frame(height: 90)
         }
         .padding(.vertical, 8)
-    }
-    
-    private var pageTitle: String {
-        switch currentPage {
-        case 0: return NSLocalizedString("基本色", comment: "Basic colors")
-        case 1: return NSLocalizedString("暖色系", comment: "Warm colors")
-        case 2: return NSLocalizedString("冷色系", comment: "Cool colors")
-        default: return ""
-        }
     }
     
     private func colorGrid(colors: [Color]) -> some View {
