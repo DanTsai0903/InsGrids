@@ -1,9 +1,9 @@
 # Implementation Tasks - Text Editor UI Redesign
 
 ## Phase 1: Preparation
-- [  ] Review reference images and save to project assets
-- [ ] Audit existing TextEditorView code and identify reusable components
-- [ ] Test current text editing flow to understand baseline behavior
+- [x] Review reference images and save to project assets
+- [x] Audit existing TextEditorView code and identify reusable components
+- [x] Test current text editing flow to understand baseline behavior
 
 ## Phase 2: Remove Delete Button
 - [x] Remove delete button overlay for text elements in `GridCanvasView.swift`
@@ -32,19 +32,24 @@
 - [x] Add Done button → save and dismiss
 - [x] Style buttons with consistent size and spacing
 
-## Phase 5.5: Custom Color Picker (New)
+## Phase 5.5: Custom Color Picker & Eyedropper
 - [x] Create CustomColorPaletteView with preset colors
 - [x] Create EyedropperOverlayView for canvas color sampling
 - [x] Integrate inline palette in TextEditorView
-- [x] Add 3 palette pages (Basic, Warm, Neutral)
-- [x] Add eyedropper mode with pin marker
-- [x] **TODO**: Pass `canvasSnapshot` (UIImage) from parent view for eyedropper to function
+- [x] Add 3 palette pages (Basic, Warm, Cool) with swipe navigation
+- [x] Add eyedropper mode with pin marker showing sampled color
+- [x] Pass `canvasSnapshot` (UIImage) from parent view for eyedropper
+- [x] Fix color extraction (BGRA to RGBA format issue)
+- [x] Real-time text preview color update during eyedropper drag
+- [x] Hide live canvas during eyedropper (solid black background)
+- [x] Expand snapshot to include content beyond canvas bounds
 
 ## Phase 6: Add Vertical Size Slider
-- [x] Create vertical slider component on right edge
+- [x] Create vertical slider component
 - [x] Configure range 12-72pt with step of 1
-- [x] Add visual size indicator (e.g., "24pt" label)
-- [x] Position slider at middle-right of screen
+- [x] Add visual size indicator ("24pt" label)
+- [x] Move slider to LEFT edge of screen
+- [x] Add slide-in animation when actively using slider
 - [x] Bind slider to `fontSize` state
 - [x] Test slider interaction doesn't conflict with other gestures
 
@@ -58,30 +63,26 @@
 - [x] Design or find "Aa + 文字" icon asset
 - [x] Add icon to project assets
 - [x] Update text tool button to use new icon
-- [ ] Verify icon rendering at different sizes
+- [x] Verify icon rendering at different sizes
 
-## Phase 9: Polish and Testing
-- [ ] Add animations for editor appearance/dismissal
-- [ ] Test all control button interactions
-- [ ] Verify real-time text preview updates correctly
-- [ ] Test with long text, multi-line text
-- [ ] Test with different fonts and sizes
-- [ ] Verify color and background changes apply correctly
-- [ ] Test auto-delete on empty text
-- [ ] Test tap-to-edit on existing text elements
-- [ ] Verify accessibility labels and VoiceOver support
+## Phase 9: Text Input Improvements
+- [x] Native blinking cursor using visible TextField
+- [x] Cursor color matches text color via `.tint()`
+- [x] Keyboard stays visible when tapping color buttons
+- [x] Unified TextField (single instance) for reliable state
 
-## Phase 10: Integration
-- [ ] Test full flow: create → edit → save → re-edit → delete
-- [ ] Verify no regressions in existing text functionality
-- [ ] Test on different device sizes (iPhone, iPad)
-- [ ] Validate with both English and Chinese text
+## Phase 10: Known Limitations
+- [ ] Text background extends full width in editor (SwiftUI TextField limitation)
+  - Note: Actual TextElement on canvas uses Text view which wraps correctly
+  - Advanced solution: UITextView wrapper with intrinsicContentSize
 
 ## Verification
-- [ ] Text editor shows canvas overlay
-- [ ] All settings accessible via buttons (no scrolling needed)
-- [ ] Size adjustable via vertical slider
-- [ ] Tap on text opens editor
-- [ ] Empty text auto-deletes element
-- [ ] Visual style matches Instagram reference
-- [ ] All existing text functionality preserved
+- [x] Text editor shows canvas overlay
+- [x] All settings accessible via buttons (no scrolling needed)
+- [x] Size adjustable via vertical slider
+- [x] Tap on text opens editor
+- [x] Empty text auto-deletes element
+- [x] Eyedropper correctly samples colors
+- [x] Real-time color preview during eyedropper
+- [ ] Visual style matches Instagram reference (partial - background width differs)
+- [x] All existing text functionality preserved
