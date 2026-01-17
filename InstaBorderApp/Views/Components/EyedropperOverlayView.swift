@@ -84,7 +84,7 @@ struct EyedropperOverlayView: View {
     
     /// Get color from image at specified point
     private func getColor(at point: CGPoint, in image: UIImage, viewSize: CGSize) -> Color {
-        // Calculate the scale to fit image in view
+        // Calculate the scale to fit image in view (aspect fit)
         let imageSize = image.size
         let scale = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
         let scaledWidth = imageSize.width * scale
@@ -100,32 +100,65 @@ struct EyedropperOverlayView: View {
         let clampedX = max(0, min(imageX, imageSize.width - 1))
         let clampedY = max(0, min(imageY, imageSize.height - 1))
         
-        // Get pixel color
-        guard let cgImage = image.cgImage else { return .white }
-        
-        let pixelX = Int(clampedX)
-        let pixelY = Int(clampedY)
-        
-        guard let pixelData = cgImage.dataProvider?.data else { return .white }
-        let data: UnsafePointer<UInt8> = CFDataGetBytePtr(pixelData)
-        
-        let bytesPerPixel = cgImage.bitsPerPixel / 8
-        let bytesPerRow = cgImage.bytesPerRow
-        let pixelIndex = pixelY * bytesPerRow + pixelX * bytesPerPixel
-        
-        // Get RGB values (handle different pixel formats)
-        let r, g, b: CGFloat
-        if cgImage.bitsPerPixel == 32 {
-            r = CGFloat(data[pixelIndex]) / 255.0
-            g = CGFloat(data[pixelIndex + 1]) / 255.0
-            b = CGFloat(data[pixelIndex + 2]) / 255.0
-        } else {
-            r = CGFloat(data[pixelIndex]) / 255.0
-            g = r
-            b = r
+        // Use a safer method to get pixel color
+        guard let uiColor = image.pixelColor(at: CGPoint(x: clampedX, y: clampedY)) else {
+            return .white
         }
         
-        return Color(red: r, green: g, blue: b)
+        return Color(uiColor)
+    }
+}
+
+// MARK: - UIImage Extension for Pixel Color
+
+extension UIImage {
+    /// Safely extract pixel color at a given point
+    func pixelColor(at point: CGPoint) -> UIColor? {
+        guard let cgImage = self.cgImage else { return nil }
+        
+        let width = cgImage.width
+        let height = cgImage.height
+        
+        // Account for image scale
+        let pixelX = Int(point.x * self.scale)
+        let pixelY = Int(point.y * self.scale)
+        
+        // Bounds check
+        guard pixelX >= 0 && pixelX < width && pixelY >= 0 && pixelY < height else {
+            return nil
+        }
+        
+        // Create a 1x1 bitmap context to extract the pixel
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var pixelData: [UInt8] = [0, 0, 0, 0]
+        
+        guard let context = CGContext(
+            data: &pixelData,
+            width: 1,
+            height: 1,
+            bitsPerComponent: 8,
+            bytesPerRow: 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+        ) else {
+            return nil
+        }
+        
+        // Draw only the 1x1 pixel we need
+        context.draw(cgImage, in: CGRect(x: -pixelX, y: -pixelY, width: width, height: height))
+        
+        // Extract RGBA values (we specified byteOrder32Big + premultipliedLast = RGBA)
+        let r = CGFloat(pixelData[0]) / 255.0
+        let g = CGFloat(pixelData[1]) / 255.0
+        let b = CGFloat(pixelData[2]) / 255.0
+        let a = CGFloat(pixelData[3]) / 255.0
+        
+        // Handle premultiplied alpha
+        if a > 0 {
+            return UIColor(red: r / a, green: g / a, blue: b / a, alpha: a)
+        } else {
+            return UIColor(red: r, green: g, blue: b, alpha: a)
+        }
     }
 }
 
