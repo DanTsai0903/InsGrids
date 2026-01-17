@@ -427,8 +427,101 @@ class GridViewModel: ObservableObject {
     }
     
     /// Get a snapshot of the current canvas for tools like eyedropper
+    /// This includes content that extends beyond the canvas bounds
     func getCanvasSnapshot(size: CGSize) -> UIImage? {
-        return renderCanvas(size: size)
+        // Calculate bounding box of all content to include overflow
+        let bounds = calculateContentBounds(canvasSize: size)
+        
+        // Render at the expanded size
+        return renderCanvasWithOffset(canvasSize: size, contentBounds: bounds)
+    }
+    
+    /// Calculate the bounding box that contains all visible content
+    private func calculateContentBounds(canvasSize: CGSize) -> CGRect {
+        var minX: CGFloat = 0
+        var minY: CGFloat = 0
+        var maxX: CGFloat = canvasSize.width
+        var maxY: CGFloat = canvasSize.height
+        
+        for canvasImage in canvasImages {
+            // Calculate image size after fitting to canvas width
+            let originalSize = canvasImage.image.size
+            let fitScale = canvasSize.width / originalSize.width
+            let drawWidth = originalSize.width * fitScale * canvasImage.scale
+            let drawHeight = originalSize.height * fitScale * canvasImage.scale
+            
+            // Calculate rotated bounding box (approximate with max dimension)
+            let diagonal = sqrt(drawWidth * drawWidth + drawHeight * drawHeight)
+            let halfDiag = diagonal / 2
+            
+            // Calculate corners after transform
+            let left = canvasImage.position.x - halfDiag
+            let right = canvasImage.position.x + halfDiag
+            let top = canvasImage.position.y - halfDiag
+            let bottom = canvasImage.position.y + halfDiag
+            
+            minX = min(minX, left)
+            minY = min(minY, top)
+            maxX = max(maxX, right)
+            maxY = max(maxY, bottom)
+        }
+        
+        // Add some padding
+        let padding: CGFloat = 20
+        return CGRect(
+            x: minX - padding,
+            y: minY - padding,
+            width: maxX - minX + padding * 2,
+            height: maxY - minY + padding * 2
+        )
+    }
+    
+    /// Render canvas with offset to include content outside normal bounds
+    private func renderCanvasWithOffset(canvasSize: CGSize, contentBounds: CGRect) -> UIImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 2.0  // Retina quality
+        let renderer = UIGraphicsImageRenderer(size: contentBounds.size, format: format)
+        
+        // Calculate offset to translate content into view
+        let offsetX = -contentBounds.origin.x
+        let offsetY = -contentBounds.origin.y
+        
+        return renderer.image { context in
+            let cgContext = context.cgContext
+            
+            // Translate to account for content outside normal bounds
+            cgContext.translateBy(x: offsetX, y: offsetY)
+            
+            // Background (draw at original canvas position)
+            UIColor(backgroundColor).setFill()
+            cgContext.fill(CGRect(origin: .zero, size: canvasSize))
+            
+            // Draw each image
+            for canvasImage in canvasImages {
+                cgContext.saveGState()
+                
+                // Move to image position
+                cgContext.translateBy(x: canvasImage.position.x, y: canvasImage.position.y)
+                
+                // Apply rotation
+                cgContext.rotate(by: canvasImage.rotation.radians)
+                
+                // Apply scale
+                cgContext.scaleBy(x: canvasImage.scale, y: canvasImage.scale)
+                
+                // Calculate image size (fit to canvas width initially)
+                let originalSize = canvasImage.image.size
+                let fitScale = canvasSize.width / originalSize.width
+                let drawWidth = originalSize.width * fitScale
+                let drawHeight = originalSize.height * fitScale
+                
+                // Draw image centered at origin (we already translated)
+                let rect = CGRect(x: -drawWidth/2, y: -drawHeight/2, width: drawWidth, height: drawHeight)
+                canvasImage.image.draw(in: rect)
+                
+                cgContext.restoreGState()
+            }
+        }
     }
     
     private func renderCanvas(size: CGSize) -> UIImage? {

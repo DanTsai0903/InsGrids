@@ -51,8 +51,8 @@ struct TextEditorView: View {
         GeometryReader { geometry in
             ZStack {
                 // Dark overlay background (canvas visible behind when using overlay presentation)
-                // Hide dimmed background when eyedropper is active to show clear canvas
-                Color.black.opacity(isEyedropperActive ? 0.0 : 0.7)
+                // Use solid black when eyedropper is active to hide live canvas and only show snapshot
+                Color.black.opacity(isEyedropperActive ? 1.0 : 0.7)
                     .ignoresSafeArea()
                     .onTapGesture {
                         // Tap on background to dismiss keyboard and close color palette
