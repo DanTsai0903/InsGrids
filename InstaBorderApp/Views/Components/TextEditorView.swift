@@ -115,7 +115,6 @@ struct TextEditorView: View {
                                         .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
                                         .cornerRadius(4)
                                         .focused($isTextFieldFocused)
-                                        .fixedSize(horizontal: true, vertical: false) // Wrap content only
                                 } else {
                                     TextField("", text: $text, axis: .vertical)
                                         .font(fontForCurrentSelection(size: fontSize))
@@ -254,7 +253,7 @@ struct TextEditorView: View {
             // Text Color button
             VStack(spacing: 4) {
                 Button {
-                    isTextFieldFocused = false
+                    // Keep keyboard visible
                     colorPickerMode = .textColor
                     withAnimation {
                         showColorPalette = true
@@ -320,7 +319,7 @@ struct TextEditorView: View {
             if backgroundType != .none {
                 VStack(spacing: 4) {
                     Button {
-                        isTextFieldFocused = false
+                        // Keep keyboard visible
                         colorPickerMode = .backgroundColor
                         withAnimation {
                             showColorPalette = true
