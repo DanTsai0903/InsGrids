@@ -1,118 +1,126 @@
 import SwiftUI
 
 /// Custom color palette view with preset colors and eyedropper
+/// Redesigned with swipe-to-switch pages and smaller color circles in grid layout
 struct CustomColorPaletteView: View {
     @Binding var selectedColor: Color
     var onEyedropperTap: () -> Void
     
-    // Preset color palettes
+    // Expanded color palettes with more colors for better selection
     private let basicColors: [Color] = [
-        .white, .black, Color(white: 0.5),
-        .blue, Color(red: 0.2, green: 0.6, blue: 1.0),
-        .green, Color(red: 0.3, green: 0.8, blue: 0.3),
-        .yellow, .orange,
-        .red, .pink, .purple
+        // Row 1: Whites and blacks
+        .white, Color(white: 0.95), Color(white: 0.85), Color(white: 0.7),
+        Color(white: 0.5), Color(white: 0.3), Color(white: 0.15), .black,
+        // Row 2: Primary colors
+        .red, Color(red: 1.0, green: 0.3, blue: 0.3), .orange, Color(red: 1.0, green: 0.7, blue: 0.3),
+        .yellow, Color(red: 0.9, green: 0.9, blue: 0.4), .green, Color(red: 0.4, green: 0.8, blue: 0.4),
+        // Row 3: Blues and purples
+        .cyan, Color(red: 0.3, green: 0.7, blue: 1.0), .blue, Color(red: 0.4, green: 0.4, blue: 1.0),
+        .purple, Color(red: 0.7, green: 0.4, blue: 1.0), .pink, Color(red: 1.0, green: 0.5, blue: 0.7)
     ]
     
     private let warmColors: [Color] = [
-        .red, Color(red: 1.0, green: 0.4, blue: 0.4),
-        .orange, Color(red: 1.0, green: 0.7, blue: 0.5),
-        Color(red: 1.0, green: 0.85, blue: 0.5), // gold
-        Color(red: 0.6, green: 0.3, blue: 0.1), // brown
-        Color(red: 0.8, green: 0.6, blue: 0.4), // tan
-        Color(red: 0.5, green: 0.1, blue: 0.1), // maroon
-        Color(red: 0.98, green: 0.5, blue: 0.45), // salmon
-        Color(red: 0.5, green: 0.5, blue: 0.0), // olive
-        Color(red: 0.4, green: 0.26, blue: 0.13), // dark brown
-        Color(red: 0.0, green: 0.4, blue: 0.2) // forest green
+        // Row 1: Reds
+        Color(red: 1.0, green: 0.0, blue: 0.0), Color(red: 0.9, green: 0.2, blue: 0.2),
+        Color(red: 0.8, green: 0.3, blue: 0.3), Color(red: 0.7, green: 0.2, blue: 0.2),
+        Color(red: 0.5, green: 0.1, blue: 0.1), Color(red: 0.4, green: 0.0, blue: 0.0),
+        Color(red: 0.3, green: 0.0, blue: 0.0), Color(red: 0.2, green: 0.0, blue: 0.0),
+        // Row 2: Oranges
+        Color(red: 1.0, green: 0.5, blue: 0.0), Color(red: 1.0, green: 0.6, blue: 0.2),
+        Color(red: 1.0, green: 0.7, blue: 0.4), Color(red: 0.98, green: 0.5, blue: 0.45),
+        Color(red: 0.9, green: 0.4, blue: 0.2), Color(red: 0.8, green: 0.4, blue: 0.1),
+        Color(red: 0.6, green: 0.3, blue: 0.1), Color(red: 0.4, green: 0.2, blue: 0.1),
+        // Row 3: Yellows and browns
+        Color(red: 1.0, green: 0.85, blue: 0.0), Color(red: 1.0, green: 0.9, blue: 0.4),
+        Color(red: 0.95, green: 0.85, blue: 0.5), Color(red: 0.85, green: 0.7, blue: 0.4),
+        Color(red: 0.7, green: 0.5, blue: 0.3), Color(red: 0.55, green: 0.35, blue: 0.2),
+        Color(red: 0.4, green: 0.26, blue: 0.13), Color(red: 0.3, green: 0.2, blue: 0.1)
     ]
     
-    private let neutralColors: [Color] = [
-        Color(white: 1.0),
-        Color(white: 0.9),
-        Color(white: 0.8),
-        Color(white: 0.7),
-        Color(white: 0.6),
-        Color(white: 0.5),
-        Color(white: 0.4),
-        Color(white: 0.3),
-        Color(white: 0.2),
-        Color(white: 0.1),
-        Color(white: 0.0)
+    private let coolColors: [Color] = [
+        // Row 1: Greens
+        Color(red: 0.0, green: 0.8, blue: 0.0), Color(red: 0.2, green: 0.7, blue: 0.2),
+        Color(red: 0.3, green: 0.6, blue: 0.3), Color(red: 0.0, green: 0.5, blue: 0.0),
+        Color(red: 0.1, green: 0.4, blue: 0.2), Color(red: 0.0, green: 0.3, blue: 0.1),
+        Color(red: 0.2, green: 0.4, blue: 0.3), Color(red: 0.3, green: 0.5, blue: 0.4),
+        // Row 2: Blues
+        Color(red: 0.0, green: 0.7, blue: 1.0), Color(red: 0.2, green: 0.6, blue: 1.0),
+        Color(red: 0.3, green: 0.5, blue: 0.9), Color(red: 0.2, green: 0.4, blue: 0.8),
+        Color(red: 0.1, green: 0.3, blue: 0.7), Color(red: 0.0, green: 0.2, blue: 0.6),
+        Color(red: 0.0, green: 0.15, blue: 0.4), Color(red: 0.0, green: 0.1, blue: 0.3),
+        // Row 3: Purples
+        Color(red: 0.8, green: 0.4, blue: 1.0), Color(red: 0.7, green: 0.3, blue: 0.9),
+        Color(red: 0.6, green: 0.2, blue: 0.8), Color(red: 0.5, green: 0.1, blue: 0.7),
+        Color(red: 0.4, green: 0.1, blue: 0.6), Color(red: 0.3, green: 0.1, blue: 0.5),
+        Color(red: 0.25, green: 0.05, blue: 0.4), Color(red: 0.2, green: 0.0, blue: 0.3)
     ]
     
     @State private var currentPage: Int = 0
     
-    private var currentPalette: [Color] {
-        switch currentPage {
-        case 0: return basicColors
-        case 1: return warmColors
-        case 2: return neutralColors
-        default: return basicColors
-        }
-    }
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 8)
     
     var body: some View {
         VStack(spacing: 8) {
-            // Color palette row
-            HStack(spacing: 12) {
-                // Eyedropper button
+            // Eyedropper button row
+            HStack {
                 Button {
                     onEyedropperTap()
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 36, height: 36)
+                    HStack(spacing: 6) {
                         Image(systemName: "eyedropper")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white)
+                            .font(.system(size: 16))
+                        Text(NSLocalizedString("吸取顏色", comment: "Pick color"))
+                            .font(.system(size: 14))
                     }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(16)
                 }
                 
-                // Scrollable color palette
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(Array(currentPalette.enumerated()), id: \.offset) { index, color in
-                            colorCircle(color: color)
-                        }
-                    }
-                    .padding(.horizontal, 4)
-                }
+                Spacer()
+                
+                // Page indicator text
+                Text(pageTitle)
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.6))
             }
             .padding(.horizontal, 16)
             
-            // Page indicators
-            HStack(spacing: 6) {
-                ForEach(0..<3, id: \.self) { page in
-                    Circle()
-                        .fill(page == currentPage ? Color.white : Color.white.opacity(0.4))
-                        .frame(width: 6, height: 6)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                currentPage = page
-                            }
-                        }
-                }
+            // Swipeable color pages
+            TabView(selection: $currentPage) {
+                colorGrid(colors: basicColors)
+                    .tag(0)
+                
+                colorGrid(colors: warmColors)
+                    .tag(1)
+                
+                colorGrid(colors: coolColors)
+                    .tag(2)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .frame(height: 90)
+        }
+        .padding(.vertical, 8)
+    }
+    
+    private var pageTitle: String {
+        switch currentPage {
+        case 0: return NSLocalizedString("基本色", comment: "Basic colors")
+        case 1: return NSLocalizedString("暖色系", comment: "Warm colors")
+        case 2: return NSLocalizedString("冷色系", comment: "Cool colors")
+        default: return ""
+        }
+    }
+    
+    private func colorGrid(colors: [Color]) -> some View {
+        LazyVGrid(columns: columns, spacing: 6) {
+            ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
+                colorCircle(color: color)
             }
         }
-        .padding(.vertical, 12)
-        .gesture(
-            DragGesture(minimumDistance: 30)
-                .onEnded { value in
-                    if value.translation.width < 0 {
-                        // Swipe left - next page
-                        withAnimation {
-                            currentPage = min(currentPage + 1, 2)
-                        }
-                    } else if value.translation.width > 0 {
-                        // Swipe right - previous page
-                        withAnimation {
-                            currentPage = max(currentPage - 1, 0)
-                        }
-                    }
-                }
-        )
+        .padding(.horizontal, 16)
     }
     
     private func colorCircle(color: Color) -> some View {
@@ -122,20 +130,23 @@ struct CustomColorPaletteView: View {
             ZStack {
                 Circle()
                     .fill(color)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 26, height: 26)
                 
                 // Selection indicator
                 if colorsAreEqual(color, selectedColor) {
                     Circle()
-                        .stroke(Color.white, lineWidth: 3)
-                        .frame(width: 32, height: 32)
+                        .stroke(Color.white, lineWidth: 2)
+                        .frame(width: 26, height: 26)
+                    Circle()
+                        .stroke(Color.black.opacity(0.3), lineWidth: 1)
+                        .frame(width: 30, height: 30)
                 }
                 
                 // Border for light colors
-                if isLightColor(color) {
+                if isLightColor(color) && !colorsAreEqual(color, selectedColor) {
                     Circle()
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        .frame(width: 32, height: 32)
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                        .frame(width: 26, height: 26)
                 }
             }
         }
@@ -158,7 +169,7 @@ struct CustomColorPaletteView: View {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
         let luminance = 0.299 * r + 0.587 * g + 0.114 * b
-        return luminance > 0.8
+        return luminance > 0.85
     }
 }
 
