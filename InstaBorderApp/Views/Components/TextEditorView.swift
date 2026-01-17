@@ -95,30 +95,35 @@ struct TextEditorView: View {
                         
                         Spacer()
                         
-                        // Text input area
+                        // Text input area with visible cursor
                         // When eyedropper is active, move to top-left
                         ZStack(alignment: isEyedropperActive ? .topLeading : .center) {
                             if isEyedropperActive {
                                 Color.clear // Container expands
                             }
                             
-                            // Live text preview (styled)
+                            // Styled text input with native blinking cursor
                             Group {
                                 if backgroundType != .none {
-                                    Text(text.isEmpty ? NSLocalizedString("輸入文字", comment: "Tap to type placeholder") : text)
+                                    TextField("", text: $text, axis: .vertical)
                                         .font(fontForCurrentSelection(size: fontSize))
-                                        .foregroundColor(text.isEmpty ? .gray : textColor)
+                                        .foregroundColor(textColor)
                                         .multilineTextAlignment(alignment)
+                                        .tint(textColor) // Cursor color matches text
                                         .padding(8)
                                         .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
                                         .cornerRadius(4)
+                                        .focused($isTextFieldFocused)
                                 } else {
-                                    Text(text.isEmpty ? NSLocalizedString("輸入文字", comment: "Tap to type placeholder") : text)
+                                    TextField("", text: $text, axis: .vertical)
                                         .font(fontForCurrentSelection(size: fontSize))
-                                        .foregroundColor(text.isEmpty ? .gray : textColor)
+                                        .foregroundColor(textColor)
                                         .multilineTextAlignment(alignment)
+                                        .tint(textColor) // Cursor color matches text
+                                        .focused($isTextFieldFocused)
                                 }
                             }
+                            .frame(minWidth: 50) // Minimum width so cursor is visible
                             .onTapGesture {
                                 // Tap on text to focus input
                                 if !isEyedropperActive {
@@ -133,14 +138,6 @@ struct TextEditorView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill space to allow positioning
                         
                         Spacer()
-                        
-                        // Hidden TextField for keyboard input
-                    
-                    // Hidden TextField for keyboard input
-                    TextField("", text: $text, axis: .vertical)
-                        .focused($isTextFieldFocused)
-                        .frame(width: 1, height: 1)
-                        .opacity(0.01)
                     
                     // Color palette (shown when color button tapped)
                     if showColorPalette {
