@@ -49,6 +49,9 @@ struct GridEditingView: View {
     @State private var showStickerPicker = false
     @State private var editingTextElement: TextElement? = nil
     
+    // Canvas snapshot for eyedropper
+    @State private var canvasSnapshot: UIImage? = nil
+    
     var body: some View {
         VStack(spacing: 0) {
             // Top toolbar
@@ -150,6 +153,8 @@ struct GridEditingView: View {
                     onEditText: { id in
                         // TODO: Open text editor for editing
                         if let element = viewModel.textElements.first(where: { $0.id == id }) {
+                            // Helper to capture snapshot
+                            canvasSnapshot = viewModel.getCanvasSnapshot(size: canvasSize)
                             editingTextElement = element
                             showTextEditor = true
                         }
@@ -303,23 +308,42 @@ struct GridEditingView: View {
                 .zIndex(1001)
             }
         }
-        // Text Editor sheet
-        .sheet(isPresented: $showTextEditor) {
-            TextEditorView(
-                textElement: $editingTextElement,
-                onSave: { textElement in
-                    var element = textElement
-                    if element.position == .zero {
-                        element.position = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+        // Text Editor overlay - shows canvas behind
+        .overlay {
+            if showTextEditor {
+                TextEditorView(
+                    textElement: $editingTextElement,
+                    canvasSnapshot: canvasSnapshot,
+                    onSave: { textElement in
+                        var element = textElement
+                        if element.position == .zero {
+                            element.position = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                        }
+                        if let existing = editingTextElement {
+                            viewModel.updateTextElement(existing.id, with: element)
+                        } else {
+                            viewModel.addTextElement(element)
+                        }
+                        editingTextElement = nil
+                        showTextEditor = false
+                    },
+                    onDelete: {
+                        // Delete text element when user clears all text
+                        if let existing = editingTextElement {
+                            viewModel.removeTextElement(existing.id)
+                        }
+                        editingTextElement = nil
+                        showTextEditor = false
+                    },
+                    onCancel: {
+                        // Cancel button tapped
+                        editingTextElement = nil
+                        showTextEditor = false
                     }
-                    if let existing = editingTextElement {
-                        viewModel.updateTextElement(existing.id, with: element)
-                    } else {
-                        viewModel.addTextElement(element)
-                    }
-                    editingTextElement = nil
-                }
-            )
+                )
+                .transition(.opacity)
+                .zIndex(1002)
+            }
         }
         // Sticker Picker sheet
         .sheet(isPresented: $showStickerPicker) {
@@ -394,12 +418,19 @@ struct GridEditingView: View {
             Button {
                 pendingDeleteImageId = nil
                 editingTextElement = nil  // Create new
+                // Capture snapshot for new text too
+                canvasSnapshot = viewModel.getCanvasSnapshot(size: canvasSize)
                 showTextEditor = true
             } label: {
-                Image(systemName: "textformat")
-                    .font(.system(size: 18))
-                    .foregroundColor(.white)
-                    .frame(width: 32, height: 32)
+                VStack(spacing: 0) {
+                    Text("Aa")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("文字")
+                        .font(.system(size: 9))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .frame(width: 32, height: 32)
             }
             
             // Add Sticker button

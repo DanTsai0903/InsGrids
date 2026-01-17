@@ -115,24 +115,42 @@ struct LayoutEditorView: View {
                 slotToAddPhoto = nil
             }
         }
-        // Text Editor sheet
-        .sheet(isPresented: $showTextEditor) {
-            TextEditorView(
-                textElement: $editingTextElement,
-                onSave: { textElement in
-                    var element = textElement
-                    if element.position == .zero {
-                        // Default to center of canvas
-                        element.position = CGPoint(x: currentCanvasSize.width / 2, y: currentCanvasSize.height / 2)
+        // Text Editor overlay - shows canvas behind
+        .overlay {
+            if showTextEditor {
+                TextEditorView(
+                    textElement: $editingTextElement,
+                    onSave: { textElement in
+                        var element = textElement
+                        if element.position == .zero {
+                            // Default to center of canvas
+                            element.position = CGPoint(x: currentCanvasSize.width / 2, y: currentCanvasSize.height / 2)
+                        }
+                        if let existing = editingTextElement {
+                            viewModel.updateTextElement(existing.id, with: element)
+                        } else {
+                            viewModel.addTextElement(element)
+                        }
+                        editingTextElement = nil
+                        showTextEditor = false
+                    },
+                    onDelete: {
+                        // Delete text element when user clears all text
+                        if let existing = editingTextElement {
+                            viewModel.removeTextElement(existing.id)
+                        }
+                        editingTextElement = nil
+                        showTextEditor = false
+                    },
+                    onCancel: {
+                        // Cancel button tapped
+                        editingTextElement = nil
+                        showTextEditor = false
                     }
-                    if let existing = editingTextElement {
-                        viewModel.updateTextElement(existing.id, with: element)
-                    } else {
-                        viewModel.addTextElement(element)
-                    }
-                    editingTextElement = nil
-                }
-            )
+                )
+                .transition(.opacity)
+                .zIndex(1001)
+            }
         }
         // Sticker Picker sheet
         .sheet(isPresented: $showStickerPicker) {
@@ -543,21 +561,15 @@ struct LayoutEditorView: View {
                     )
                 }
                 
-                // Delete button for selected element
+                // Delete button for selected sticker elements only
                 if let elementId = viewModel.selectedElementId {
-                    let isTextElement = viewModel.textElements.contains { $0.id == elementId }
                     let isStickerElement = viewModel.stickerElements.contains { $0.id == elementId }
                     
-                    if isTextElement || isStickerElement {
+                    if isStickerElement {
                         Button {
                             let generator = UINotificationFeedbackGenerator()
                             generator.notificationOccurred(.success)
-                            
-                            if isTextElement {
-                                viewModel.removeTextElement(elementId)
-                            } else if isStickerElement {
-                                viewModel.removeStickerElement(elementId)
-                            }
+                            viewModel.removeStickerElement(elementId)
                         } label: {
                             ZStack {
                                 Circle().fill(Color.white).frame(width: 70, height: 70)
@@ -627,10 +639,10 @@ struct LayoutEditorView: View {
                     editingTextElement = nil
                     showTextEditor = true
                 } label: {
-                    VStack(spacing: 6) {
-                        Image(systemName: "textformat")
-                            .font(.system(size: 22))
-                        Text(NSLocalizedString("Add Text", comment: ""))
+                    VStack(spacing: 4) {
+                        Text("Aa")
+                            .font(.system(size: 20, weight: .bold))
+                        Text("文字")
                             .font(.caption.bold())
                     }
                     .foregroundColor(.white)

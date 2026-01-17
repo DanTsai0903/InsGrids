@@ -426,6 +426,11 @@ class GridViewModel: ObservableObject {
         return tiles
     }
     
+    /// Get a snapshot of the current canvas for tools like eyedropper
+    func getCanvasSnapshot(size: CGSize) -> UIImage? {
+        return renderCanvas(size: size)
+    }
+    
     private func renderCanvas(size: CGSize) -> UIImage? {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 2.0  // Retina quality

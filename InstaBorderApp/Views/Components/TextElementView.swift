@@ -9,7 +9,7 @@ struct TextView: View {
         Group {
             if let bgColor = element.backgroundColor {
                 Text(element.text)
-                    .font(fontForName(element.font, size: element.fontSize))
+                    .font(fontForElement(element))
                     .foregroundColor(element.color)
                     .multilineTextAlignment(element.alignment)
                     .padding(8)
@@ -17,7 +17,7 @@ struct TextView: View {
                     .cornerRadius(4)
             } else {
                 Text(element.text)
-                    .font(fontForName(element.font, size: element.fontSize))
+                    .font(fontForElement(element))
                     .foregroundColor(element.color)
                     .multilineTextAlignment(element.alignment)
             }
@@ -36,17 +36,17 @@ struct TextView: View {
         }
     }
     
-    private func fontForName(_ name: String, size: CGFloat) -> Font {
-        switch name {
-        case "SF Pro Text": return .system(size: size, weight: .regular)
-        case "Helvetica Neue": return .custom("Helvetica Neue", size: size)
-        case "Georgia": return .custom("Georgia", size: size)
-        case "Courier New": return .custom("Courier New", size: size)
-        case "Times New Roman": return .custom("Times New Roman", size: size)
-        case "Arial": return .custom("Arial", size: size)
-        case "Menlo": return .custom("Menlo", size: size)
-        default: return .system(size: size)
+    private func fontForElement(_ element: TextElement) -> Font {
+        let weight = element.resolvedFontWeight()
+        let size = element.fontSize
+
+        // Handle SF Pro system font specially
+        if element.fontFamily == "SF Pro" {
+            return .system(size: size, weight: weight.weight)
         }
+
+        // Use custom font PostScript name
+        return .custom(weight.postScriptName, size: size)
     }
 }
 
@@ -76,6 +76,16 @@ struct TextElementView: View {
                 y: element.position.y + dragOffset.height
             )
             .simultaneousGesture(
+                TapGesture(count: 1)
+                    .onEnded {
+                        onDoubleTap()  // Open editor on single tap
+                    }
+            )
+            .onTapGesture {
+                onSelect()
+                onDoubleTap()  // Open editor on single tap
+            }
+            .simultaneousGesture(
                 TapGesture(count: 2)
                     .onEnded {
                         onDoubleTap()
@@ -86,7 +96,7 @@ struct TextElementView: View {
                     .onEnded { _ in
                         let generator = UIImpactFeedbackGenerator(style: .medium)
                         generator.impactOccurred()
-                        onSelect()
+                        onDoubleTap()  // Open text editor for re-editing
                     }
             )
             .gesture(

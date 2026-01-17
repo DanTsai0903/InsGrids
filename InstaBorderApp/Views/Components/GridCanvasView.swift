@@ -147,22 +147,15 @@ struct FreeformCanvasView: View {
                     }
                 }
                 
-                // Delete button for selected text/sticker elements
+                // Delete button for selected sticker elements only
                 if let elementId = selectedElementId {
-                    // Check if it's a text or sticker element
-                    let isTextElement = textElements.contains { $0.id == elementId }
                     let isStickerElement = stickerElements.contains { $0.id == elementId }
                     
-                    if isTextElement || isStickerElement {
+                    if isStickerElement {
                         Button {
                             let generator = UINotificationFeedbackGenerator()
                             generator.notificationOccurred(.success)
-                            
-                            if isTextElement {
-                                onDeleteText?(elementId)
-                            } else if isStickerElement {
-                                onDeleteSticker?(elementId)
-                            }
+                            onDeleteSticker?(elementId)
                         } label: {
                             ZStack {
                                 Circle().fill(Color.white).frame(width: 70, height: 70)
@@ -249,7 +242,7 @@ struct FreeformCanvasView: View {
                         onImageManipulationStart?()
                     },
                     onDoubleTap: {
-                        // TODO: Open text editor
+                        onEditText?(element.id)
                     },
                     onUpdatePosition: { newPosition in
                         onTextPositionUpdate?(element.id, newPosition)

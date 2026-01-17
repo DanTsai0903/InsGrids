@@ -122,45 +122,47 @@ struct ImageElement: Identifiable {
 struct TextElement: Identifiable {
     var id = UUID()
     var text: String
-    var font: String = "SF Pro Text"
+    var fontFamily: String = "SF Pro"
+    var fontWeight: String = "Regular"
     var fontSize: CGFloat = 24
     var color: Color = .black
     var alignment: TextAlignment = .center
     var backgroundColor: Color? = nil
     var backgroundOpacity: Double = 1.0
-    
+
     // Transform properties
     var position: CGPoint = .zero
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
-    
-    /// Available system fonts
-    static let availableFonts: [String] = [
-        "SF Pro Text",
-        "Helvetica Neue",
-        "Georgia",
-        "Courier New",
-        "Times New Roman",
-        "Arial",
-        "Menlo",
-        // Custom Fonts - CJK
-        "CactusClassicalSerif-Regular",
-        "ChocolateClassicalSans-Regular",
-        "ChironHeiHK-Regular",
-        "ChironSungHK-Regular",
-        "ChironGoRoundTC-Regular",
-        "LXGWWenKaiTC-Regular",
-        "LXGWWenKaiMonoTC-Regular",
-        "LXGWWenKaiTC-Bold",
-        "LXGWWenKaiMonoTC-Bold"
-    ]
-    
+
+    // MARK: - Legacy Support
+
+    /// Deprecated: Use fontFamily + fontWeight instead
+    @available(*, deprecated, message: "Use fontFamily and fontWeight instead")
+    var font: String {
+        get { fontFamily }
+        set {
+            // Migration: Try to parse old format
+            fontFamily = newValue
+        }
+    }
+
     /// Create default text element
     static func createDefault(at position: CGPoint) -> TextElement {
         TextElement(
             text: NSLocalizedString("Double tap to edit", comment: "Default text for new text element"),
             position: position
         )
+    }
+
+    /// Get the resolved FontWeight for rendering
+    func resolvedFontWeight() -> FontWeight {
+        if let family = FontFamily.fontByName(fontFamily),
+           let weight = family.weightByName(fontWeight) {
+            return weight
+        }
+        // Fallback to SF Pro Regular
+        return FontFamily.allFonts.first!.defaultWeight
     }
 }
 
@@ -282,17 +284,30 @@ extension ImageElement {
 
 extension TextElement: Codable {
     enum CodingKeys: String, CodingKey {
-        case id, text, font, fontSize, color, alignmentString
+        case id, text, font, fontFamily, fontWeight, fontSize, color, alignmentString
         case backgroundColor, backgroundOpacity
         case positionX, positionY, scale, rotationDegrees
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+
         id = try container.decode(UUID.self, forKey: .id)
         text = try container.decode(String.self, forKey: .text)
-        font = try container.decode(String.self, forKey: .font)
+
+        // Handle both old (font) and new (fontFamily + fontWeight) formats
+        if let family = try? container.decode(String.self, forKey: .fontFamily) {
+            fontFamily = family
+            fontWeight = try container.decodeIfPresent(String.self, forKey: .fontWeight) ?? "Regular"
+        } else if let oldFont = try? container.decode(String.self, forKey: .font) {
+            // Migrate old format
+            fontFamily = oldFont
+            fontWeight = "Regular"
+        } else {
+            fontFamily = "SF Pro"
+            fontWeight = "Regular"
+        }
+
         fontSize = try container.decode(CGFloat.self, forKey: .fontSize)
         backgroundOpacity = try container.decode(Double.self, forKey: .backgroundOpacity)
         
@@ -329,10 +344,11 @@ extension TextElement: Codable {
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        
+
         try container.encode(id, forKey: .id)
         try container.encode(text, forKey: .text)
-        try container.encode(font, forKey: .font)
+        try container.encode(fontFamily, forKey: .fontFamily)
+        try container.encode(fontWeight, forKey: .fontWeight)
         try container.encode(fontSize, forKey: .fontSize)
         try container.encode(backgroundOpacity, forKey: .backgroundOpacity)
         

@@ -14,6 +14,9 @@ targets:
         excludes:
           - "*.xcodeproj"
           - "*.xcworkspace"
+    resources:
+      - path: InstaBorderApp/Resources/Fonts
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.insgrids.app
@@ -41,3 +44,17 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UILaunchScreen: {}
         CFBundleDisplayName: InsGrids
+        UIAppFonts:
+          - CactusClassicalSerif-Regular.ttf
+          - ChironGoRoundTC-VariableFont_wght.ttf
+          - ChironHeiHK-Italic-VariableFont_wght.ttf
+          - ChironHeiHK-VariableFont_wght.ttf
+          - ChironSungHK-Italic-VariableFont_wght.ttf
+          - ChironSungHK-VariableFont_wght.ttf
+          - ChocolateClassicalSans-Regular.ttf
+          - LXGWWenKaiMonoTC-Bold.ttf
+          - LXGWWenKaiMonoTC-Light.ttf
+          - LXGWWenKaiMonoTC-Regular.ttf
+          - LXGWWenKaiTC-Bold.ttf
+          - LXGWWenKaiTC-Light.ttf
+          - LXGWWenKaiTC-Regular.ttf

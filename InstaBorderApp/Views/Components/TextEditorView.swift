@@ -4,17 +4,34 @@ import SwiftUI
 struct TextEditorView: View {
     @Binding var textElement: TextElement?
     var onSave: (TextElement) -> Void
-    @Environment(\.dismiss) var dismiss
+    var onDelete: (() -> Void)? = nil  // Called when text is cleared
+    var onCancel: (() -> Void)? = nil  // Called when cancel button tapped
     
     // Local state for editing
     @State private var text: String = ""
-    @State private var selectedFont: String = "SF Pro Text"
+    @State private var selectedFontFamily: String = "SF Pro"
+    @State private var selectedFontWeight: String = "Regular"
     @State private var fontSize: CGFloat = 24
-    @State private var textColor: Color = .black
+    @State private var textColor: Color = .white
     @State private var alignment: TextAlignment = .center
     @State private var backgroundType: BackgroundType = .none
     @State private var backgroundColor: Color = .white
     @State private var backgroundOpacity: Double = 1.0
+    @State private var showFontPicker: Bool = false
+    
+    // Color picker states
+    @State private var showColorPalette: Bool = false
+    @State private var colorPickerMode: ColorPickerMode = .textColor
+    @State private var isEyedropperActive: Bool = false
+    var canvasSnapshot: UIImage?
+    
+    enum ColorPickerMode {
+        case textColor
+        case backgroundColor
+    }
+    
+    // Focus state for keyboard
+    @FocusState private var isTextFieldFocused: Bool
     
     enum BackgroundType: String, CaseIterable {
         case none = "None"
@@ -22,253 +39,445 @@ struct TextEditorView: View {
         case semiTransparent = "Semi-transparent"
     }
     
-    init(textElement: Binding<TextElement?>, onSave: @escaping (TextElement) -> Void) {
+    init(textElement: Binding<TextElement?>, canvasSnapshot: UIImage? = nil, onSave: @escaping (TextElement) -> Void, onDelete: (() -> Void)? = nil, onCancel: (() -> Void)? = nil) {
         self._textElement = textElement
+        self.canvasSnapshot = canvasSnapshot
         self.onSave = onSave
+        self.onDelete = onDelete
+        self.onCancel = onCancel
     }
     
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Live preview
-                    previewSection
-                    
-                    Divider()
-                    
-                    // Text input
-                    textInputSection
-                    
-                    // Font selection
-                    fontSection
-                    
-                    // Size and color
-                    sizeAndColorSection
-                    
-                    // Alignment
-                    alignmentSection
-                    
-                    // Background
-                    backgroundSection
-                }
-                .padding()
-            }
-            .navigationTitle(textElement == nil 
-                ? NSLocalizedString("Add Text", comment: "Add text title")
-                : NSLocalizedString("Edit Text", comment: "Edit text title")
-            )
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(NSLocalizedString("Cancel", comment: "Cancel button")) {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(NSLocalizedString("Done", comment: "Done button")) {
-                        saveAndDismiss()
-                    }
-                    .disabled(text.isEmpty)
-                }
-            }
-            .onAppear {
-                setupInitialState()
-            }
-        }
-    }
-    
-    // MARK: - Preview Section
-    
-    private var previewSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("Preview", comment: "Preview label"))
-                .font(.headline)
-            
+     var body: some View {
+        GeometryReader { geometry in
             ZStack {
-                Rectangle()
-                    .fill(Color(.systemGray6))
-                    .frame(height: 120)
-                    .cornerRadius(12)
-                
-                // Text preview with background
-                Group {
-                    if backgroundType != .none {
-                        Text(text.isEmpty ? NSLocalizedString("Double tap to edit", comment: "Placeholder text") : text)
-                            .font(fontForName(selectedFont).weight(.regular))
-                            .font(.system(size: min(fontSize, 32)))
-                            .foregroundColor(textColor)
-                            .multilineTextAlignment(alignment)
-                            .padding(8)
-                            .background(
-                                backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
-                            )
-                            .cornerRadius(4)
-                    } else {
-                        Text(text.isEmpty ? NSLocalizedString("Double tap to edit", comment: "Placeholder text") : text)
-                            .font(fontForName(selectedFont).weight(.regular))
-                            .font(.system(size: min(fontSize, 32)))
-                            .foregroundColor(textColor)
-                            .multilineTextAlignment(alignment)
+                // Dark overlay background (canvas visible behind when using overlay presentation)
+                // Hide dimmed background when eyedropper is active to show clear canvas
+                Color.black.opacity(isEyedropperActive ? 0.0 : 0.7)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        // Tap on background to dismiss keyboard and close color palette
+                        isTextFieldFocused = false
+                        showColorPalette = false
                     }
+                
+                    VStack(spacing: 0) {
+                        // Top bar with Done button
+                        HStack {
+                            // Cancel button
+                            Button {
+                                onCancel?()
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                            }
+                            
+                            Spacer()
+                            
+                            Button {
+                                saveAndDismiss()
+                            } label: {
+                                Text(NSLocalizedString("完成", comment: "Done button"))
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(Color.blue)
+                                    )
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        .opacity(isEyedropperActive ? 0 : 1) // Hide top bar
+                        
+                        Spacer()
+                        
+                        // Text input area
+                        // When eyedropper is active, move to top-left
+                        ZStack(alignment: isEyedropperActive ? .topLeading : .center) {
+                            if isEyedropperActive {
+                                Color.clear // Container expands
+                            }
+                            
+                            // Live text preview (styled)
+                            Group {
+                                if backgroundType != .none {
+                                    Text(text.isEmpty ? NSLocalizedString("輸入文字", comment: "Tap to type placeholder") : text)
+                                        .font(fontForCurrentSelection(size: fontSize))
+                                        .foregroundColor(text.isEmpty ? .gray : textColor)
+                                        .multilineTextAlignment(alignment)
+                                        .padding(8)
+                                        .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
+                                        .cornerRadius(4)
+                                } else {
+                                    Text(text.isEmpty ? NSLocalizedString("輸入文字", comment: "Tap to type placeholder") : text)
+                                        .font(fontForCurrentSelection(size: fontSize))
+                                        .foregroundColor(text.isEmpty ? .gray : textColor)
+                                        .multilineTextAlignment(alignment)
+                                }
+                            }
+                            .onTapGesture {
+                                // Tap on text to focus input
+                                if !isEyedropperActive {
+                                    isTextFieldFocused = true
+                                    showColorPalette = false
+                                }
+                            }
+                            .position(isEyedropperActive ? CGPoint(x: 100, y: 100) : CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
+                            // Note: Using position to force location during eyedropper mode
+                            // Ideally we would use alignment, but position is more absolute
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill space to allow positioning
+                        
+                        Spacer()
+                        
+                        // Hidden TextField for keyboard input
+                    
+                    // Hidden TextField for keyboard input
+                    TextField("", text: $text, axis: .vertical)
+                        .focused($isTextFieldFocused)
+                        .frame(width: 1, height: 1)
+                        .opacity(0.01)
+                    
+                    // Color palette (shown when color button tapped)
+                    if showColorPalette {
+                        VStack(spacing: 8) {
+                            // Mode selector
+                            HStack {
+                                Text(colorPickerMode == .textColor ? 
+                                     NSLocalizedString("文字顏色", comment: "Text color") : 
+                                     NSLocalizedString("背景顏色", comment: "Background color"))
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Button {
+                                    showColorPalette = false
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            
+                            CustomColorPaletteView(
+                                selectedColor: colorPickerMode == .textColor ? $textColor : $backgroundColor,
+                                onEyedropperTap: {
+                                    showColorPalette = false
+                                    // TODO: Capture canvas snapshot and show eyedropper
+                                    isEyedropperActive = true
+                                }
+                            )
+                        }
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.black.opacity(0.8))
+                        )
+                        .padding(.horizontal, 16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    
+                    // Bottom control bar
+                    bottomControlBar
+                        .padding(.bottom, 20)
+                        .opacity(isEyedropperActive ? 0 : 1) // Hide bottom controls
                 }
+                
+                // Vertical size slider on right edge
+                verticalSizeSlider(screenHeight: geometry.size.height)
+                    .position(x: geometry.size.width - 40, y: geometry.size.height / 2)
+                    .opacity(isEyedropperActive ? 0 : 1) // Hide slider
+                
+                // Eyedropper overlay
+                if isEyedropperActive {
+                    EyedropperOverlayView(
+                        canvasSnapshot: canvasSnapshot,
+                        selectedColor: colorPickerMode == .textColor ? $textColor : $backgroundColor,
+                        onColorPicked: { color in
+                            if colorPickerMode == .textColor {
+                                textColor = color
+                            } else {
+                                backgroundColor = color
+                            }
+                            isEyedropperActive = false
+                        },
+                        onCancel: {
+                            isEyedropperActive = false
+                        }
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: showColorPalette)
+            .animation(.easeInOut(duration: 0.2), value: isEyedropperActive)
+        }
+        .sheet(isPresented: $showFontPicker) {
+            FontPickerView(selectedFontFamily: $selectedFontFamily, selectedFontWeight: $selectedFontWeight)
+        }
+        .onAppear {
+            setupInitialState()
+            // Auto-focus to show keyboard
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isTextFieldFocused = true
             }
         }
     }
     
-    // MARK: - Text Input Section
+    // MARK: - Bottom Control Bar
     
-    private var textInputSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("Text", comment: "Text label"))
-                .font(.headline)
+    private var bottomControlBar: some View {
+        HStack(spacing: 20) {
+            // Font button
+            VStack(spacing: 4) {
+                Button {
+                    isTextFieldFocused = false
+                    showFontPicker = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Text("Aa")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                Text(selectedFontFamily.prefix(6))
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1)
+            }
             
-            TextEditor(text: $text)
-                .frame(minHeight: 80, maxHeight: 120)
-                .padding(8)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
-        }
-    }
-    
-    // MARK: - Font Section
-    
-    private var fontSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("Font", comment: "Font label"))
-                .font(.headline)
+            // Text Color button
+            VStack(spacing: 4) {
+                Button {
+                    isTextFieldFocused = false
+                    colorPickerMode = .textColor
+                    withAnimation {
+                        showColorPalette = true
+                    }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(showColorPalette && colorPickerMode == .textColor ? Color.blue : Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Circle()
+                            .fill(textColor)
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                            )
+                    }
+                }
+                Text(NSLocalizedString("顏色", comment: "Color"))
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.8))
+            }
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(TextElement.availableFonts, id: \.self) { fontName in
-                        Button {
-                            selectedFont = fontName
-                        } label: {
-                            Text("Aa")
-                                .font(fontForName(fontName))
+            // Alignment button
+            VStack(spacing: 4) {
+                Button {
+                    cycleAlignment()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: alignmentIcon)
+                            .font(.system(size: 22))
+                            .foregroundColor(.white)
+                    }
+                }
+                Text(NSLocalizedString("對齊", comment: "Alignment"))
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            // Background type button (cycle through none/solid/transparent)
+            VStack(spacing: 4) {
+                Button {
+                    cycleBackground()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: backgroundIcon)
+                            .font(.system(size: 22))
+                            .foregroundColor(.white)
+                    }
+                }
+                Text(backgroundLabel)
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            // Background Color button (only show when background is not none)
+            if backgroundType != .none {
+                VStack(spacing: 4) {
+                    Button {
+                        isTextFieldFocused = false
+                        colorPickerMode = .backgroundColor
+                        withAnimation {
+                            showColorPalette = true
+                        }
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(showColorPalette && colorPickerMode == .backgroundColor ? Color.blue : Color.white.opacity(0.2))
                                 .frame(width: 50, height: 50)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedFont == fontName ? Color.blue.opacity(0.2) : Color(.systemGray6))
-                                )
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(backgroundColor)
+                                .frame(width: 36, height: 28)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(selectedFont == fontName ? Color.blue : Color.clear, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.white, lineWidth: 2)
                                 )
                         }
-                        .foregroundColor(.primary)
                     }
+                    Text(NSLocalizedString("背景色", comment: "Background color"))
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.8))
                 }
+                .transition(.scale.combined(with: .opacity))
             }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(
+            RoundedRectangle(cornerRadius: 30)
+                .fill(Color.black.opacity(0.6))
+        )
+        .animation(.easeInOut(duration: 0.2), value: backgroundType)
     }
     
-    // MARK: - Size and Color Section
+    // MARK: - Vertical Size Slider
     
-    private var sizeAndColorSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(NSLocalizedString("Size", comment: "Size label"))
-                        .font(.headline)
-                    
-                    HStack {
-                        Text("\(Int(fontSize))pt")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .frame(width: 45, alignment: .leading)
-                        
-                        Slider(value: $fontSize, in: 12...72, step: 1)
-                    }
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text(NSLocalizedString("Color", comment: "Color label"))
-                        .font(.headline)
-                    
-                    ColorPicker("", selection: $textColor)
-                        .labelsHidden()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Alignment Section
-    
-    private var alignmentSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("Alignment", comment: "Alignment label"))
-                .font(.headline)
+    private func verticalSizeSlider(screenHeight: CGFloat) -> some View {
+        VStack(spacing: 8) {
+            Text("\(Int(fontSize))")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+                .padding(6)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(0.6))
+                )
             
-            Picker("", selection: $alignment) {
-                Image(systemName: "text.alignleft")
-                    .tag(TextAlignment.leading)
-                Image(systemName: "text.aligncenter")
-                    .tag(TextAlignment.center)
-                Image(systemName: "text.alignright")
-                    .tag(TextAlignment.trailing)
-            }
-            .pickerStyle(.segmented)
+            Slider(value: $fontSize, in: 12...72, step: 1)
+                .rotationEffect(.degrees(-90))
+                .frame(width: min(screenHeight * 0.4, 250), height: 44)
+                .accentColor(.white)
         }
     }
     
-    // MARK: - Background Section
+    // MARK: - Helper Properties
     
-    private var backgroundSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("Background", comment: "Background label"))
-                .font(.headline)
-            
-            Picker("", selection: $backgroundType) {
-                Text(NSLocalizedString("None", comment: "None option")).tag(BackgroundType.none)
-                Text(NSLocalizedString("Solid", comment: "Solid option")).tag(BackgroundType.solid)
-                Text(NSLocalizedString("Semi-transparent", comment: "Semi-transparent option")).tag(BackgroundType.semiTransparent)
-            }
-            .pickerStyle(.segmented)
-            
-            if backgroundType != .none {
-                HStack {
-                    Text(NSLocalizedString("Background Color", comment: "Background color label"))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    ColorPicker("", selection: $backgroundColor)
-                        .labelsHidden()
-                }
-            }
+    private var alignmentIcon: String {
+        switch alignment {
+        case .leading: return "text.alignleft"
+        case .center: return "text.aligncenter"
+        case .trailing: return "text.alignright"
         }
     }
     
-    // MARK: - Helpers
-    
-    private func fontForName(_ name: String) -> Font {
-        switch name {
-        case "SF Pro Text": return .system(.body, design: .default)
-        case "Helvetica Neue": return .custom("Helvetica Neue", size: 16)
-        case "Georgia": return .custom("Georgia", size: 16)
-        case "Courier New": return .custom("Courier New", size: 16)
-        case "Times New Roman": return .custom("Times New Roman", size: 16)
-        case "Arial": return .custom("Arial", size: 16)
-        case "Menlo": return .custom("Menlo", size: 16)
-        default: return .system(.body)
+    private var backgroundIcon: String {
+        switch backgroundType {
+        case .none: return "square.dashed"
+        case .solid: return "square.fill"
+        case .semiTransparent: return "square.lefthalf.filled"
         }
+    }
+    
+    private var backgroundLabel: String {
+        switch backgroundType {
+        case .none: return NSLocalizedString("無", comment: "None")
+        case .solid: return NSLocalizedString("實心", comment: "Solid")
+        case .semiTransparent: return NSLocalizedString("透明", comment: "Semi-transparent short")
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func cycleAlignment() {
+        switch alignment {
+        case .leading:
+            alignment = .center
+        case .center:
+            alignment = .trailing
+        case .trailing:
+            alignment = .leading
+        }
+    }
+    
+    private func cycleBackground() {
+        switch backgroundType {
+        case .none:
+            // When enabling background, set to contrast color of text
+            backgroundColor = contrastColor(for: textColor)
+            backgroundType = .solid
+        case .solid:
+            backgroundType = .semiTransparent
+        case .semiTransparent:
+            backgroundType = .none
+        }
+    }
+    
+    /// Calculate a contrasting background color based on text color
+    /// Light colors get dark backgrounds, dark colors get light backgrounds
+    private func contrastColor(for color: Color) -> Color {
+        // Convert Color to UIColor to access RGB components
+        let uiColor = UIColor(color)
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        
+        // Calculate relative luminance using sRGB formula
+        let luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+        
+        if luminance > 0.5 {
+            // Light color -> dark background (invert and darken)
+            return Color(
+                red: Double(red * 0.2),
+                green: Double(green * 0.2),
+                blue: Double(blue * 0.2)
+            )
+        } else {
+            // Dark color -> light background (invert and lighten)
+            return Color(
+                red: Double(1.0 - (1.0 - red) * 0.3),
+                green: Double(1.0 - (1.0 - green) * 0.3),
+                blue: Double(1.0 - (1.0 - blue) * 0.3)
+            )
+        }
+    }
+    
+    private func fontForCurrentSelection(size: CGFloat) -> Font {
+        guard let family = FontFamily.fontByName(selectedFontFamily),
+              let weight = family.weightByName(selectedFontWeight) else {
+            return .system(size: size)
+        }
+
+        if family.isSystemFont && family.displayName == "SF Pro" {
+            return .system(size: size, weight: weight.weight)
+        }
+
+        return .custom(weight.postScriptName, size: size)
     }
     
     private func setupInitialState() {
         if let element = textElement {
             text = element.text
-            selectedFont = element.font
+            selectedFontFamily = element.fontFamily
+            selectedFontWeight = element.fontWeight
             fontSize = element.fontSize
             textColor = element.color
             alignment = element.alignment
-            
+
             if let bgColor = element.backgroundColor {
                 backgroundColor = bgColor
                 if element.backgroundOpacity < 1.0 {
@@ -281,18 +490,33 @@ struct TextEditorView: View {
             }
         } else {
             text = ""
+            // Default to white color for new text (visible on dark overlay)
+            textColor = .white
         }
     }
     
     private func saveAndDismiss() {
-        var element = textElement ?? TextElement(text: text)
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        element.text = text
-        element.font = selectedFont
+        // If text is empty and editing existing element, delete it
+        if trimmedText.isEmpty {
+            if textElement != nil {
+                onDelete?()
+            } else {
+                onCancel?()
+            }
+            return
+        }
+        
+        var element = textElement ?? TextElement(text: trimmedText)
+
+        element.text = trimmedText
+        element.fontFamily = selectedFontFamily
+        element.fontWeight = selectedFontWeight
         element.fontSize = fontSize
         element.color = textColor
         element.alignment = alignment
-        
+
         switch backgroundType {
         case .none:
             element.backgroundColor = nil
@@ -304,8 +528,46 @@ struct TextEditorView: View {
             element.backgroundColor = backgroundColor
             element.backgroundOpacity = 0.5
         }
-        
+
         onSave(element)
-        dismiss()
+    }
+}
+
+// MARK: - Direct Color Picker (shows system color picker immediately)
+
+struct DirectColorPickerView: UIViewControllerRepresentable {
+    @Binding var selectedColor: Color
+    var onDismiss: () -> Void
+    
+    func makeUIViewController(context: Context) -> UIColorPickerViewController {
+        let picker = UIColorPickerViewController()
+        picker.selectedColor = UIColor(selectedColor)
+        picker.supportsAlpha = false
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIColorPickerViewController, context: Context) {
+        uiViewController.selectedColor = UIColor(selectedColor)
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIColorPickerViewControllerDelegate {
+        var parent: DirectColorPickerView
+        
+        init(_ parent: DirectColorPickerView) {
+            self.parent = parent
+        }
+        
+        func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+            parent.selectedColor = Color(viewController.selectedColor)
+        }
+        
+        func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
+            parent.onDismiss()
+        }
     }
 }
