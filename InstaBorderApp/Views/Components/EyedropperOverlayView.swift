@@ -63,7 +63,10 @@ struct EyedropperOverlayView: View {
                         
                         // Sample color at this position
                         if let snapshot = canvasSnapshot {
-                            sampledColor = getColor(at: value.location, in: snapshot, viewSize: geometry.size)
+                            let color = getColor(at: value.location, in: snapshot, viewSize: geometry.size)
+                            sampledColor = color
+                            // Update the binding in real-time for live preview
+                            selectedColor = color
                         }
                     }
                     .onEnded { value in
