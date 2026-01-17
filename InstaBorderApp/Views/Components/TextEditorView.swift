@@ -110,10 +110,12 @@ struct TextEditorView: View {
                                         .foregroundColor(textColor)
                                         .multilineTextAlignment(alignment)
                                         .tint(textColor) // Cursor color matches text
-                                        .padding(8)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
                                         .background(backgroundColor.opacity(backgroundType == .semiTransparent ? 0.5 : 1.0))
                                         .cornerRadius(4)
                                         .focused($isTextFieldFocused)
+                                        .fixedSize(horizontal: true, vertical: false) // Wrap content only
                                 } else {
                                     TextField("", text: $text, axis: .vertical)
                                         .font(fontForCurrentSelection(size: fontSize))
@@ -123,7 +125,7 @@ struct TextEditorView: View {
                                         .focused($isTextFieldFocused)
                                 }
                             }
-                            .frame(minWidth: 50) // Minimum width so cursor is visible
+                            .frame(minWidth: text.isEmpty ? 2 : nil) // Just cursor width when empty
                             .onTapGesture {
                                 // Tap on text to focus input
                                 if !isEyedropperActive {
