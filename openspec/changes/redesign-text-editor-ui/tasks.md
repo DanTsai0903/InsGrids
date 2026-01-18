@@ -71,10 +71,12 @@
 - [x] Keyboard stays visible when tapping color buttons
 - [x] Unified TextField (single instance) for reliable state
 
-## Phase 10: Known Limitations
-- [ ] Text background extends full width in editor (SwiftUI TextField limitation)
-  - Note: Actual TextElement on canvas uses Text view which wraps correctly
-  - Advanced solution: UITextView wrapper with intrinsicContentSize
+## Phase 10: Text Background Wrapping Fix
+- [x] Text background extends full width in editor (SwiftUI TextField limitation)
+  - Created WrappingTextView (UIViewRepresentable with UITextView)
+  - Implemented intrinsicContentSize calculation for proper text wrapping
+  - Background now wraps text content instead of extending full width
+  - All existing functionality preserved (focus, cursor color, keyboard)
 
 ## Verification
 - [x] Text editor shows canvas overlay
@@ -84,5 +86,5 @@
 - [x] Empty text auto-deletes element
 - [x] Eyedropper correctly samples colors
 - [x] Real-time color preview during eyedropper
-- [ ] Visual style matches Instagram reference (partial - background width differs)
+- [x] Visual style matches Instagram reference (text background now wraps correctly)
 - [x] All existing text functionality preserved
