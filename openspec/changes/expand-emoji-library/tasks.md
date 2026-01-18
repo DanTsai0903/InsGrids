@@ -1,0 +1,113 @@
+# Tasks: Expand Emoji Library
+
+## Phase 1: Data Preparation
+- [ ] 1.1 Research iOS 17+ emoji catalog and Unicode 15.0 standard
+- [ ] 1.2 Create emoji name/keyword mapping for search functionality
+  - Map each emoji to searchable keywords (e.g., "❤️" → ["heart", "love", "red"])
+  - Include category names as searchable terms
+  - Support both English and Chinese keywords for localization
+- [ ] 1.3 Organize Smileys & People category (~500 emojis)
+  - Faces (happy, sad, loving, etc.)
+  - Hand gestures
+  - People and body parts
+  - Person activities
+- [ ] 1.4 Organize Animals & Nature category (~150 emojis)
+  - Mammals, birds, reptiles, marine life
+  - Plants and flowers
+  - Weather and sky
+- [ ] 1.5 Organize Food & Drink category (~130 emojis)
+  - Fruits and vegetables
+  - Prepared foods
+  - Beverages
+  - Utensils
+- [ ] 1.6 Organize Activity category (~90 emojis)
+  - Sports
+  - Games and hobbies
+  - Arts and music
+- [ ] 1.7 Organize Travel & Places category (~120 emojis)
+  - Transportation
+  - Buildings and structures
+  - Geographic locations
+- [ ] 1.8 Organize Objects category (~250 emojis)
+  - Technology
+  - Household items
+  - Tools and equipment
+  - Clothing and accessories
+- [ ] 1.9 Organize Symbols category (~280 emojis)
+  - Hearts and romantic symbols
+  - Geometric shapes
+  - Arrows and directional symbols
+  - Signs and warnings
+  - Zodiac and religious symbols
+- [ ] 1.10 Organize Flags category (~270 emojis)
+  - Country flags (alphabetical)
+  - Regional flags
+  - Special flags
+
+## Phase 2: Implementation
+- [ ] 2.1 Update `EmojiPickerView.swift` with new emoji data
+  - Replace `emojis` array declaration
+  - Add emoji keyword mapping dictionary
+  - Update category count (remains 8)
+  - Verify category icon emojis are correct
+- [ ] 2.2 Implement search UI
+  - Add search bar above category tabs
+  - Add search icon and clear button
+  - Style search field to match app design
+- [ ] 2.3 Implement search logic
+  - Add `@State` for search text
+  - Create search filter function matching keywords
+  - Update grid to show search results when searching
+  - Show category grid when search is empty
+- [ ] 2.4 Add localization for search
+  - "Search Emoji" placeholder text
+  - "No results found" empty state message
+  - Support both English and Traditional Chinese
+- [ ] 2.5 Test emoji rendering in picker
+  - All emojis display correctly
+  - No missing glyphs or rendering issues
+  - Category tabs work correctly
+- [ ] 2.6 Test emoji selection flow
+  - Selecting emoji creates sticker element
+  - Emoji appears on canvas at correct position
+  - Emoji can be transformed (scale, rotate, move)
+
+## Phase 3: Search Testing
+- [ ] 3.1 Test search functionality
+  - Search by emoji name (e.g., "heart" finds all hearts)
+  - Search by category (e.g., "food" finds all food emojis)
+  - Case-insensitive search works
+  - Real-time filtering as user types
+- [ ] 3.2 Test search UI behavior
+  - Clear button appears when typing
+  - Clear button resets to category view
+  - Empty state shows when no results
+  - Results display in grid format
+- [ ] 3.3 Test search performance
+  - Search completes quickly (<100ms)
+  - No lag when typing rapidly
+  - Memory usage remains stable
+
+## Phase 4: General Validation
+- [ ] 4.1 Visual inspection of all categories
+  - Verify logical grouping within categories
+  - Check for duplicate emojis
+  - Ensure emoji ordering makes sense
+- [ ] 4.2 Performance testing
+  - Verify smooth scrolling through large categories
+  - Test category switching responsiveness
+  - Check memory usage (should be minimal)
+- [ ] 4.3 Integration testing
+  - Emoji stickers export correctly in tiles
+  - Auto-save/restore works with new emojis
+  - Grid presets preserve emoji stickers
+- [ ] 4.4 Cross-device testing
+  - Test on iPhone (various screen sizes)
+  - Test on iPad (if supported)
+  - Verify on iOS 16/17 (emoji compatibility)
+
+## Phase 5: Documentation
+- [ ] 5.1 Update spec delta in `specs/sticker-elements/spec.md`
+- [ ] 5.2 Document emoji count and categorization in design docs
+- [ ] 5.3 Add validation checklist to implementation plan
+- [ ] 5.4 Document search keyword mapping approach

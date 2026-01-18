@@ -94,7 +94,7 @@ struct StickerElementView: View {
                 }
                 .onEnded { value in
                     let newScale = element.scale * value
-                    onUpdateScale(max(0.3, min(4.0, newScale)))
+                    onUpdateScale(max(0.3, newScale))
                 },
             RotationGesture(minimumAngleDelta: .zero)
                 .onChanged { value in
