@@ -57,101 +57,103 @@ struct TextEditorView: View {
                 // Use solid black when eyedropper is active to hide live canvas and only show snapshot
                 Color.black.opacity(isEyedropperActive ? 1.0 : 0.7)
                     .ignoresSafeArea()
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         // Tap on background to dismiss keyboard and close color palette
+                        // This won't block highPriorityGesture on slider
                         isFocusedBinding = false
                         showColorPalette = false
                     }
-                
-                    VStack(spacing: 0) {
-                        // Top bar with Done button
-                        HStack {
-                            // Cancel button
-                            Button {
-                                onCancel?()
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .frame(width: 44, height: 44)
-                            }
-                            
-                            Spacer()
-                            
-                            Button {
-                                saveAndDismiss()
-                            } label: {
-                                Text(NSLocalizedString("完成", comment: "Done button"))
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(Color.blue)
-                                    )
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        .opacity(isEyedropperActive ? 0 : 1) // Hide top bar
-                        
-                        Spacer()
-                        
-                        // Text input area with visible cursor
-                        // When eyedropper is active, move to top-left
-                        ZStack(alignment: isEyedropperActive ? .topLeading : .center) {
-                            if isEyedropperActive {
-                                Color.clear // Container expands
-                            }
 
-                            // Styled text input with native blinking cursor
-                            // Using WrappingTextView with intrinsic content size for proper background wrapping
-                            WrappingTextView(
-                                text: $text,
-                                font: uiFontForCurrentSelection(size: fontSize),
-                                textColor: UIColor(textColor),
-                                tintColor: UIColor(textColor),
-                                textAlignment: nsTextAlignment,
-                                isFocused: $isFocusedBinding
-                            )
-                            .fixedSize() // Respect intrinsic content size from UITextView
-                            .padding(.horizontal, backgroundType != .none ? 8 : 0)
-                            .padding(.vertical, backgroundType != .none ? 4 : 0)
-                            .background(
-                                Group {
-                                    if backgroundType != .none {
-                                        backgroundColor
-                                            .opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
-                                            .cornerRadius(4)
-                                    }
-                                }
-                            )
-                            .onChange(of: isFocusedBinding) { _, newValue in
-                                // Sync to FocusState
-                                isTextFieldFocused = newValue
-                            }
-                            .onTapGesture {
-                                // Tap on text to focus input
-                                if !isEyedropperActive {
-                                    isFocusedBinding = true
-                                    showColorPalette = false
-                                }
-                            }
-                            .position(isEyedropperActive ? CGPoint(x: 100, y: 100) : CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
-                            // Note: Using position to force location during eyedropper mode
+                VStack(spacing: 0) {
+                    // Top bar with Done button
+                    HStack {
+                        // Cancel button
+                        Button {
+                            onCancel?()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill space to allow positioning
-                        
+
                         Spacer()
-                    
+
+                        Button {
+                            saveAndDismiss()
+                        } label: {
+                            Text(NSLocalizedString("完成", comment: "Done button"))
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.blue)
+                                )
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .opacity(isEyedropperActive ? 0 : 1) // Hide top bar
+
+                    Spacer()
+
+                    // Text input area with visible cursor
+                    // When eyedropper is active, move to top-left
+                    ZStack(alignment: isEyedropperActive ? .topLeading : .center) {
+                        if isEyedropperActive {
+                            Color.clear // Container expands
+                        }
+
+                        // Styled text input with native blinking cursor
+                        // Using WrappingTextView with intrinsic content size for proper background wrapping
+                        WrappingTextView(
+                            text: $text,
+                            font: uiFontForCurrentSelection(size: fontSize),
+                            textColor: UIColor(textColor),
+                            tintColor: UIColor(textColor),
+                            textAlignment: nsTextAlignment,
+                            isFocused: $isFocusedBinding
+                        )
+                        .fixedSize() // Respect intrinsic content size from UITextView
+                        .padding(.horizontal, backgroundType != .none ? 8 : 0)
+                        .padding(.vertical, backgroundType != .none ? 4 : 0)
+                        .background(
+                            Group {
+                                if backgroundType != .none {
+                                    backgroundColor
+                                        .opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
+                                        .cornerRadius(4)
+                                }
+                            }
+                        )
+                        .onChange(of: isFocusedBinding) { _, newValue in
+                            // Sync to FocusState
+                            isTextFieldFocused = newValue
+                        }
+                        .onTapGesture {
+                            // Tap on text to focus input
+                            if !isEyedropperActive {
+                                isFocusedBinding = true
+                                showColorPalette = false
+                            }
+                        }
+                        .position(isEyedropperActive ? CGPoint(x: 100, y: 100) : CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
+                        // Note: Using position to force location during eyedropper mode
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill space to allow positioning
+
+                    Spacer()
+
                     // Color palette (shown when color button tapped)
                     if showColorPalette {
                         VStack(spacing: 8) {
                             // Mode selector
                             HStack {
-                                Text(colorPickerMode == .textColor ? 
-                                     NSLocalizedString("文字顏色", comment: "Text color") : 
+                                Text(colorPickerMode == .textColor ?
+                                     NSLocalizedString("文字顏色", comment: "Text color") :
                                      NSLocalizedString("背景顏色", comment: "Background color"))
                                     .font(.subheadline)
                                     .foregroundColor(.white)
@@ -165,7 +167,7 @@ struct TextEditorView: View {
                                 }
                             }
                             .padding(.horizontal, 16)
-                            
+
                             CustomColorPaletteView(
                                 selectedColor: colorPickerMode == .textColor ? $textColor : $backgroundColor,
                                 onEyedropperTap: {
@@ -183,19 +185,25 @@ struct TextEditorView: View {
                         .padding(.horizontal, 16)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    
+
                     // Bottom control bar
                     bottomControlBar
                         .padding(.bottom, 20)
                         .opacity(isEyedropperActive ? 0 : 1) // Hide bottom controls
                 }
-                
-                // Vertical size slider on LEFT edge with slide animation
-                verticalSizeSlider(screenHeight: geometry.size.height)
-                    .position(x: isSliderActive ? 50 : 5, y: geometry.size.height / 2)
-                    .opacity(isEyedropperActive ? 0 : (isSliderActive ? 1.0 : 0.4))
-                    .animation(.easeInOut(duration: 0.2), value: isSliderActive)
-                
+                .allowsHitTesting(!isEyedropperActive) // Disable hit testing on main content when eyedropper active
+
+                // Font size slider overlay - positioned at top-left
+                if !isEyedropperActive {
+                    verticalSizeSlider(screenHeight: geometry.size.height)
+                        .offset(x: isSliderActive ? 5 : -30) // Hidden near edge when inactive, visible when active
+                        .opacity(isSliderActive ? 1.0 : 0.5)
+                        .animation(.easeInOut(duration: 0.2), value: isSliderActive)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(.top, 100)
+                        .allowsHitTesting(true) // Ensure slider can receive touches
+                }
+
                 // Eyedropper overlay
                 if isEyedropperActive {
                     EyedropperOverlayView(
@@ -363,35 +371,58 @@ struct TextEditorView: View {
     // MARK: - Vertical Size Slider
     
     private func verticalSizeSlider(screenHeight: CGFloat) -> some View {
-        VStack(spacing: 8) {
-            Text("\(Int(fontSize))")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
-                .padding(6)
-                .background(
-                    Circle()
-                        .fill(Color.black.opacity(0.6))
-                )
+        let sliderHeight: CGFloat = min(screenHeight * 0.35, 220)
+        let minValue: CGFloat = 12
+        let maxValue: CGFloat = 72
+        let progress = (fontSize - minValue) / (maxValue - minValue)
 
-            Slider(value: $fontSize, in: 12...72, step: 1)
-                .rotationEffect(.degrees(-90))
-                .frame(width: min(screenHeight * 0.4, 250), height: 44)
-                .accentColor(.white)
-                .onChange(of: fontSize) { _, _ in
-                    // Slider is being used - activate animation
+        return VStack(spacing: 12) {
+            // Custom vertical slider
+            ZStack(alignment: .bottom) {
+                // Track background
+                Capsule()
+                    .fill(Color.white.opacity(0.4))
+                    .frame(width: 6, height: sliderHeight)
+
+                // Filled track from bottom
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: 6, height: max(6, sliderHeight * progress))
+
+                // Thumb positioned along track
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 28, height: 28)
+                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .offset(y: -(sliderHeight - 28) * progress)
+            }
+            .frame(height: sliderHeight)
+        }
+        .frame(width: 60) // Fixed width
+        .padding(.trailing, 20) // Extra touch area on right only
+        .contentShape(Rectangle())
+        .highPriorityGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
                     isSliderActive = true
-                    // Reset timer on each change
                     sliderTimer?.invalidate()
+
+                    // Calculate position relative to the slider track
+                    // Account for the size indicator (36) + spacing (12) = 48pt from top
+                    let trackTop: CGFloat = 48
+                    let relativeY = value.location.y - trackTop
+                    let percentage = 1.0 - (relativeY / sliderHeight)
+                    let clampedPercentage = max(0, min(1, percentage))
+                    fontSize = minValue + (maxValue - minValue) * clampedPercentage
+                }
+                .onEnded { _ in
                     sliderTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
                         withAnimation {
                             isSliderActive = false
                         }
                     }
                 }
-        }
-        .padding(.leading, 30)
-        .padding(.trailing, 10)
-        .contentShape(Rectangle())
+        )
     }
     
     // MARK: - Helper Properties
