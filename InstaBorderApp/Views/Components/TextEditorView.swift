@@ -372,7 +372,7 @@ struct TextEditorView: View {
                     Circle()
                         .fill(Color.black.opacity(0.6))
                 )
-            
+
             Slider(value: $fontSize, in: 12...72, step: 1)
                 .rotationEffect(.degrees(-90))
                 .frame(width: min(screenHeight * 0.4, 250), height: 44)
@@ -389,6 +389,9 @@ struct TextEditorView: View {
                     }
                 }
         }
+        .padding(.leading, 30)
+        .padding(.trailing, 10)
+        .contentShape(Rectangle())
     }
     
     // MARK: - Helper Properties
