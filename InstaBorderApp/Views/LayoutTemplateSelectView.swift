@@ -12,6 +12,7 @@ struct LayoutTemplateSelectView: View {
     @State private var pickerTemplate: LayoutTemplate?
     @State private var editorData: EditorData?
     @State private var selectedFilter: Int? = nil // nil = "All", otherwise slot count
+    @State private var showCustomGridSheet = false
 
     @Environment(\.dismiss) var dismiss
 
@@ -77,6 +78,21 @@ struct LayoutTemplateSelectView: View {
                 // Template List
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // Custom Grid Card (always visible at top)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(NSLocalizedString("customGrid.section", comment: "Custom"))
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 20)
+                            
+                            CustomGridCard()
+                                .padding(.horizontal, 20)
+                                .onTapGesture {
+                                    showCustomGridSheet = true
+                                }
+                        }
+                        
+                        // Predefined Templates
                         ForEach(filteredTemplates, id: \.slotCount) { group in
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("\(group.slotCount) Photos")
@@ -123,6 +139,46 @@ struct LayoutTemplateSelectView: View {
         }
         .fullScreenCover(item: $editorData) { data in
             LayoutEditorView(template: data.template, images: data.images)
+        }
+        .sheet(isPresented: $showCustomGridSheet) {
+            NavigationView {
+                CustomGridInputSheet(isPresented: $showCustomGridSheet) { template in
+                    pickerTemplate = template
+                }
+            }
+        }
+    }
+}
+
+struct CustomGridCard: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Color.gray.opacity(0.2)
+                
+                VStack(spacing: 8) {
+                    Image(systemName: "square.grid.3x3")
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(.blue)
+                    
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.blue)
+                }
+            }
+            .frame(width: 100, height: 100)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.blue.opacity(0.5), lineWidth: 2)
+            )
+            
+            Text(NSLocalizedString("template.customGrid", comment: "Custom Grid"))
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: 100)
         }
     }
 }

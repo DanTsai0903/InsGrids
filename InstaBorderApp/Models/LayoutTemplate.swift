@@ -668,6 +668,39 @@ extension LayoutTemplate {
         grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2
     ]
     
+    /// Generates a custom uniform grid template with specified dimensions
+    /// - Parameters:
+    ///   - rows: Number of rows (1-30)
+    ///   - columns: Number of columns (1-30)
+    /// - Returns: A LayoutTemplate with uniform rectangular slots arranged in a grid
+    static func customGrid(rows: Int, columns: Int) -> LayoutTemplate {
+        // Validate input ranges
+        let validRows = max(1, min(30, rows))
+        let validColumns = max(1, min(30, columns))
+        
+        let id = "custom_\(validColumns)x\(validRows)"
+        let name = "\(validColumns)×\(validRows) Grid"
+        
+        var slots: [LayoutSlotShape] = []
+        let slotWidth = 1.0 / CGFloat(validColumns)
+        let slotHeight = 1.0 / CGFloat(validRows)
+        
+        // Generate slots in row-major order (left-to-right, top-to-bottom)
+        for row in 0..<validRows {
+            for col in 0..<validColumns {
+                let rect = CGRect(
+                    x: CGFloat(col) * slotWidth,
+                    y: CGFloat(row) * slotHeight,
+                    width: slotWidth,
+                    height: slotHeight
+                )
+                slots.append(.rectangle(rect))
+            }
+        }
+        
+        return LayoutTemplate(id: id, name: name, slots: slots)
+    }
+    
     static func templates(withSlotCount count: Int) -> [LayoutTemplate] {
         allTemplates.filter { $0.slotCount == count }
     }

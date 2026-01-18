@@ -151,3 +151,14 @@
 "Weather" = "Weather";
 "Nature" = "Nature";
 "Objects" = "Objects";
+// Custom Grid Template
+"template.customGrid" = "Custom Grid";
+"customGrid.section" = "Custom";
+"customGrid.title" = "Custom Grid";
+"customGrid.columns" = "Columns";
+"customGrid.rows" = "Rows";
+"customGrid.preview" = "Preview";
+"customGrid.create" = "Create Grid";
+"customGrid.cancel" = "Cancel";
+"customGrid.slots" = "slots";
+"customGrid.aspectRatio" = "Aspect Ratio";

@@ -151,3 +151,14 @@
 "Weather" = "天氣";
 "Nature" = "自然";
 "Objects" = "物品";
+// Custom Grid Template
+"template.customGrid" = "自訂網格";
+"customGrid.section" = "自訂";
+"customGrid.title" = "自訂網格";
+"customGrid.columns" = "列數";
+"customGrid.rows" = "行數";
+"customGrid.preview" = "預覽";
+"customGrid.create" = "建立網格";
+"customGrid.cancel" = "取消";
+"customGrid.slots" = "格";
+"customGrid.aspectRatio" = "版面比例";
