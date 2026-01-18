@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Font weight/style variant
 struct FontWeight: Identifiable, Hashable {
@@ -6,6 +7,22 @@ struct FontWeight: Identifiable, Hashable {
     let name: String           // Display name (e.g., "Regular", "Bold")
     let postScriptName: String // PostScript name for UIFont
     let weight: Font.Weight    // SwiftUI font weight
+
+    /// Convert SwiftUI Font.Weight to UIFont.Weight
+    var uiWeight: UIFont.Weight {
+        switch weight {
+        case .ultraLight: return .ultraLight
+        case .thin: return .thin
+        case .light: return .light
+        case .regular: return .regular
+        case .medium: return .medium
+        case .semibold: return .semibold
+        case .bold: return .bold
+        case .heavy: return .heavy
+        case .black: return .black
+        default: return .regular
+        }
+    }
 
     static let regular = Font.Weight.regular
     static let light = Font.Weight.light

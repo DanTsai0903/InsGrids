@@ -77,21 +77,31 @@ struct CustomColorPaletteView: View {
                     }
                 }
                 .padding(.leading, 16)
-                
+
                 // Color grid section
                 TabView(selection: $currentPage) {
                     colorGrid(colors: basicColors)
                         .tag(0)
-                    
+
                     colorGrid(colors: warmColors)
                         .tag(1)
-                    
+
                     colorGrid(colors: coolColors)
                         .tag(2)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(height: 90)
             }
+
+            // Custom page indicators (dots) below color grid
+            HStack(spacing: 6) {
+                ForEach(0..<3) { index in
+                    Circle()
+                        .fill(currentPage == index ? Color.white : Color.white.opacity(0.3))
+                        .frame(width: 6, height: 6)
+                }
+            }
+            .padding(.bottom, 4)
         }
         .padding(.vertical, 8)
     }

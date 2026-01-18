@@ -26,14 +26,15 @@ struct TextEditorView: View {
     @State private var colorPickerMode: ColorPickerMode = .textColor
     @State private var isEyedropperActive: Bool = false
     var canvasSnapshot: UIImage?
-    
+
     enum ColorPickerMode {
         case textColor
         case backgroundColor
     }
-    
+
     // Focus state for keyboard
     @FocusState private var isTextFieldFocused: Bool
+    @State private var isFocusedBinding: Bool = false
     
     enum BackgroundType: String, CaseIterable {
         case none = "None"
@@ -58,7 +59,7 @@ struct TextEditorView: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         // Tap on background to dismiss keyboard and close color palette
-                        isTextFieldFocused = false
+                        isFocusedBinding = false
                         showColorPalette = false
                     }
                 
@@ -103,38 +104,42 @@ struct TextEditorView: View {
                             if isEyedropperActive {
                                 Color.clear // Container expands
                             }
-                            
+
                             // Styled text input with native blinking cursor
-                            // Use same TextField for both cases, apply background conditionally
-                            TextField("", text: $text, axis: .vertical)
-                                .font(fontForCurrentSelection(size: fontSize))
-                                .foregroundColor(textColor)
-                                .multilineTextAlignment(alignment)
-                                .tint(textColor) // Cursor color matches text
-                                .padding(.horizontal, backgroundType != .none ? 8 : 0)
-                                .padding(.vertical, backgroundType != .none ? 4 : 0)
-                                .background(
-                                    Group {
-                                        if backgroundType != .none {
-                                            backgroundColor
-                                                .opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
-                                                .cornerRadius(4)
-                                        }
+                            // Using WrappingTextView with intrinsic content size for proper background wrapping
+                            WrappingTextView(
+                                text: $text,
+                                font: uiFontForCurrentSelection(size: fontSize),
+                                textColor: UIColor(textColor),
+                                tintColor: UIColor(textColor),
+                                textAlignment: nsTextAlignment,
+                                isFocused: $isFocusedBinding
+                            )
+                            .fixedSize() // Respect intrinsic content size from UITextView
+                            .padding(.horizontal, backgroundType != .none ? 8 : 0)
+                            .padding(.vertical, backgroundType != .none ? 4 : 0)
+                            .background(
+                                Group {
+                                    if backgroundType != .none {
+                                        backgroundColor
+                                            .opacity(backgroundType == .semiTransparent ? 0.5 : 1.0)
+                                            .cornerRadius(4)
                                     }
-                                )
-                                .focused($isTextFieldFocused)
-                                // NOTE: We removed fixedSize because it makes TextField invisible when empty
-                                // Background may extend full width in editor, but TextElement on canvas uses Text view which wraps correctly
+                                }
+                            )
+                            .onChange(of: isFocusedBinding) { _, newValue in
+                                // Sync to FocusState
+                                isTextFieldFocused = newValue
+                            }
                             .onTapGesture {
                                 // Tap on text to focus input
                                 if !isEyedropperActive {
-                                    isTextFieldFocused = true
+                                    isFocusedBinding = true
                                     showColorPalette = false
                                 }
                             }
                             .position(isEyedropperActive ? CGPoint(x: 100, y: 100) : CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
                             // Note: Using position to force location during eyedropper mode
-                            // Ideally we would use alignment, but position is more absolute
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill space to allow positioning
                         
@@ -187,9 +192,9 @@ struct TextEditorView: View {
                 
                 // Vertical size slider on LEFT edge with slide animation
                 verticalSizeSlider(screenHeight: geometry.size.height)
-                    .position(x: isSliderActive ? 50 : 20, y: geometry.size.height / 2)
+                    .position(x: isSliderActive ? 50 : 5, y: geometry.size.height / 2)
+                    .opacity(isEyedropperActive ? 0 : (isSliderActive ? 1.0 : 0.4))
                     .animation(.easeInOut(duration: 0.2), value: isSliderActive)
-                    .opacity(isEyedropperActive ? 0 : 1) // Hide slider
                 
                 // Eyedropper overlay
                 if isEyedropperActive {
@@ -221,7 +226,7 @@ struct TextEditorView: View {
             setupInitialState()
             // Auto-focus to show keyboard
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                isTextFieldFocused = true
+                isFocusedBinding = true
             }
         }
     }
@@ -233,7 +238,7 @@ struct TextEditorView: View {
             // Font button
             VStack(spacing: 4) {
                 Button {
-                    isTextFieldFocused = false
+                    isFocusedBinding = false
                     showFontPicker = true
                 } label: {
                     ZStack {
@@ -478,6 +483,27 @@ struct TextEditorView: View {
 
         return .custom(weight.postScriptName, size: size)
     }
+
+    private func uiFontForCurrentSelection(size: CGFloat) -> UIFont {
+        guard let family = FontFamily.fontByName(selectedFontFamily),
+              let weight = family.weightByName(selectedFontWeight) else {
+            return UIFont.systemFont(ofSize: size)
+        }
+
+        if family.isSystemFont && family.displayName == "SF Pro" {
+            return UIFont.systemFont(ofSize: size, weight: weight.uiWeight)
+        }
+
+        return UIFont(name: weight.postScriptName, size: size) ?? UIFont.systemFont(ofSize: size)
+    }
+
+    private var nsTextAlignment: NSTextAlignment {
+        switch alignment {
+        case .leading: return .left
+        case .center: return .center
+        case .trailing: return .right
+        }
+    }
     
     private func setupInitialState() {
         if let element = textElement {
@@ -543,12 +569,106 @@ struct TextEditorView: View {
     }
 }
 
+// MARK: - Wrapping Text View with Intrinsic Content Size
+
+/// Custom UITextView wrapper that properly calculates intrinsic content size
+/// This allows the text background to wrap the content instead of extending full width
+struct WrappingTextView: UIViewRepresentable {
+    @Binding var text: String
+    var font: UIFont
+    var textColor: UIColor
+    var tintColor: UIColor
+    var textAlignment: NSTextAlignment
+    var isFocused: Binding<Bool>
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = IntrinsicHeightTextView()
+        textView.delegate = context.coordinator
+        textView.backgroundColor = .clear
+        textView.isScrollEnabled = false
+        textView.textContainer.lineFragmentPadding = 0
+        textView.textContainerInset = .zero
+        textView.autocorrectionType = .no
+        textView.autocapitalizationType = .sentences
+        textView.returnKeyType = .default
+
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        uiView.text = text
+        uiView.font = font
+        uiView.textColor = textColor
+        uiView.tintColor = tintColor
+        uiView.textAlignment = textAlignment
+
+        // Handle focus state
+        if isFocused.wrappedValue && !uiView.isFirstResponder {
+            uiView.becomeFirstResponder()
+        } else if !isFocused.wrappedValue && uiView.isFirstResponder {
+            uiView.resignFirstResponder()
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        var parent: WrappingTextView
+
+        init(_ parent: WrappingTextView) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            parent.text = textView.text
+            // Force layout update when text changes
+            textView.invalidateIntrinsicContentSize()
+        }
+
+        func textViewDidBeginEditing(_ textView: UITextView) {
+            parent.isFocused.wrappedValue = true
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            parent.isFocused.wrappedValue = false
+        }
+    }
+}
+
+/// UITextView subclass that properly reports intrinsic content size based on text content
+class IntrinsicHeightTextView: UITextView {
+    override var intrinsicContentSize: CGSize {
+        // Set a reasonable maximum width for text (about 80% of typical screen width)
+        let maxWidth: CGFloat = 300
+
+        // Calculate the size needed to fit the text with constraints
+        var size = sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
+
+        // If text is empty or very short, use minimum size for cursor visibility
+        if text.isEmpty {
+            size = sizeThatFits(CGSize(width: 50, height: CGFloat.greatestFiniteMagnitude))
+            size.width = max(size.width, 50)
+        }
+
+        // Return actual width needed for the content (not UIView.noIntrinsicMetric)
+        // This allows the background to wrap the text properly
+        return size
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        invalidateIntrinsicContentSize()
+    }
+}
+
 // MARK: - Direct Color Picker (shows system color picker immediately)
 
 struct DirectColorPickerView: UIViewControllerRepresentable {
     @Binding var selectedColor: Color
     var onDismiss: () -> Void
-    
+
     func makeUIViewController(context: Context) -> UIColorPickerViewController {
         let picker = UIColorPickerViewController()
         picker.selectedColor = UIColor(selectedColor)
@@ -556,26 +676,26 @@ struct DirectColorPickerView: UIViewControllerRepresentable {
         picker.delegate = context.coordinator
         return picker
     }
-    
+
     func updateUIViewController(_ uiViewController: UIColorPickerViewController, context: Context) {
         uiViewController.selectedColor = UIColor(selectedColor)
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     class Coordinator: NSObject, UIColorPickerViewControllerDelegate {
         var parent: DirectColorPickerView
-        
+
         init(_ parent: DirectColorPickerView) {
             self.parent = parent
         }
-        
+
         func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
             parent.selectedColor = Color(viewController.selectedColor)
         }
-        
+
         func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
             parent.onDismiss()
         }
