@@ -193,14 +193,14 @@ struct TextEditorView: View {
                 }
                 .allowsHitTesting(!isEyedropperActive) // Disable hit testing on main content when eyedropper active
 
-                // Font size slider overlay - positioned at top-left
+                // Font size slider overlay - positioned at left, bottom aligned with top of control bar
                 if !isEyedropperActive {
                     verticalSizeSlider(screenHeight: geometry.size.height)
                         .offset(x: isSliderActive ? 5 : -30) // Hidden near edge when inactive, visible when active
                         .opacity(isSliderActive ? 1.0 : 0.5)
                         .animation(.easeInOut(duration: 0.2), value: isSliderActive)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.top, 100)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .padding(.bottom, 90) // Bottom padding: control bar height (~70) + spacing (20)
                         .allowsHitTesting(true) // Ensure slider can receive touches
                 }
 
@@ -371,7 +371,7 @@ struct TextEditorView: View {
     // MARK: - Vertical Size Slider
     
     private func verticalSizeSlider(screenHeight: CGFloat) -> some View {
-        let sliderHeight: CGFloat = min(screenHeight * 0.35, 220)
+        let sliderHeight: CGFloat = min(screenHeight * 0.55, 350) // Increased from 0.35 to 0.55
         let minValue: CGFloat = 12
         let maxValue: CGFloat = 72
         let progress = (fontSize - minValue) / (maxValue - minValue)
