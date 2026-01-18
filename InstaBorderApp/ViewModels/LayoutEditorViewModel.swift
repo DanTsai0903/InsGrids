@@ -10,6 +10,9 @@ class LayoutEditorViewModel: ObservableObject {
 
     let template: LayoutTemplate
 
+    // Z-index counter for bringing elements to front
+    private var nextZIndex: Int = 1
+
     // MARK: - Undo Stack
     private struct EditorState {
         let config: LayoutConfiguration
@@ -215,6 +218,13 @@ class LayoutEditorViewModel: ObservableObject {
             selectedElementId = nil
         }
     }
+
+    /// Move text element to front (top layer) by ID
+    func bringTextToFront(_ id: UUID) {
+        guard let index = textElements.firstIndex(where: { $0.id == id }) else { return }
+        textElements[index].zIndex = nextZIndex
+        nextZIndex += 1
+    }
     
     func updateTextPosition(_ id: UUID, position: CGPoint) {
         if let index = textElements.firstIndex(where: { $0.id == id }) {
@@ -247,6 +257,13 @@ class LayoutEditorViewModel: ObservableObject {
         if selectedElementId == id {
             selectedElementId = nil
         }
+    }
+
+    /// Move sticker element to front (top layer) by ID
+    func bringStickerToFront(_ id: UUID) {
+        guard let index = stickerElements.firstIndex(where: { $0.id == id }) else { return }
+        stickerElements[index].zIndex = nextZIndex
+        nextZIndex += 1
     }
     
     func updateStickerPosition(_ id: UUID, position: CGPoint) {

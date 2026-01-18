@@ -76,6 +76,12 @@ struct GridEditingView: View {
                     onBringToFront: { id in
                         viewModel.bringToFront(id)
                     },
+                    onBringTextToFront: { id in
+                        viewModel.bringTextToFront(id)
+                    },
+                    onBringStickerToFront: { id in
+                        viewModel.bringStickerToFront(id)
+                    },
                     onDeleteImage: { id in
                         viewModel.removeImage(id)
                     },

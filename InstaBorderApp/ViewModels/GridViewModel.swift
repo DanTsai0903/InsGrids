@@ -17,6 +17,9 @@ class GridViewModel: ObservableObject {
     @Published var isProcessing = false
     @Published var showRestoreAlert = false
     @Published var autoSaveStatus: String = ""
+
+    // Z-index counter for bringing elements to front
+    private var nextZIndex: Int = 1
     
     // MARK: - Undo Stack
     
@@ -143,8 +146,22 @@ class GridViewModel: ObservableObject {
     /// Move image to front (top layer) by ID
     func bringToFront(_ id: UUID) {
         guard let index = canvasImages.firstIndex(where: { $0.id == id }) else { return }
-        let image = canvasImages.remove(at: index)
-        canvasImages.append(image)
+        canvasImages[index].zIndex = nextZIndex
+        nextZIndex += 1
+    }
+
+    /// Move text element to front (top layer) by ID
+    func bringTextToFront(_ id: UUID) {
+        guard let index = textElements.firstIndex(where: { $0.id == id }) else { return }
+        textElements[index].zIndex = nextZIndex
+        nextZIndex += 1
+    }
+
+    /// Move sticker element to front (top layer) by ID
+    func bringStickerToFront(_ id: UUID) {
+        guard let index = stickerElements.firstIndex(where: { $0.id == id }) else { return }
+        stickerElements[index].zIndex = nextZIndex
+        nextZIndex += 1
     }
     
     /// Save current image states for undo (call before changes)
@@ -252,6 +269,7 @@ class GridViewModel: ObservableObject {
             copy.position = image.position
             copy.scale = image.scale
             copy.rotation = image.rotation
+            copy.zIndex = image.zIndex
             return copy
         }
         let state = CanvasState(
@@ -355,12 +373,13 @@ class GridViewModel: ObservableObject {
                 let fileURL = autosaveFolder.appendingPathComponent("\(saved.id).jpg")
                 guard let data = try? Data(contentsOf: fileURL),
                       let uiImage = UIImage(data: data) else { return nil }
-                
+
                 var canvasImage = CanvasImage(image: uiImage)
                 canvasImage.id = saved.id
                 canvasImage.position = CGPoint(x: saved.positionX, y: saved.positionY)
                 canvasImage.scale = saved.scale
                 canvasImage.rotation = Angle(degrees: saved.rotationDegrees)
+                canvasImage.zIndex = saved.zIndex
                 return canvasImage
             }
             

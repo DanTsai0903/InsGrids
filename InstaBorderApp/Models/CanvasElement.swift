@@ -135,6 +135,9 @@ struct TextElement: Identifiable {
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
 
+    // Z-order for layering (higher values render on top)
+    var zIndex: Int = 0
+
     // MARK: - Legacy Support
 
     /// Deprecated: Use fontFamily + fontWeight instead
@@ -181,11 +184,14 @@ struct StickerElement: Identifiable {
     var content: String  // Emoji character or SF Symbol name
     var color: Color? = nil  // Only used for SF Symbols
     var size: CGFloat = 64  // Base size before scale
-    
+
     // Transform properties
     var position: CGPoint = .zero
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
+
+    // Z-order for layering (higher values render on top)
+    var zIndex: Int = 0
     
     /// Create emoji sticker
     static func emoji(_ emoji: String, at position: CGPoint) -> StickerElement {
@@ -286,7 +292,7 @@ extension TextElement: Codable {
     enum CodingKeys: String, CodingKey {
         case id, text, font, fontFamily, fontWeight, fontSize, color, alignmentString
         case backgroundColor, backgroundOpacity
-        case positionX, positionY, scale, rotationDegrees
+        case positionX, positionY, scale, rotationDegrees, zIndex
     }
 
     init(from decoder: Decoder) throws {
@@ -327,7 +333,8 @@ extension TextElement: Codable {
         scale = try container.decode(CGFloat.self, forKey: .scale)
         let rotDegrees = try container.decode(Double.self, forKey: .rotationDegrees)
         rotation = Angle(degrees: rotDegrees)
-        
+        zIndex = try container.decodeIfPresent(Int.self, forKey: .zIndex) ?? 0
+
         // Decode colors using UIColor archiver
         let colorData = try container.decode(Data.self, forKey: .color)
         if let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: colorData) {
@@ -366,7 +373,8 @@ extension TextElement: Codable {
         try container.encode(position.y, forKey: .positionY)
         try container.encode(scale, forKey: .scale)
         try container.encode(rotation.degrees, forKey: .rotationDegrees)
-        
+        try container.encode(zIndex, forKey: .zIndex)
+
         // Encode colors
         let colorData = try NSKeyedArchiver.archivedData(withRootObject: UIColor(color), requiringSecureCoding: false)
         try container.encode(colorData, forKey: .color)
@@ -383,7 +391,7 @@ extension TextElement: Codable {
 extension StickerElement: Codable {
     enum CodingKeys: String, CodingKey {
         case id, type, content, color, size
-        case positionX, positionY, scale, rotationDegrees
+        case positionX, positionY, scale, rotationDegrees, zIndex
     }
     
     init(from decoder: Decoder) throws {
@@ -401,7 +409,8 @@ extension StickerElement: Codable {
         scale = try container.decode(CGFloat.self, forKey: .scale)
         let rotDegrees = try container.decode(Double.self, forKey: .rotationDegrees)
         rotation = Angle(degrees: rotDegrees)
-        
+        zIndex = try container.decodeIfPresent(Int.self, forKey: .zIndex) ?? 0
+
         // Decode optional color
         if let colorData = try container.decodeIfPresent(Data.self, forKey: .color),
            let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: colorData) {
@@ -422,7 +431,8 @@ extension StickerElement: Codable {
         try container.encode(position.y, forKey: .positionY)
         try container.encode(scale, forKey: .scale)
         try container.encode(rotation.degrees, forKey: .rotationDegrees)
-        
+        try container.encode(zIndex, forKey: .zIndex)
+
         // Encode optional color
         if let stickerColor = color {
             let colorData = try NSKeyedArchiver.archivedData(withRootObject: UIColor(stickerColor), requiringSecureCoding: false)

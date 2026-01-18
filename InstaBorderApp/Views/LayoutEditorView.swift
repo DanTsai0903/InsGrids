@@ -520,6 +520,7 @@ struct LayoutEditorView: View {
                         },
                         onManipulate: {
                             viewModel.saveSnapshot()
+                            viewModel.bringTextToFront(element.id)
                         },
                         onDoubleTap: {
                             editingTextElement = element
@@ -535,8 +536,9 @@ struct LayoutEditorView: View {
                             viewModel.updateTextRotation(element.id, rotation: newRotation)
                         }
                     )
+                    .zIndex(Double(element.zIndex))
                 }
-                
+
                 // Sticker elements layer
                 ForEach($viewModel.stickerElements) { $element in
                     StickerElementView(
@@ -548,6 +550,7 @@ struct LayoutEditorView: View {
                         },
                         onManipulate: {
                             viewModel.saveSnapshot()
+                            viewModel.bringStickerToFront(element.id)
                         },
                         onUpdatePosition: { newPosition in
                             viewModel.updateStickerPosition(element.id, position: newPosition)
@@ -559,8 +562,9 @@ struct LayoutEditorView: View {
                             viewModel.updateStickerRotation(element.id, rotation: newRotation)
                         }
                     )
+                    .zIndex(Double(element.zIndex))
                 }
-                
+
                 // Delete button for selected sticker elements only
                 if let elementId = viewModel.selectedElementId {
                     let isStickerElement = viewModel.stickerElements.contains { $0.id == elementId }

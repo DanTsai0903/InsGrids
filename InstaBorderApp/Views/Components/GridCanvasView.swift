@@ -4,14 +4,17 @@ import SwiftUI
 struct CanvasImage: Identifiable {
     var id = UUID()
     var image: UIImage
-    
+
     // Transform properties
     var position: CGPoint = .zero  // Center position on canvas
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
-    
+
     // Photo adjustments (brightness, contrast, filters, etc.)
     var adjustments: PhotoAdjustments = PhotoAdjustments()
+
+    // Z-order for layering (higher values render on top)
+    var zIndex: Int = 0
 }
 
 /// Codable version of CanvasImage for persistence (Metadata only)
@@ -22,7 +25,8 @@ struct SavedCanvasImage: Codable {
     let scale: CGFloat
     let rotationDegrees: Double
     let adjustments: PhotoAdjustments
-    
+    let zIndex: Int
+
     init(from canvasImage: CanvasImage) {
         self.id = canvasImage.id
         self.positionX = canvasImage.position.x
@@ -30,8 +34,9 @@ struct SavedCanvasImage: Codable {
         self.scale = canvasImage.scale
         self.rotationDegrees = canvasImage.rotation.degrees
         self.adjustments = canvasImage.adjustments
+        self.zIndex = canvasImage.zIndex
     }
-    
+
     // toCanvasImage will now be handled by ViewModel which knows where the images are stored
 }
 
@@ -47,6 +52,8 @@ struct FreeformCanvasView: View {
     let gridColumns: Int
     let backgroundColor: Color
     var onBringToFront: (UUID) -> Void
+    var onBringTextToFront: ((UUID) -> Void)? = nil
+    var onBringStickerToFront: ((UUID) -> Void)? = nil
     var onDeleteImage: ((UUID) -> Void)? = nil
     var onCropImage: ((UUID) -> Void)? = nil
     var onEditImage: ((UUID) -> Void)? = nil  // Photo adjustments & filters
@@ -195,8 +202,8 @@ struct FreeformCanvasView: View {
                             canvasScale = max(0.3, min(4.0, canvasScale))
                         }
                 )
-            
-            // Images layer - sorted by z-order (last = top)
+
+            // Images layer - use .zIndex() modifier for proper layering
             ForEach(images) { canvasImage in
                 SingleImageView(
                     canvasImage: canvasImage,
@@ -225,9 +232,10 @@ struct FreeformCanvasView: View {
                         pendingDeleteImageId = canvasImage.id
                     }
                 )
+                .zIndex(Double(canvasImage.zIndex))
                 .id(canvasImage.id) // Force proper view identity
             }
-            
+
             // Text elements layer
             ForEach($textElements) { $element in
                 TextElementView(
@@ -240,6 +248,7 @@ struct FreeformCanvasView: View {
                     onManipulate: {
                         pendingDeleteImageId = nil
                         onImageManipulationStart?()
+                        onBringTextToFront?(element.id)
                     },
                     onDoubleTap: {
                         onEditText?(element.id)
@@ -254,8 +263,9 @@ struct FreeformCanvasView: View {
                         onTextRotationUpdate?(element.id, newRotation)
                     }
                 )
+                .zIndex(Double(element.zIndex))
             }
-            
+
             // Sticker elements layer
             ForEach($stickerElements) { $element in
                 StickerElementView(
@@ -268,6 +278,7 @@ struct FreeformCanvasView: View {
                     onManipulate: {
                         pendingDeleteImageId = nil
                         onImageManipulationStart?()
+                        onBringStickerToFront?(element.id)
                     },
                     onUpdatePosition: { newPosition in
                         onStickerPositionUpdate?(element.id, newPosition)
@@ -279,6 +290,7 @@ struct FreeformCanvasView: View {
                         onStickerRotationUpdate?(element.id, newRotation)
                     }
                 )
+                .zIndex(Double(element.zIndex))
             }
             
             // Grid overlay
