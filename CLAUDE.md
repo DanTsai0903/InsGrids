@@ -82,7 +82,7 @@ Skip proposals for: bug fixes, typos, dependency updates, config changes.
 
 ## Key Constraints
 
-- **Memory:** Use `autoreleasepool` for batch operations. Max 12MP output. Serial processing (not parallel) for high-res images.
+- **Memory:** Use `autoreleasepool` for batch operations. Max 12MP output. Serial processing (not parallel) for high-res images. Cache management: orphaned files auto-cleaned every 5s, 500MB soft limit with oldest-first deletion, integrity checks on launch, lifecycle cleanup on app background. Always use `PhotoEditorEngine.shared` (never create new instances).
 - **No external dependencies:** First-party Apple frameworks only.
 - **Privacy:** `.addOnly` photo permission. No cloud, no analytics.
 - **XcodeGen:** Never edit `.xcodeproj` directly—modify `project.yml` and regenerate.

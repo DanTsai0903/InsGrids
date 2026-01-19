@@ -3,6 +3,15 @@ import PhotosUI
 import Combine
 
 /// ViewModel for managing freeform grid canvas state
+///
+/// ## Memory Management Guarantees
+/// - **Proxy Workflow**: User edits with 1200px downsampled proxies, originals cached to disk
+/// - **Cache Cleanup**: Orphaned files removed every 5 seconds during auto-save
+/// - **Lifecycle Hooks**: Cache cleanup triggered when app backgrounds/terminates
+/// - **Size Limits**: 500MB soft limit enforced with oldest-first deletion
+/// - **Integrity Checks**: Corrupted/orphaned files validated and removed on launch
+/// - **Autoreleasepool**: Tile export uses autoreleasepool to prevent OOM on large grids
+/// - **Singleton Reuse**: PhotoEditorEngine.shared reused across all renders to minimize GPU overhead
 @MainActor
 class GridViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -50,9 +59,11 @@ class GridViewModel: ObservableObject {
     }
     
     // MARK: - Initialization
-    
+
     init() {
+        validateCacheIntegrity()
         checkForAutoSave()
+        enforceStorageLimit()
     }
     
     deinit {
@@ -123,7 +134,7 @@ class GridViewModel: ObservableObject {
             // 1. Save High-Res Original
             if let data = newImage.jpegData(compressionQuality: 1.0) {
                 saveOriginal(data: data, id: id)
-                
+
                 // 2. Update Model with Downsampled Proxy
                 if let proxy = downsample(data: data, maxDimension: 1200) {
                     canvasImages[index].image = proxy
@@ -310,26 +321,46 @@ class GridViewModel: ObservableObject {
         autoSaveTimer = nil
     }
     
+    /// Clean up orphaned files from both cache folders
+    /// - Parameter activeIds: Set of UUIDs for currently active images
+    nonisolated private func cleanupOrphanedFiles(activeIds: Set<UUID>) {
+        // Build folder URLs directly (nonisolated, no access to self)
+        let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let autosaveURL = cachesDir.appendingPathComponent("autosave_images")
+        let originalsURL = cachesDir.appendingPathComponent("original_images")
+
+        Task.detached(priority: .background) {
+            // Clean both autosave and original image folders
+            for folder in [autosaveURL, originalsURL] {
+                if let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) {
+                    for file in files {
+                        let filename = file.deletingPathExtension().lastPathComponent
+                        // Try to parse UUID, remove file if not in active set
+                        if let uuid = UUID(uuidString: filename), !activeIds.contains(uuid) {
+                            try? FileManager.default.removeItem(at: file)
+                        } else if UUID(uuidString: filename) == nil {
+                            // Invalid UUID filename, remove orphaned file
+                            try? FileManager.default.removeItem(at: file)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private func saveState() {
         // Capture everything we need from MainActor
         let imagesToSave = canvasImages.map { (id: $0.id, image: $0.image) }
         let currentMetadata = configMetadata()
         let folder = autosaveFolder
         let key = autoSaveKey
-        
+
         // Push heavy work to background
         Task.detached(priority: .background) {
-            // 1. Cleanup
-            let activeIds = Set(imagesToSave.map { $0.id.uuidString })
-            if let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) {
-                for file in files {
-                    let filename = file.deletingPathExtension().lastPathComponent
-                    if !activeIds.contains(filename) {
-                        try? FileManager.default.removeItem(at: file)
-                    }
-                }
-            }
-            
+            // 1. Cleanup orphaned files from both folders
+            let activeIds = Set(imagesToSave.map { $0.id })
+            self.cleanupOrphanedFiles(activeIds: activeIds)
+
             // 2. Save Images
             for item in imagesToSave {
                 let fileURL = folder.appendingPathComponent("\(item.id).jpg")
@@ -337,7 +368,7 @@ class GridViewModel: ObservableObject {
                     try? data.write(to: fileURL)
                 }
             }
-            
+
             // 3. Save Metadata
             if let data = try? JSONEncoder().encode(currentMetadata) {
                 UserDefaults.standard.set(data, forKey: key)
@@ -397,21 +428,128 @@ class GridViewModel: ObservableObject {
     
     func clearAutoSave() {
         UserDefaults.standard.removeObject(forKey: autoSaveKey)
-        
-        // Clean up disk images
-        if let files = try? FileManager.default.contentsOfDirectory(at: autosaveFolder, includingPropertiesForKeys: nil) {
-            for file in files {
-                try? FileManager.default.removeItem(at: file)
+
+        // Clean up all cache files (pass empty set to remove everything)
+        cleanupOrphanedFiles(activeIds: Set())
+    }
+
+    /// Perform lifecycle cleanup when app backgrounds/terminates
+    /// Removes orphaned files while keeping active ones
+    func performLifecycleCleanup() {
+        let activeIds = Set(canvasImages.map { $0.id })
+        cleanupOrphanedFiles(activeIds: activeIds)
+    }
+
+    // MARK: - Cache Size Management
+
+    /// Calculate total cache size in bytes
+    private func totalCacheSize() -> Int {
+        var total = 0
+        let folders = [autosaveFolder, originalsFolder]
+
+        for folder in folders {
+            if let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.fileSizeKey]) {
+                for file in files {
+                    if let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+                       let size = attrs[.size] as? Int {
+                        total += size
+                    }
+                }
             }
         }
-        // Clean up originals
-        if let files = try? FileManager.default.contentsOfDirectory(at: originalsFolder, includingPropertiesForKeys: nil) {
-            for file in files {
-                try? FileManager.default.removeItem(at: file)
+        return total
+    }
+
+    /// Delete oldest cache files until total size is under limit
+    /// - Parameter limit: Maximum cache size in bytes
+    private func deleteOldestFiles(until limit: Int) {
+        let folders = [autosaveFolder, originalsFolder]
+        var allFiles: [(url: URL, date: Date, size: Int)] = []
+
+        // Collect all files with metadata
+        for folder in folders {
+            if let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey]) {
+                for file in files {
+                    if let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
+                       let date = attrs[.creationDate] as? Date,
+                       let size = attrs[.size] as? Int {
+                        allFiles.append((url: file, date: date, size: size))
+                    }
+                }
+            }
+        }
+
+        // Sort by creation date (oldest first)
+        allFiles.sort { $0.date < $1.date }
+
+        // Delete oldest files until under limit
+        var currentSize = allFiles.reduce(0) { $0 + $1.size }
+        for file in allFiles {
+            if currentSize <= limit {
+                break
+            }
+            try? FileManager.default.removeItem(at: file.url)
+            currentSize -= file.size
+        }
+    }
+
+    /// Enforce cache size limit (500MB soft limit)
+    func enforceStorageLimit() {
+        let limit = 500 * 1024 * 1024 // 500MB
+        Task.detached(priority: .background) { [weak self] in
+            guard let self = self else { return }
+            let size = await MainActor.run { self.totalCacheSize() }
+            if size > limit {
+                await MainActor.run { self.deleteOldestFiles(until: limit) }
             }
         }
     }
-    
+
+    /// Validate cache integrity and remove corrupted/orphaned files
+    /// Runs on app launch to ensure clean state
+    func validateCacheIntegrity() {
+        let autosave = autosaveFolder
+        let originals = originalsFolder
+        let key = autoSaveKey
+
+        Task.detached(priority: .background) {
+            // Get active IDs from UserDefaults metadata
+            var activeIds = Set<UUID>()
+            if let data = UserDefaults.standard.data(forKey: key),
+               let config = try? JSONDecoder().decode(GridAutoSaveConfig.self, from: data) {
+                activeIds = Set(config.images.map { $0.id })
+            }
+
+            // Check autosave folder for orphaned files
+            if let files = try? FileManager.default.contentsOfDirectory(at: autosave, includingPropertiesForKeys: nil) {
+                for file in files {
+                    let filename = file.deletingPathExtension().lastPathComponent
+                    if let uuid = UUID(uuidString: filename) {
+                        // Valid UUID, but not in metadata - orphaned
+                        if !activeIds.contains(uuid) {
+                            try? FileManager.default.removeItem(at: file)
+                        }
+                    } else {
+                        // Invalid UUID filename - remove
+                        try? FileManager.default.removeItem(at: file)
+                    }
+                }
+            }
+
+            // Check both folders for corrupted image files
+            for folder in [autosave, originals] {
+                if let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) {
+                    for file in files where file.pathExtension == "jpg" {
+                        // Try to load as image - if fails, it's corrupted
+                        if UIImage(contentsOfFile: file.path) == nil {
+                            try? FileManager.default.removeItem(at: file)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Export
     
     /// Generate tiles from current canvas state
@@ -643,6 +781,8 @@ class GridViewModel: ObservableObject {
             await MainActor.run { [weak self] in
                 self?.isProcessing = false
                 completion(finalCount == tileCount, finalCount)
+                // Enforce cache size limit after export
+                self?.enforceStorageLimit()
             }
         }
     }
@@ -770,8 +910,7 @@ class GridViewModel: ObservableObject {
                 
                 // Apply photo adjustments (brightness, contrast, filters, etc.)
                 if let img = drawImage, item.adjustments.hasAdjustments {
-                    let engine = PhotoEditorEngine()
-                    drawImage = engine.render(image: img, adjustments: item.adjustments)
+                    drawImage = PhotoEditorEngine.shared.render(image: img, adjustments: item.adjustments)
                 }
                 
                 if let finalImage = drawImage {

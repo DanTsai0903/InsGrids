@@ -5,6 +5,7 @@ import PhotosUI
 struct GridEditingView: View {
     @StateObject private var viewModel = GridViewModel()
     @Environment(\.dismiss) var dismiss
+    @Environment(\.scenePhase) var scenePhase
     
     // UI State
     @State private var showDimensionPicker = false
@@ -191,6 +192,12 @@ struct GridEditingView: View {
         }
         .onDisappear {
             viewModel.stopAutoSave()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            // Clean up orphaned cache files when app backgrounds or becomes inactive
+            if newPhase == .background || newPhase == .inactive {
+                viewModel.performLifecycleCleanup()
+            }
         }
         // Dimension picker sheet
         .sheet(isPresented: $showDimensionPicker) {

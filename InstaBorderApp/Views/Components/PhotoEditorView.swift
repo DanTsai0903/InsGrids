@@ -15,8 +15,6 @@ struct PhotoEditorView: View {
     @State private var showingOriginal = false  // Toggle to show original vs edited
     @State private var showFilterIntensitySlider = false // Toggle for filter strength slider
     
-    private let engine = PhotoEditorEngine()
-    
     // Debounce publisher for throttling preview updates
     @State private var adjustmentsPublisher = PassthroughSubject<PhotoAdjustments, Never>()
     
@@ -317,7 +315,7 @@ struct PhotoEditorView: View {
         let displayImage: UIImage? = {
             guard let thumb = filterThumbnail else { return nil }
             if let fn = filterName {
-                return engine.generateFilterThumbnail(image: thumb, filterName: fn)
+                return PhotoEditorEngine.shared.generateFilterThumbnail(image: thumb, filterName: fn)
             }
             return thumb
         }()
@@ -372,10 +370,10 @@ struct PhotoEditorView: View {
     private func updatePreview() {
         // Always render from the CLEAN original to prevent stacking
         guard let baseImage = originalPreviewImage else { return }
-        
+
         // Render on background thread (already debounced by Combine)
         DispatchQueue.global(qos: .userInitiated).async {
-            let result = engine.render(image: baseImage, adjustments: adjustments)
+            let result = PhotoEditorEngine.shared.render(image: baseImage, adjustments: adjustments)
             DispatchQueue.main.async {
                 displayedPreviewImage = result
             }

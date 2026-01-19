@@ -210,8 +210,7 @@ struct LayoutEditorView: View {
             PhotoEditorView(originalImage: image, onSave: { adjustments in
                 // Apply adjustments to the original image
                 Task {
-                    let engine = PhotoEditorEngine()
-                    let editedImage = engine.render(image: image, adjustments: adjustments)
+                    let editedImage = PhotoEditorEngine.shared.render(image: image, adjustments: adjustments)
                     await MainActor.run {
                         viewModel.updatePhotoImage(editedImage, at: slotIndex)
                         showPhotoEditor = false
