@@ -2,13 +2,24 @@
 
 **Create Perfect Aspect Ratios for Your Photos** - A simple and elegant iOS app for adding customizable borders to your photos, perfect for Instagram and social media.
 
+## 📢 What's New in v3.2.0
+
+- **Custom Sticker Categories**: Browse 700+ stickers organized into intuitive themed collections
+- **Sticker Import Automation**: Built-in tools for managing and importing custom sticker packs
+- **Enhanced Memory Management**: Improved cache management prevents memory accumulation
+- **iOS 26 Liquid Glass Design**: Modern, fluid UI that integrates seamlessly with iOS 26
+
+See the full [Release Notes](https://github.com/DanTsai0903/InsGrids/releases/tag/v3.2.0).
+
 ## ✨ Features
 
 - **Layout Templates**: Instagram Layout-style collages with predefined templates (2-4 photos). Customize borders, spacing, corner radius, aspect ratio, and background color.
 - **Freeform Grid Layout**: Create Instagram aesthetics by splitting images across NxM grids (1x2, 2x3, 3x3, up to 6x6).
+- **Text Tool**: Add customizable text overlays to your compositions with full font, size, color, and positioning control.
+- **Sticker Library**: Extensive collection of 700+ stickers organized into themed categories (Animals, Nature, Food, Emojis, etc.) for creative expression.
 - **Advanced Photo Editor**: Built-in editor with Lightroom-style adjustments (Exposure, Contrast, Highlights, Shadows, etc.) and professional filters.
 - **Pro Crop Tool**: Advanced overlay-based cropping with **Locked Ratio Mode** (auto-locks 1:1, 4:5, 16:9) for precise composition.
-- **Smart Gestures**: Drag to arrange, pinch to zoom/rotate, and double-tap to reset.
+- **Smart Gestures**: Drag to arrange, pinch to zoom/rotate, and double-tap to reset. Works for photos, text, and stickers.
 - **Image Slicing**: Automatically splits your composition into perfect 4:5 aspect ratio tiles for Instagram posting.
 - **iCloud Photos Support**: Seamlessly download and use photos stored in iCloud with visual progress indicator.
 - **Proxy Image Workflow**: Edit smoothly with optimized thumbnails while preserving full original resolution for export.
@@ -109,11 +120,13 @@ Free accounts have a 7-day expiration. To keep the app working:
 1. **Choose Layout**: Select "Freeform Grid" and set your desired columns/rows (e.g., 3 columns x 2 rows).
 2. **Add & Arrange**:
    - Tap "+" to add photos.
-   - **Move**: Drag photos to any cell.
-   - **Transform**: Pinch to zoom or rotate images within cells.
+   - **Text**: Add text overlays with customizable fonts, colors, and sizes.
+   - **Stickers**: Browse 700+ stickers organized by categories - tap to add, drag to position.
+   - **Move**: Drag photos, text, or stickers to any position.
+   - **Transform**: Pinch to zoom or rotate images, text, and stickers. No scale limits.
    - **Edit**: Tap a photo -> "Edit" to adjust exposure, contrast, or apply filters.
    - **Crop**: Tap a photo -> "Crop" to use the locked-ratio crop tool.
-   - **Layer**: Tap to bring an image to the front.
+   - **Layer**: Tap to bring an element to the front.
 3. **Customize**:
    - Change background color using the color picker.
    - Adjust grid dimensions dynamically.
@@ -136,11 +149,14 @@ InsGrids/
 ├── InstaBorderApp/
 │   ├── Models/
 │   │   ├── CanvasImage.swift
+│   │   ├── CanvasElement.swift (Text & Sticker support)
 │   │   ├── GridAutoSaveConfig.swift
 │   │   ├── GridLayout.swift
 │   │   ├── GridProcessor.swift
 │   │   ├── LayoutTemplate.swift
-│   │   └── LayoutConfiguration.swift
+│   │   ├── LayoutConfiguration.swift
+│   │   ├── StickerManager.swift
+│   │   └── CustomStickerCategory.swift
 │   ├── ViewModels/
 │   │   ├── GridViewModel.swift
 │   │   └── LayoutEditorViewModel.swift
@@ -152,13 +168,18 @@ InsGrids/
 │   │   ├── Components/
 │   │   │   ├── FreeformCanvasView.swift
 │   │   │   ├── GridCanvasView.swift
-│   │   │   └── LayoutPhotoPickerView.swift
+│   │   │   ├── LayoutPhotoPickerView.swift
+│   │   │   ├── StickerPickerView.swift
+│   │   │   └── StickerView.swift
 │   ├── Utilities/
 │   │   ├── ImageExporter.swift
 │   │   └── PhotoEditorEngine.swift
 │   ├── en.lproj/
 │   ├── zh-Hant.lproj/
 │   └── Assets.xcassets/
+│       └── Stickers/ (700+ themed stickers)
+├── tools/
+│   └── import-stickers.sh (Automation scripts)
 ├── project.yml
 └── generate_ipa.sh
 ```

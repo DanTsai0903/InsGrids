@@ -157,7 +157,7 @@ struct StickerPickerView: View {
                     } else {
                         ForEach(CustomStickerCategory.allCategories) { category in
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(NSLocalizedString(category.localizedKey, comment: category.name))
+                                Text(category.name.capitalized)
                                     .font(.headline)
                                     .padding(.horizontal)
                                 
