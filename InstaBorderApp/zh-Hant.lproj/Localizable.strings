@@ -72,9 +72,9 @@
 "grid.restore.no" = "重新開始";
 "grid.autosave.saved" = "已儲存";
 
-// Emoji Picker
-"emoji.picker.title" = "新增表情";
-"emoji.picker.clear" = "清除";
+// Emoji Picker (已棄用 - 從貼紙中移除，請使用文字工具)
+// "emoji.picker.title" = "新增表情";
+// "emoji.picker.clear" = "清除";
 
 // Alerts
 "alert.success" = "成功";
@@ -141,10 +141,13 @@
 
 // Sticker Elements
 "Add Sticker" = "新增貼紙";
-"Emoji" = "表情符號";
-"Stickers" = "貼紙";
+// "Emoji" = "表情符號";  // 已棄用 - 從貼紙中移除
+"Icon" = "圖示";
+"Sticker" = "貼圖";
+"Stickers" = "圖示";  // 向後兼容 - 對應到圖示
 "Search Stickers" = "搜尋貼紙";
 "No results" = "沒有結果";
+"sticker.comingSoon" = "個性化貼圖即將推出";
 "Arrows" = "箭頭";
 "Shapes" = "形狀";
 "Communication" = "通訊";

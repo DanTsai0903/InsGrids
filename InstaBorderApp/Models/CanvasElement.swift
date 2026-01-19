@@ -171,17 +171,19 @@ struct TextElement: Identifiable {
 
 // MARK: - Sticker Element
 
-/// Sticker type - emoji or SF Symbol
+/// Sticker type - SF Symbol or custom sticker
 enum StickerType: String, Codable {
-    case emoji
     case sfSymbol
+    case customSticker
+    // Legacy support for backward compatibility
+    case emoji  // Deprecated but kept for reading old files
 }
 
-/// Sticker element (emoji or SF Symbol) for canvas placement
+/// Sticker element (SF Symbol or custom sticker) for canvas placement
 struct StickerElement: Identifiable {
     var id = UUID()
     var type: StickerType
-    var content: String  // Emoji character or SF Symbol name
+    var content: String  // SF Symbol name or custom sticker asset name
     var color: Color? = nil  // Only used for SF Symbols
     var size: CGFloat = 64  // Base size before scale
 
@@ -193,14 +195,14 @@ struct StickerElement: Identifiable {
     // Z-order for layering (higher values render on top)
     var zIndex: Int = 0
     
-    /// Create emoji sticker
-    static func emoji(_ emoji: String, at position: CGPoint) -> StickerElement {
-        StickerElement(type: .emoji, content: emoji, position: position)
-    }
-    
     /// Create SF Symbol sticker
     static func sfSymbol(_ name: String, color: Color = .primary, at position: CGPoint) -> StickerElement {
         StickerElement(type: .sfSymbol, content: name, color: color, position: position)
+    }
+    
+    /// Create custom sticker from asset name
+    static func customSticker(_ assetName: String, at position: CGPoint) -> StickerElement {
+        StickerElement(type: .customSticker, content: assetName, position: position)
     }
 }
 

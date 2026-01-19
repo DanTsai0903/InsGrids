@@ -72,9 +72,9 @@
 "grid.restore.no" = "Start Fresh";
 "grid.autosave.saved" = "Saved";
 
-// Emoji Picker
-"emoji.picker.title" = "Add Emoji";
-"emoji.picker.clear" = "Clear";
+// Emoji Picker (DEPRECATED - Removed from stickers, use text tool instead)
+// "emoji.picker.title" = "Add Emoji";
+// "emoji.picker.clear" = "Clear";
 
 // Alerts
 "alert.success" = "Success";
@@ -141,10 +141,13 @@
 
 // Sticker Elements
 "Add Sticker" = "Add Sticker";
-"Emoji" = "Emoji";
-"Stickers" = "Stickers";
+// "Emoji" = "Emoji";  // DEPRECATED - removed from stickers
+"Icon" = "Icon";
+"Sticker" = "Sticker";
+"Stickers" = "Icon";  // Legacy compatibility - maps to Icon
 "Search Stickers" = "Search Stickers";
 "No results" = "No results";
+"sticker.comingSoon" = "Custom stickers coming soon";
 "Arrows" = "Arrows";
 "Shapes" = "Shapes";
 "Communication" = "Communication";

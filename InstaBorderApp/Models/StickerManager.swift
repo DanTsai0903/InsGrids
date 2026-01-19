@@ -1,20 +1,20 @@
 import SwiftUI
 
 // MARK: - Sticker Manager
-// Manages sticker element creation and emoji/icon library access
+// Manages sticker element creation and SF Symbol/custom sticker library access
 
 /// Manager for creating and handling sticker elements
 class StickerManager: ObservableObject {
     static let shared = StickerManager()
     
-    /// Available sticker categories
+    /// Available SF Symbol sticker categories
     var categories: [StickerCategory] {
         StickerCategory.allCategories
     }
     
-    /// Create emoji sticker element at specified position
-    func createEmojiSticker(_ emoji: String, at position: CGPoint) -> StickerElement {
-        StickerElement.emoji(emoji, at: position)
+    /// Available custom sticker categories
+    var customCategories: [CustomStickerCategory] {
+        CustomStickerCategory.allCategories
     }
     
     /// Create SF Symbol sticker element at specified position
@@ -23,8 +23,18 @@ class StickerManager: ObservableObject {
         return StickerElement.sfSymbol(safeName, color: color, at: position)
     }
     
+    /// Create custom sticker element at specified position
+    func createCustomSticker(_ assetName: String, at position: CGPoint) -> StickerElement {
+        StickerElement.customSticker(assetName, at: position)
+    }
+    
     /// Search for symbols matching query
     func searchSymbols(_ query: String) -> [String] {
         IconLibrary.search(query)
+    }
+    
+    /// Search for custom stickers matching query
+    func searchCustomStickers(_ query: String) -> [String] {
+        CustomStickerCategory.searchStickers(query)
     }
 }

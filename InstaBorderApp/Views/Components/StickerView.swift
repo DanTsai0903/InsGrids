@@ -9,12 +9,19 @@ struct StickerView: View {
         Group {
             switch element.type {
             case .emoji:
+                // Legacy support for backward compatibility
                 Text(element.content)
                     .font(.system(size: element.size))
             case .sfSymbol:
                 Image(systemName: element.content)
                     .font(.system(size: element.size))
                     .foregroundColor(element.color ?? .primary)
+            case .customSticker:
+                // Custom sticker from Assets.xcassets
+                Image(element.content)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: element.size, height: element.size)
             }
         }
         .scaleEffect(element.scale)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Sticker picker view with Emoji and Stickers tabs
+/// Sticker picker view with Icon and Sticker tabs
 struct StickerPickerView: View {
     var onSelect: (StickerElement) -> Void
     var canvasCenter: CGPoint
@@ -16,17 +16,17 @@ struct StickerPickerView: View {
             VStack(spacing: 0) {
                 // Tab selector
                 Picker("", selection: $selectedTab) {
-                    Text(NSLocalizedString("Emoji", comment: "Emoji tab")).tag(0)
-                    Text(NSLocalizedString("Stickers", comment: "Stickers tab")).tag(1)
+                    Text(NSLocalizedString("Icon", comment: "Icon tab")).tag(0)
+                    Text(NSLocalizedString("Sticker", comment: "Sticker tab")).tag(1)
                 }
                 .pickerStyle(.segmented)
                 .padding()
                 
                 // Content based on selected tab
                 if selectedTab == 0 {
-                    emojiTab
+                    iconTab
                 } else {
-                    stickersTab
+                    stickerTab
                 }
             }
             .navigationTitle(NSLocalizedString("Add Sticker", comment: "Sticker picker title"))
@@ -45,24 +45,9 @@ struct StickerPickerView: View {
         }
     }
     
-    // MARK: - Emoji Tab
+    // MARK: - Icon Tab (SF Symbols)
     
-    private var emojiTab: some View {
-        EmojiPickerView(
-            onSelect: { emoji in
-                let sticker = StickerElement.emoji(emoji, at: canvasCenter)
-                onSelect(sticker)
-                // Parent controls dismissal
-            },
-            onClear: {
-                // Not used in this context
-            }
-        )
-    }
-    
-    // MARK: - Stickers Tab (SF Symbols)
-    
-    private var stickersTab: some View {
+    private var iconTab: some View {
         VStack(spacing: 0) {
             // Search bar
             HStack {
@@ -125,6 +110,96 @@ struct StickerPickerView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Sticker Tab (Custom Stickers)
+    
+    private var stickerTab: some View {
+        VStack(spacing: 0) {
+            // Search bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField(NSLocalizedString("Search Stickers", comment: "Search stickers placeholder"), text: $searchText)
+                    .textFieldStyle(.plain)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(10)
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            
+            // Sticker grid
+            ScrollView {
+                if searchText.isEmpty {
+                    // Show categories or placeholder
+                    if CustomStickerCategory.allCategories.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 48))
+                                .foregroundColor(.secondary)
+                            Text(NSLocalizedString("sticker.comingSoon", comment: "Custom stickers coming soon"))
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding()
+                    } else {
+                        ForEach(CustomStickerCategory.allCategories) { category in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(NSLocalizedString(category.localizedKey, comment: category.name))
+                                    .font(.headline)
+                                    .padding(.horizontal)
+                                
+                                customStickerGrid(stickers: category.stickers)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                } else {
+                    // Show search results
+                    let results = CustomStickerCategory.searchStickers(searchText)
+                    if results.isEmpty {
+                        Text(NSLocalizedString("No results", comment: "No search results"))
+                            .foregroundColor(.secondary)
+                            .padding()
+                    } else {
+                        customStickerGrid(stickers: results)
+                            .padding()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func customStickerGrid(stickers: [String]) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+            ForEach(stickers, id: \.self) { assetName in
+                Button {
+                    let sticker = StickerElement.customSticker(assetName, at: canvasCenter)
+                    onSelect(sticker)
+                    // Parent controls dismissal
+                } label: {
+                    Image(assetName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                }
+            }
+        }
+        .padding(.horizontal)
     }
     
     private func symbolGrid(symbols: [String]) -> some View {
