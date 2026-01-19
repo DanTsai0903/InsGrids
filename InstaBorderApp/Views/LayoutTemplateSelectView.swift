@@ -30,7 +30,7 @@ struct LayoutTemplateSelectView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            ThemeColors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -146,6 +146,7 @@ struct LayoutTemplateSelectView: View {
                     pickerTemplate = template
                 }
             }
+            .presentationBackground(.regularMaterial)
         }
     }
 }
@@ -195,8 +196,13 @@ struct FilterButton: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color.blue : Color.gray.opacity(0.3))
-                .clipShape(Capsule())
+                .background {
+                    if isSelected {
+                        Capsule().fill(Color.blue)
+                    } else {
+                        Capsule().fill(.ultraThinMaterial)
+                    }
+                }
         }
     }
 }

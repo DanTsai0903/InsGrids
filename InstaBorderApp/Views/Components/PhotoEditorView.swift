@@ -48,7 +48,7 @@ struct PhotoEditorView: View {
             VStack(spacing: 0) {
                 // Tab Selector
                 tabSelector
-                
+
                 // Content based on selected tab
                 if selectedTab == .adjust {
                     adjustmentsPanel
@@ -56,9 +56,9 @@ struct PhotoEditorView: View {
                     filtersPanel
                 }
             }
-            .background(Color.black.opacity(0.95))
+            .background(.bar)
         }
-        .background(Color.black.edgesIgnoringSafeArea(.all))
+        .background(ThemeColors.background.edgesIgnoringSafeArea(.all))
         .onAppear {
             // Generate downsampled preview image (400px for performance)
             let size = CGSize(width: 400, height: 400 * (originalImage.size.height / originalImage.size.width))
@@ -136,9 +136,9 @@ struct PhotoEditorView: View {
             }
         }
         .padding()
-        .background(Color.black)
+        .background(.bar)
     }
-    
+
     // MARK: - Image Preview
     private var imagePreview: some View {
         GeometryReader { geometry in

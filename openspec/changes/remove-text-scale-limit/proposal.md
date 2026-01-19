@@ -1,39 +1,38 @@
-# Remove Text and Sticker Scale Upper Limit
+# Change: Remove Text and Sticker Scale Upper Limit
 
-## Summary
+## Why
 
-Allow text and sticker elements to be scaled to unlimited sizes via pinch-to-zoom gestures. Currently, both element types are constrained to a maximum scale of 4.0×, which limits creative flexibility.
+The current text and sticker elements have a maximum scale limit of 4.0x, which restricts creative flexibility. Users sometimes need to create very large text overlays or stickers that span across the entire canvas, especially for bold visual statements or creative emphasis. The artificial 4.0x cap prevents users from achieving their desired artistic vision.
 
-## Motivation
+## What Changes
 
-Users want the freedom to make text and stickers as large as needed without artificial constraints. The 4.0× upper limit was originally set as a conservative boundary, but in practice:
+This change **removes the upper scale limit** for text and sticker elements in the Layout Editor:
 
-- Large text is common for emphasis or artistic layouts
-- Oversized stickers can serve as decorative backgrounds
-- The canvas already has its own zoom limits for navigation
+### 1. TextElementView Scale Limit
+- **Before**: `onUpdateScale(max(0.3, min(4.0, newScale)))`
+- **After**: `onUpdateScale(max(0.3, newScale))`
 
-## Proposed Changes
+### 2. StickerView Scale Limit
+- **Before**: `onUpdateScale(max(0.3, min(4.0, newScale)))`
+- **After**: `onUpdateScale(max(0.3, newScale))`
 
-Remove the upper scale limit (currently 4.0×) for:
-1. **Text elements** in `TextElementView.swift`
-2. **Sticker elements** in `StickerView.swift`
+### Preserved Behavior
+- **Minimum scale of 0.3** remains to prevent elements from becoming too small to interact with
+- Pinch-to-zoom gesture behavior unchanged
+- Export quality for large elements preserved (rendering at scale)
 
-Keep the lower limit (0.3×) to prevent elements from becoming too small to interact with.
+## Impact
 
-## Scope
+- **Affected code**:
+  - **MODIFY**: `InstaBorderApp/Views/Components/TextElementView.swift` - Remove `min(4.0, ...)` constraint
+  - **MODIFY**: `InstaBorderApp/Views/Components/StickerView.swift` - Remove `min(4.0, ...)` constraint
 
-- **In scope**: Removing upper scale limit for text and sticker elements
-- **Out of scope**: Photo slot scaling (remains unchanged), canvas zoom limits
+- **No localization changes needed**
+- **No breaking changes**
+- **Performance**: Minimal impact, large elements may require slightly more memory during export
 
-## Files to Modify
+## Non-Goals
 
-| File | Change |
-|------|--------|
-| `InstaBorderApp/Views/Components/TextElementView.swift` | Remove `min(4.0, ...)` constraint |
-| `InstaBorderApp/Views/Components/StickerView.swift` | Remove `min(4.0, ...)` constraint |
-
-## Risk Assessment
-
-- **Low risk**: Simple constraint removal with no architectural impact
-- **Memory**: Large text is rendered as vector graphics (scalable), no memory concern
-- **UX**: Users can always scale back down if they go too large
+- ❌ Removing the minimum scale limit (0.3x preserved for usability)
+- ❌ Custom scale limit settings
+- ❌ Scale limit warnings or confirmations

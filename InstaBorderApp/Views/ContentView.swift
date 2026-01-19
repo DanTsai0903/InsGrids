@@ -10,18 +10,22 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Premium Dark Background
-                Color.black.ignoresSafeArea()
-                
-                // Subtle gradient accent
+                // iOS 26 Liquid Glass Background
+                ThemeColors.background.ignoresSafeArea()
+
+                // Subtle gradient accent with material
                 VStack {
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.15), Color.clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 300)
-                    .ignoresSafeArea()
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.2), Color.clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(height: 300)
+                        .ignoresSafeArea()
                     Spacer()
                 }
                 
@@ -56,55 +60,31 @@ struct ContentView: View {
                     PhotosPicker(selection: $selectedItems, matching: .images, photoLibrary: .shared()) {
                         HStack(spacing: 12) {
                             Image(systemName: "square.dashed")
-                                .font(.headline)
                             Text(NSLocalizedString("button.selectPhotos", comment: ""))
-                                .font(.headline)
                         }
-                        .foregroundColor(.black)
-                        .frame(width: 220, height: 56)
-                        .background(Color.white)
-                        .cornerRadius(28)
-                        .shadow(color: .white.opacity(0.2), radius: 20, x: 0, y: 10)
                     }
+                    .buttonStyle(.glassPrimary)
                     .onChange(of: selectedItems) { _, newItems in
                         loadImages(from: newItems)
                     }
-                    
+
                     // Freeform Grid Button
                     NavigationLink(destination: GridEditingView()) {
                         HStack(spacing: 12) {
                             Image(systemName: "square.grid.3x3")
-                                .font(.headline)
                             Text(NSLocalizedString("button.freeformGrid", comment: ""))
-                                .font(.headline)
                         }
-                        .foregroundColor(.white)
-                        .frame(width: 220, height: 56)
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(28)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 28)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
                     }
-                    
+                    .buttonStyle(.glassSecondary)
+
                     // Layout Button
                     NavigationLink(destination: LayoutTemplateSelectView()) {
                         HStack(spacing: 12) {
                             Image(systemName: "square.grid.2x2")
-                                .font(.headline)
                             Text(NSLocalizedString("button.layout", comment: ""))
-                                .font(.headline)
                         }
-                        .foregroundColor(.white)
-                        .frame(width: 220, height: 56)
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(28)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 28)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
                     }
+                    .buttonStyle(.glassSecondary)
                     
                     // Footer
                     Text(NSLocalizedString("footer.features", comment: ""))
@@ -119,12 +99,16 @@ struct ContentView: View {
             }
             .overlay {
                 if isLoadingPhotos {
-                    Color.black.opacity(0.7).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView().tint(.white).scaleEffect(1.3)
-                        Text(NSLocalizedString("status.icloudDownload", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.white)
+                    ZStack {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                        VStack(spacing: 12) {
+                            ProgressView().tint(.white).scaleEffect(1.3)
+                            Text(NSLocalizedString("status.icloudDownload", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                        }
                     }
                 }
             }

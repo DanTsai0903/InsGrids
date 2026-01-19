@@ -52,7 +52,12 @@ struct EmojiPickerView: View {
                                 .padding(8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .fill(selectedCategory == index ? Color.blue.opacity(0.2) : Color.clear)
+                                        .fill(selectedCategory == index ? Color.blue : .clear)
+                                        .opacity(selectedCategory == index ? 1 : 0)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(selectedCategory == index ? Color.blue : .clear, lineWidth: 2)
                                 )
                         }
                     }

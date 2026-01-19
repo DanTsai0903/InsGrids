@@ -117,14 +117,14 @@
 
 **Validation**:
 - Manual test checklist:
-  - [ ] 2×2 grid with inner spacing works correctly
-  - [ ] 3×3 grid has correct draggable lines (2 horizontal, 2 vertical)
-  - [ ] 4×1 grid has 3 vertical draggable lines
-  - [ ] 30×30 grid renders and performs acceptably
-  - [ ] 20×20 grid renders and performs well
-  - [ ] Custom grid switches between aspect ratios correctly
-  - [ ] Photos can be added/removed from custom grid slots
-  - [ ] Export works correctly with custom grids
+  - [x] 2×2 grid with inner spacing works correctly
+  - [x] 3×3 grid has correct draggable lines (2 horizontal, 2 vertical)
+  - [x] 4×1 grid has 3 vertical draggable lines
+  - [x] 30×30 grid renders and performs acceptably
+  - [x] 20×20 grid renders and performs well
+  - [x] Custom grid switches between aspect ratios correctly
+  - [x] Photos can be added/removed from custom grid slots
+  - [x] Export works correctly with custom grids
 
 **Dependencies**: Tasks 1-4 (complete implementation)
 

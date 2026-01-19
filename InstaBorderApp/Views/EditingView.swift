@@ -59,7 +59,7 @@ struct EditingView: View {
             .padding(.horizontal, 12)
             .padding(.top, 4)
             .padding(.bottom, 8)
-            .background(Color.black)
+            .background(.bar)
             
             // Photos Grid
             ScrollView {
@@ -83,8 +83,7 @@ struct EditingView: View {
                                     .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(8)
-                                    .background(Color.black.opacity(0.6))
-                                    .clipShape(Circle())
+                                    .background(.ultraThinMaterial, in: Circle())
                             }
                             .padding(8)
                         }
@@ -94,8 +93,8 @@ struct EditingView: View {
                     }
                 }
             }
-            .background(Color.black)
-            
+            .background(ThemeColors.background)
+
             // Bottom Controls
             VStack(spacing: 16) {
                 HStack {
@@ -147,18 +146,20 @@ struct EditingView: View {
                 }
             }
             .padding(.vertical, 16)
-            .background(Color.black)
+            .background(.bar)
         }
-        .background(Color.black)
+        .background(ThemeColors.background)
         .ignoresSafeArea(edges: .bottom)
         .navigationBarHidden(true)
         .sheet(isPresented: $showRatioSheet) {
             RatioSheet(currentRatio: $currentRatio) { applyChanges() }
                 .presentationDetents([.height(180)])
+                .presentationBackground(.regularMaterial)
         }
         .sheet(isPresented: $showColorSheet) {
             ColorSheet(currentColor: $currentColor) { applyChanges() }
                 .presentationDetents([.height(220)])
+                .presentationBackground(.regularMaterial)
         }
         .sheet(isPresented: $showPresetsSheet) {
             PresetsSheet(
@@ -175,6 +176,7 @@ struct EditingView: View {
                 }
             )
             .presentationDetents([.medium, .large])
+            .presentationBackground(.regularMaterial)
         }
         .fullScreenCover(isPresented: $showPhotoEditor) {
             if let original = viewModel.getOriginalImage(at: selectedImageIndex) {
@@ -200,12 +202,16 @@ struct EditingView: View {
         .overlay(
             Group {
                 if isSaving || viewModel.isProcessing {
-                    Color.black.opacity(0.7).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView().tint(.white).scaleEffect(1.3)
-                        Text(isSaving ? NSLocalizedString("status.saving", comment: "") : NSLocalizedString("status.processing", comment: ""))
-                            .font(.subheadline)
-                            .foregroundColor(.white)
+                    ZStack {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                        VStack(spacing: 12) {
+                            ProgressView().tint(.white).scaleEffect(1.3)
+                            Text(isSaving ? NSLocalizedString("status.saving", comment: "") : NSLocalizedString("status.processing", comment: ""))
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                        }
                     }
                 }
             }

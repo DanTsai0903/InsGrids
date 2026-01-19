@@ -77,16 +77,18 @@ struct LayoutEditorView: View {
             canvasView
             controlsView
         }
-        .background(Color.black)
+        .background(ThemeColors.background)
         .ignoresSafeArea(edges: .bottom)
         .navigationBarHidden(true)
         .sheet(isPresented: $showRatioSheet) {
             RatioSheet(currentRatio: $viewModel.config.aspectRatio) {}
                 .presentationDetents([.height(180)])
+                .presentationBackground(.regularMaterial)
         }
         .sheet(isPresented: $showColorSheet) {
             ColorSheet(currentColor: $viewModel.config.backgroundColor) {}
                 .presentationDetents([.height(220)])
+                .presentationBackground(.regularMaterial)
         }
         .sheet(isPresented: $showBorderSheet) {
             BorderSheet(
@@ -98,6 +100,7 @@ struct LayoutEditorView: View {
                 }
             )
             .presentationDetents([.height(280)])
+            .presentationBackground(.regularMaterial)
         }
         .overlay(savingOverlay)
         .alert(NSLocalizedString("alert.complete", comment: ""), isPresented: $showingSaveSuccess) {
@@ -167,26 +170,35 @@ struct LayoutEditorView: View {
                     showStickerPicker = false
                 }
             )
+            .presentationBackground(.regularMaterial)
         }
     }
 
     @ViewBuilder
     private var savingOverlay: some View {
         if isSaving {
-            Color.black.opacity(0.7).ignoresSafeArea()
-            VStack(spacing: 12) {
-                ProgressView().tint(.white).scaleEffect(1.3)
-                Text(NSLocalizedString("status.saving", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.white)
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView().tint(.white).scaleEffect(1.3)
+                    Text(NSLocalizedString("status.saving", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                }
             }
         } else if isLoadingPhoto {
-            Color.black.opacity(0.7).ignoresSafeArea()
-            VStack(spacing: 12) {
-                ProgressView().tint(.white).scaleEffect(1.3)
-                Text(NSLocalizedString("status.icloudDownload", comment: ""))
-                    .font(.subheadline)
-                    .foregroundColor(.white)
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView().tint(.white).scaleEffect(1.3)
+                    Text(NSLocalizedString("status.icloudDownload", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                }
             }
         }
     }
@@ -291,9 +303,9 @@ struct LayoutEditorView: View {
         .padding(.horizontal, 12)
         .padding(.top, 4)
         .padding(.bottom, 8)
-        .background(Color.black)
+        .background(.bar)
     }
-    
+
     private var canvasView: some View {
         GeometryReader { geometry in
             let canvasWidth = geometry.size.width - 40
@@ -316,7 +328,7 @@ struct LayoutEditorView: View {
             
             ZStack {
                 // Full area background for gesture capture
-                Color.black
+                ThemeColors.background
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onTapGesture {
                         activeSlotIndex = nil
@@ -416,9 +428,9 @@ struct LayoutEditorView: View {
                 }
             }
         }
-        .background(Color.black)
+        .background(ThemeColors.background)
     }
-    
+
     @ViewBuilder
     private func canvasContent(canvasSize: CGSize, contentSize: CGSize, effectiveScale: CGFloat) -> some View {
         let slotsToRender = viewModel.appliedSlots
@@ -667,9 +679,9 @@ struct LayoutEditorView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(Color.black)
+        .background(.bar)
     }
-    
+
     private var ratioLabel: String {
         let ratio = viewModel.config.aspectRatio
         if abs(ratio - LayoutConfiguration.ratio1x1) < 0.01 { return "1:1" }

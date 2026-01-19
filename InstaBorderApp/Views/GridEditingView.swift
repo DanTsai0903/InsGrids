@@ -201,6 +201,7 @@ struct GridEditingView: View {
                 viewModel.updateGridSize(rows: pickerRows, columns: pickerColumns)
             }
             .presentationDetents([.medium])
+            .presentationBackground(.regularMaterial)
         }
         // Image picker
         .photosPicker(
@@ -223,6 +224,7 @@ struct GridEditingView: View {
                 }
             )
             .presentationDetents([.medium])
+            .presentationBackground(.regularMaterial)
         }
 
         // Restore session alert
@@ -248,25 +250,33 @@ struct GridEditingView: View {
         } message: {
             Text(exportMessage)
         }
-        // Processing overlay
+        // Processing overlay with material
         .overlay {
             if viewModel.isProcessing {
-                Color.black.opacity(0.7).ignoresSafeArea()
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(.white)
-                    Text(NSLocalizedString("grid.exporting", comment: "Exporting tiles..."))
-                        .foregroundColor(.white)
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        Text(NSLocalizedString("grid.exporting", comment: "Exporting tiles..."))
+                            .foregroundColor(.white)
+                    }
                 }
             } else if isLoadingPhotos {
-                Color.black.opacity(0.7).ignoresSafeArea()
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(.white)
-                    Text(NSLocalizedString("status.icloudDownload", comment: ""))
-                        .foregroundColor(.white)
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        Text(NSLocalizedString("status.icloudDownload", comment: ""))
+                            .foregroundColor(.white)
+                    }
                 }
             }
         }
@@ -366,6 +376,7 @@ struct GridEditingView: View {
                     showStickerPicker = false
                 }
             )
+            .presentationBackground(.regularMaterial)
         }
     }
     
@@ -403,10 +414,11 @@ struct GridEditingView: View {
                 Text("\(viewModel.rows)×\(viewModel.columns)")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .lineLimit(1)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.gray.opacity(0.3))
-                    .cornerRadius(8)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
             }
             
             // Background color button
@@ -463,24 +475,25 @@ struct GridEditingView: View {
             }
             .disabled(!viewModel.canUndo)
             
-            // Export button
+            // Save button
             Button {
                 pendingDeleteImageId = nil
                 exportTiles()
             } label: {
-                Text(NSLocalizedString("grid.export", comment: "Export"))
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white)
-                    .cornerRadius(14)
+                Text(NSLocalizedString("button.save", comment: ""))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.blue)
+                    .cornerRadius(18)
             }
         }
         .padding(.horizontal, 12)
         .padding(.top, 4)
         .padding(.bottom, 8)
-        .background(Color.black)
+        .background(.bar)
     }
     
     // MARK: - Actions
@@ -627,7 +640,7 @@ struct ImageCropView: View {
                 .disabled(!isLayoutReady) // Disable until layout is ready
             }
             .padding()
-            .background(Color.black)
+            .background(.bar)
             
             Spacer()
             
@@ -709,7 +722,7 @@ struct ImageCropView: View {
                         .foregroundColor(.gray)
                 }
                 .padding(.horizontal, 20)
-                
+
                 HStack {
                     Text(String(format: "%.1f°", rotationAngle))
                         .font(.caption)
@@ -728,8 +741,8 @@ struct ImageCropView: View {
                 .padding(.horizontal, 20)
             }
             .padding(.vertical, 8)
-            .background(Color.black)
-            
+            .background(.bar)
+
             // Bottom Toolbar (Ratios)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
@@ -743,7 +756,7 @@ struct ImageCropView: View {
                 }
                 .padding()
             }
-            .background(Color.white.opacity(0.1))
+            .background(.ultraThinMaterial)
         }
         .background(Color.black.edgesIgnoringSafeArea(.all))
     }

@@ -55,15 +55,21 @@ struct TextEditorView: View {
             ZStack {
                 // Dark overlay background (canvas visible behind when using overlay presentation)
                 // Use solid black when eyedropper is active to hide live canvas and only show snapshot
-                Color.black.opacity(isEyedropperActive ? 1.0 : 0.7)
-                    .ignoresSafeArea()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        // Tap on background to dismiss keyboard and close color palette
-                        // This won't block highPriorityGesture on slider
-                        isFocusedBinding = false
-                        showColorPalette = false
+                Group {
+                    if isEyedropperActive {
+                        Color.black
+                    } else {
+                        Rectangle().fill(.ultraThinMaterial)
                     }
+                }
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // Tap on background to dismiss keyboard and close color palette
+                    // This won't block highPriorityGesture on slider
+                    isFocusedBinding = false
+                    showColorPalette = false
+                }
 
                 VStack(spacing: 0) {
                     // Top bar with Done button
@@ -180,7 +186,7 @@ struct TextEditorView: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.black.opacity(0.8))
+                                .fill(.regularMaterial)
                         )
                         .padding(.horizontal, 16)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -229,6 +235,7 @@ struct TextEditorView: View {
         }
         .sheet(isPresented: $showFontPicker) {
             FontPickerView(selectedFontFamily: $selectedFontFamily, selectedFontWeight: $selectedFontWeight)
+                .presentationBackground(.regularMaterial)
         }
         .onAppear {
             setupInitialState()
@@ -363,7 +370,7 @@ struct TextEditorView: View {
         .padding(.vertical, 15)
         .background(
             RoundedRectangle(cornerRadius: 30)
-                .fill(Color.black.opacity(0.6))
+                .fill(.regularMaterial)
         )
         .animation(.easeInOut(duration: 0.2), value: backgroundType)
     }
