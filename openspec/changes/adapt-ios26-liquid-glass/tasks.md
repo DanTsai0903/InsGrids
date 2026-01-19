@@ -35,11 +35,11 @@
 
 - [x] 3.1 Update `ColorPickerSheet` (in GridEditingView.swift):
   - [x] Add `.presentationBackground(.regularMaterial)`
-  - [ ] Update preset color circles styling
+  - [x] Update preset color circles styling
 
 - [x] 3.2 Update `GridDimensionPicker.swift`:
   - [x] Add material presentation background
-  - [ ] Update stepper/picker styling
+  - [x] Update stepper/picker styling (preset buttons now use `.ultraThinMaterial`)
 
 - [x] 3.3 Update `StickerPickerView.swift`:
   - [x] Add material presentation background
@@ -47,7 +47,7 @@
 
 - [x] 3.4 Update `FontPickerView.swift`:
   - [x] Add material presentation background (via TextEditorView)
-  - [ ] Update font list styling
+  - [x] Update font list styling (font weight buttons use `.ultraThinMaterial` when selected)
 
 - [x] 3.5 Update `PresetsSheet.swift`:
   - [x] Add material presentation background (via EditingView caller)
@@ -56,8 +56,8 @@
 - [x] 3.6 Update `EmojiPickerView.swift`:
   - [x] Update category tabs styling
 
-- [ ] 3.7 Update `CustomColorPaletteView.swift`:
-  - [ ] Update color swatch styling
+- [x] 3.7 Update `CustomColorPaletteView.swift`:
+  - [x] Update color swatch styling (eyedropper button uses `.ultraThinMaterial`)
 
 ## 4. Overlay Views
 
@@ -73,8 +73,8 @@
   - [x] Update editor panel backgrounds
   - [x] Update control button styling
 
-- [ ] 4.4 Update `EyedropperOverlayView.swift`:
-  - [ ] Update loupe/magnifier styling
+- [x] 4.4 Update `EyedropperOverlayView.swift`:
+  - [x] Update loupe/magnifier styling (instruction bar and cancel button use materials)
 
 ## 4.5. UI Consistency Improvements
 
@@ -110,5 +110,5 @@
 
 ## 7. Documentation
 
-- [ ] 7.1 Update CLAUDE.md with new styling conventions
+- [x] 7.1 Update CLAUDE.md with iOS 26 Liquid Glass styling conventions
 - [ ] 7.2 Archive this change after deployment

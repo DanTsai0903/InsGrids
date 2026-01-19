@@ -69,7 +69,7 @@ struct CustomColorPaletteView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
+                            .fill(.ultraThinMaterial)
                             .frame(width: 36, height: 36)
                         Image(systemName: "eyedropper")
                             .font(.system(size: 18))

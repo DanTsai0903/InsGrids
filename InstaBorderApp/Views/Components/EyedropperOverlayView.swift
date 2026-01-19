@@ -34,9 +34,9 @@ struct EyedropperOverlayView: View {
                         Text(NSLocalizedString("拖曳選擇顏色", comment: "Drag to pick color"))
                             .font(.headline)
                             .foregroundColor(.white)
-                        
+
                         Spacer()
-                        
+
                         Button {
                             onCancel()
                         } label: {
@@ -44,13 +44,12 @@ struct EyedropperOverlayView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(16)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                         }
                     }
                     .padding()
-                    .background(Color.black.opacity(0.5))
-                    
+                    .background(.regularMaterial)
+
                     Spacer()
                 }
             }

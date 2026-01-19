@@ -45,10 +45,15 @@ struct GridDimensionPicker: View {
                             .font(.system(size: 18, weight: .medium))
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(isSelected(preset.1, preset.2) ? Color.blue : Color.gray.opacity(0.2))
-                            )
+                            .background {
+                                if isSelected(preset.1, preset.2) {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.blue)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(.ultraThinMaterial)
+                                }
+                            }
                             .foregroundColor(isSelected(preset.1, preset.2) ? .white : .primary)
                     }
                 }

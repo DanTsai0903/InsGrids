@@ -86,3 +86,46 @@ Skip proposals for: bug fixes, typos, dependency updates, config changes.
 - **No external dependencies:** First-party Apple frameworks only.
 - **Privacy:** `.addOnly` photo permission. No cloud, no analytics.
 - **XcodeGen:** Never edit `.xcodeproj` directly—modify `project.yml` and regenerate.
+
+## iOS 26 Liquid Glass Styling Conventions
+
+The app follows iOS 26 Liquid Glass design system. When styling UI components:
+
+**Backgrounds:**
+- Use `ThemeColors.background` (semantic `Color(.systemBackground)`) instead of hardcoded colors
+- App enforces dark mode via `.preferredColorScheme(.dark)` in root `WindowGroup`
+
+**Materials:**
+- Use `.ultraThinMaterial` for overlays, buttons, and lightweight UI elements
+- Use `.regularMaterial` for sheets and prominent panels
+- Use `.bar` for toolbars and navigation bars
+- Avoid `Color.opacity()` for glass effects—use materials instead
+
+**Buttons:**
+- Apply `GlassPrimaryButtonStyle` for primary actions (blue fill)
+- Apply `GlassSecondaryButtonStyle` for secondary actions (material fill)
+- Apply `GlassToolbarButtonStyle` for toolbar buttons (compact material)
+- Apply `GlassIconButtonStyle` for icon-only buttons
+- Use `.fixedSize(horizontal: true, vertical: false)` to prevent text wrapping
+
+**Colors:**
+- Use semantic colors from `ThemeColors` enum where possible
+- Use system colors (`.blue`, `.primary`, `.secondary`) for consistency
+- Avoid hardcoded RGB values except for actual color swatches/pickers
+
+**ViewBuilder Pattern:**
+When mixing `Color` and `Material` types in conditional backgrounds, use ViewBuilder with if/else instead of ternary operators:
+
+```swift
+// ✅ Correct
+.background {
+    if isSelected {
+        RoundedRectangle(cornerRadius: 8).fill(Color.blue)
+    } else {
+        RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial)
+    }
+}
+
+// ❌ Incorrect (type mismatch)
+.background(isSelected ? Color.blue : .ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+```

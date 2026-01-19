@@ -144,10 +144,15 @@ struct FontPickerView: View {
                             }
                             .frame(width: 80)
                             .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(selectedFontWeight == weight.name ? Color.blue.opacity(0.15) : Color(.systemGray6))
-                            )
+                            .background {
+                                if selectedFontWeight == weight.name {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(.ultraThinMaterial)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color(.systemGray6))
+                                }
+                            }
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(selectedFontWeight == weight.name ? Color.blue : Color.clear, lineWidth: 2)
