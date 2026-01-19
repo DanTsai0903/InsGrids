@@ -34,7 +34,7 @@ class StickerManager: ObservableObject {
     }
     
     /// Search for custom stickers matching query
-    func searchCustomStickers(_ query: String) -> [String] {
+    func searchCustomStickers(_ query: String) -> [CustomSticker] {
         CustomStickerCategory.searchStickers(query)
     }
 }
