@@ -349,7 +349,7 @@ struct CustomStickerCategory: Identifiable {
                 CustomSticker(name: "009-cat", labels: ["cat", "animal", "pet", "feline", "kitty", "cute"]),
                 CustomSticker(name: "006-bird", labels: ["bird", "animal", "pet", "wildlife", "feathers", "fly"]),
                 CustomSticker(name: "011-pig", labels: ["pig", "animal", "pet", "farm", "pink", "cute"]),
-                CustomSticker(name: "008-hamster", labels: ["hamster", "animal", "pet", "rodent", "small", "cute"]),
+                CustomSticker(name: "pets-008-hamster", labels: ["hamster", "animal", "pet", "rodent", "small", "cute"]),
                 CustomSticker(name: "004-guinea-pig", labels: ["guinea pig", "animal", "pet", "rodent", "small", "cute"]),
                 CustomSticker(name: "005-bunny", labels: ["bunny", "rabbit", "animal", "pet", "ears", "cute"]),
                 CustomSticker(name: "019-parrot", labels: ["parrot", "bird", "animal", "pet", "colorful", "talk"]),
