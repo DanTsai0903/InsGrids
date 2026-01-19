@@ -737,14 +737,36 @@ extension LayoutTemplate {
         ]
     )
 
-    static let left1Middle2Right1 = LayoutTemplate(
-        id: "left1Middle2Right1",
-        name: "Left 1 + Middle 2 Vertical + Right 1",
+    static let left1RightTop2Bottom1 = LayoutTemplate(
+        id: "left1RightTop2Bottom1",
+        name: "Left 1 + Right Top 2 + Right Bottom 1",
         slots: [
-            .rectangle(CGRect(x: 0, y: 0, width: 1.0/3.0, height: 1)),
-            .rectangle(CGRect(x: 1.0/3.0, y: 0, width: 1.0/3.0, height: 0.5)),
-            .rectangle(CGRect(x: 1.0/3.0, y: 0.5, width: 1.0/3.0, height: 0.5)),
-            .rectangle(CGRect(x: 2.0/3.0, y: 0, width: 1.0/3.0, height: 1))
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 1)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.25, height: 0.5)),
+            .rectangle(CGRect(x: 0.75, y: 0, width: 0.25, height: 0.5)),
+            .rectangle(CGRect(x: 0.5, y: 0.5, width: 0.5, height: 0.5))
+        ]
+    )
+
+    static let top2Small1LargeBottom1 = LayoutTemplate(
+        id: "top2Small1LargeBottom1",
+        name: "Top 2 Small + 1 Large + Bottom 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.25, height: 0.4)),
+            .rectangle(CGRect(x: 0.25, y: 0, width: 0.25, height: 0.4)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.4)),
+            .rectangle(CGRect(x: 0, y: 0.4, width: 1, height: 0.6))
+        ]
+    )
+
+    static let left1Right3Stacked = LayoutTemplate(
+        id: "left1Right3Stacked",
+        name: "Left 1 + Right 3 Stacked",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.4, height: 1)),
+            .rectangle(CGRect(x: 0.4, y: 0, width: 0.6, height: 1.0/3.0)),
+            .rectangle(CGRect(x: 0.4, y: 1.0/3.0, width: 0.6, height: 1.0/3.0)),
+            .rectangle(CGRect(x: 0.4, y: 2.0/3.0, width: 0.6, height: 1.0/3.0))
         ]
     )
 
@@ -818,7 +840,7 @@ extension LayoutTemplate {
         grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1,
         grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2,
         left4MixedRight1, top2VertBottom3Horiz, left1Right4Mixed, grid5x1, top3HorizBottom2,
-        grid3x2, left1Middle2Right1, top3BottomLeft1Right2Vert, top2HorizBottom4Horiz, stack6Horiz, left1Right5Mixed, left2VertRight4Grid
+        grid3x2, left1RightTop2Bottom1, top2Small1LargeBottom1, left1Right3Stacked, top3BottomLeft1Right2Vert, top2HorizBottom4Horiz, stack6Horiz, left1Right5Mixed, left2VertRight4Grid
     ]
     
     /// Generates a custom uniform grid template with specified dimensions
