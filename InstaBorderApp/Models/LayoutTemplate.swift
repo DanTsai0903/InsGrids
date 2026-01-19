@@ -662,10 +662,48 @@ extension LayoutTemplate {
         ]
     )
 
+    // 5-slot templates
+    static let left4MixedRight1 = LayoutTemplate(
+        id: "left4MixedRight1",
+        name: "Left 4 Mixed + Right 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.33)),
+            .rectangle(CGRect(x: 0, y: 0.33, width: 0.25, height: 0.34)),
+            .rectangle(CGRect(x: 0.25, y: 0.33, width: 0.25, height: 0.34)),
+            .rectangle(CGRect(x: 0, y: 0.67, width: 0.5, height: 0.33)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 1))
+        ]
+    )
+
+    static let top2VertBottom3Horiz = LayoutTemplate(
+        id: "top2VertBottom3Horiz",
+        name: "Top 2 Vertical + Bottom 3 Horizontal",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.6)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.6)),
+            .rectangle(CGRect(x: 0, y: 0.6, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0.6, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0.6, width: 1.0/3.0, height: 0.4))
+        ]
+    )
+
+    static let left1Right4Mixed = LayoutTemplate(
+        id: "left1Right4Mixed",
+        name: "Left 1 + Right 4 Mixed",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 1)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.33)),
+            .rectangle(CGRect(x: 0.5, y: 0.33, width: 0.25, height: 0.34)),
+            .rectangle(CGRect(x: 0.75, y: 0.33, width: 0.25, height: 0.34)),
+            .rectangle(CGRect(x: 0.5, y: 0.67, width: 0.5, height: 0.33))
+        ]
+    )
+
     static let allTemplates: [LayoutTemplate] = [
         grid2x1, grid1x2, diagonal2,
         grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1,
-        grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2
+        grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2,
+        left4MixedRight1, top2VertBottom3Horiz, left1Right4Mixed
     ]
     
     /// Generates a custom uniform grid template with specified dimensions
