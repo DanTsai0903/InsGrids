@@ -822,25 +822,12 @@ extension LayoutTemplate {
         ]
     )
 
-    static let left2VertRight4Grid = LayoutTemplate(
-        id: "left2VertRight4Grid",
-        name: "Left 2 Vertical + Right 4 Grid",
-        slots: [
-            .rectangle(CGRect(x: 0, y: 0, width: 0.33, height: 0.5)),
-            .rectangle(CGRect(x: 0, y: 0.5, width: 0.33, height: 0.5)),
-            .rectangle(CGRect(x: 0.33, y: 0, width: 0.335, height: 0.5)),
-            .rectangle(CGRect(x: 0.665, y: 0, width: 0.335, height: 0.5)),
-            .rectangle(CGRect(x: 0.33, y: 0.5, width: 0.335, height: 0.5)),
-            .rectangle(CGRect(x: 0.665, y: 0.5, width: 0.335, height: 0.5))
-        ]
-    )
-
     static let allTemplates: [LayoutTemplate] = [
         grid2x1, grid1x2, diagonal2,
         grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1,
         grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2,
         left4MixedRight1, top2VertBottom3Horiz, left1Right4Mixed, grid5x1, top3HorizBottom2,
-        grid3x2, left1RightTop2Bottom1, top2Small1LargeBottom1, left1Right3Stacked, top3BottomLeft1Right2Vert, top2HorizBottom4Horiz, stack6Horiz, left1Right5Mixed, left2VertRight4Grid
+        grid3x2, left1RightTop2Bottom1, top2Small1LargeBottom1, left1Right3Stacked, top3BottomLeft1Right2Vert, top2HorizBottom4Horiz, stack6Horiz, left1Right5Mixed
     ]
     
     /// Generates a custom uniform grid template with specified dimensions
