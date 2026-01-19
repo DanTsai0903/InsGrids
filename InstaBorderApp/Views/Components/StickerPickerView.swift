@@ -160,8 +160,7 @@ struct StickerPickerView: View {
                                 Text(category.name.capitalized)
                                     .font(.headline)
                                     .padding(.horizontal)
-                                
-                                customStickerGrid(stickers: category.stickers)
+                                                                customStickerGrid(stickers: category.stickers)
                             }
                             .padding(.vertical, 8)
                         }
@@ -182,15 +181,15 @@ struct StickerPickerView: View {
         }
     }
     
-    private func customStickerGrid(stickers: [String]) -> some View {
+    private func customStickerGrid(stickers: [CustomSticker]) -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
-            ForEach(stickers, id: \.self) { assetName in
+            ForEach(stickers) { sticker in
                 Button {
-                    let sticker = StickerElement.customSticker(assetName, at: canvasCenter)
-                    onSelect(sticker)
+                    let stickerElement = StickerElement.customSticker(sticker.name, at: canvasCenter)
+                    onSelect(stickerElement)
                     // Parent controls dismissal
                 } label: {
-                    Image(assetName)
+                    Image(sticker.name)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 50, height: 50)

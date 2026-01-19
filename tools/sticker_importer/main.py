@@ -117,8 +117,11 @@ def generate_label(image_path: Path, api_key: Optional[str] = None) -> list[str]
         # Generate labels
         response = client.models.generate_content(
             model="gemini-2.0-flash-exp",
+            config=GenerateContentConfig(
+                system_instruction="You are a helpful assistant that generates keywords for stickers. Provide at least 5 relevant keywords for each image."
+            ),
             contents=[
-                "Describe this sticker image with 3-5 relevant keywords, separated by commas. Only return the keywords, nothing else.",
+                "Describe this sticker image with 5-8 relevant keywords, separated by commas. Only return the keywords, nothing else. Focus on the object, style, and mood.",
                 uploaded_file
             ]
         )
@@ -129,6 +132,11 @@ def generate_label(image_path: Path, api_key: Optional[str] = None) -> list[str]
         keywords = response.text.strip().split(",")
         return [k.strip().lower() for k in keywords if k.strip()]
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+             console.print(f"[red]Quota exceeded (429). Disabling AI labeling for remaining stickers.[/red]")
+             return ["__QUOTA_EXCEEDED__"]
+        
         console.print(f"[yellow]Warning: AI labeling failed for {image_path.name}: {e}[/yellow]")
         return []
 
@@ -154,19 +162,29 @@ def update_swift_file(categories: dict[str, list[str]]):
     # Parse existing categories
     existing_categories = {}
     category_pattern = r'CustomStickerCategory\(\s*name:\s*"([^"]+)",\s*localizedKey:\s*"([^"]+)",\s*stickers:\s*\[(.*?)\]'
+    
+    # CustomSticker(name: "...", labels: [...])
+    sticker_pattern = r'CustomSticker\(name:\s*"([^"]+)",\s*labels:\s*\[(.*?)\]\)'
+    
     for cat_match in re.finditer(category_pattern, existing_content, re.DOTALL):
         cat_name = cat_match.group(1)
         stickers_str = cat_match.group(3)
-        stickers = [s.strip().strip('"') for s in stickers_str.split(",") if s.strip()]
+        
+        stickers = []
+        for s_match in re.finditer(sticker_pattern, stickers_str, re.DOTALL):
+            s_name = s_match.group(1)
+            s_labels = [l.strip().strip('"') for l in s_match.group(2).split(",") if l.strip()]
+            stickers.append({"name": s_name, "labels": s_labels})
+            
         existing_categories[cat_name] = stickers
     
     # Merge with new categories
     for cat_name, new_stickers in categories.items():
         if cat_name in existing_categories:
             # Append to existing, avoiding duplicates
-            existing_set = set(existing_categories[cat_name])
+            existing_names = {s["name"] for s in existing_categories[cat_name]}
             for sticker in new_stickers:
-                if sticker not in existing_set:
+                if sticker["name"] not in existing_names:
                     existing_categories[cat_name].append(sticker)
         else:
             # New category
@@ -175,12 +193,19 @@ def update_swift_file(categories: dict[str, list[str]]):
     # Generate new array content
     new_entries = []
     for cat_name, stickers in sorted(existing_categories.items()):
-        sticker_list = ", ".join(f'"{s}"' for s in stickers)
+        sticker_objs = []
+        for s in stickers:
+            label_list = ", ".join(f'"{l}"' for l in s["labels"])
+            sticker_objs.append(f'CustomSticker(name: "{s["name"]}", labels: [{label_list}])')
+        
+        sticker_list_str = ",\n                ".join(sticker_objs)
         localized_key = f"sticker.category.{cat_name.lower().replace(' ', '')}"
         entry = f'''        CustomStickerCategory(
             name: "{cat_name}",
             localizedKey: "{localized_key}",
-            stickers: [{sticker_list}]
+            stickers: [
+                {sticker_list_str}
+            ]
         )'''
         new_entries.append(entry)
     
@@ -244,13 +269,18 @@ def import_stickers(
             
             # Create imageset
             create_imageset(sticker_name, image_file, category_folder, format_type)
-            stickers.append(sticker_name)
             
             # AI labeling
+            labels = []
             if ai_label:
                 labels = generate_label(image_file, api_key)
-                if labels:
+                if labels and labels[0] == "__QUOTA_EXCEEDED__":
+                    ai_label = False
+                    labels = []
+                elif labels:
                     console.print(f"  [dim]{sticker_name}: {', '.join(labels)}[/dim]")
+            
+            stickers.append({"name": sticker_name, "labels": labels})
         
         categories_data[category_name] = stickers
         console.print(f"[green]✓[/green] Imported {len(stickers)} stickers")
