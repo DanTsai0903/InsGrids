@@ -699,11 +699,126 @@ extension LayoutTemplate {
         ]
     )
 
+    static let grid5x1 = LayoutTemplate(
+        id: "grid5x1",
+        name: "5 Vertical Columns",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.2, height: 1)),
+            .rectangle(CGRect(x: 0.2, y: 0, width: 0.2, height: 1)),
+            .rectangle(CGRect(x: 0.4, y: 0, width: 0.2, height: 1)),
+            .rectangle(CGRect(x: 0.6, y: 0, width: 0.2, height: 1)),
+            .rectangle(CGRect(x: 0.8, y: 0, width: 0.2, height: 1))
+        ]
+    )
+
+    static let top3HorizBottom2 = LayoutTemplate(
+        id: "top3HorizBottom2",
+        name: "Top 3 Horizontal + Bottom 2",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 0, y: 0.4, width: 0.5, height: 0.6)),
+            .rectangle(CGRect(x: 0.5, y: 0.4, width: 0.5, height: 0.6))
+        ]
+    )
+
+    // 6-slot templates
+    static let grid3x2 = LayoutTemplate(
+        id: "grid3x2",
+        name: "3x2 Grid",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0.5, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0.5, width: 1.0/3.0, height: 0.5))
+        ]
+    )
+
+    static let left1Middle2Right1 = LayoutTemplate(
+        id: "left1Middle2Right1",
+        name: "Left 1 + Middle 2 Vertical + Right 1",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1.0/3.0, height: 1)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0.5, width: 1.0/3.0, height: 0.5)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0, width: 1.0/3.0, height: 1))
+        ]
+    )
+
+    static let top3BottomLeft1Right2Vert = LayoutTemplate(
+        id: "top3BottomLeft1Right2Vert",
+        name: "Top 3 + Bottom Left 1 + Bottom Right 2",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 1.0/3.0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 2.0/3.0, y: 0, width: 1.0/3.0, height: 0.4)),
+            .rectangle(CGRect(x: 0, y: 0.4, width: 0.5, height: 0.6)),
+            .rectangle(CGRect(x: 0.5, y: 0.4, width: 0.5, height: 0.3)),
+            .rectangle(CGRect(x: 0.5, y: 0.7, width: 0.5, height: 0.3))
+        ]
+    )
+
+    static let top2HorizBottom4Horiz = LayoutTemplate(
+        id: "top2HorizBottom4Horiz",
+        name: "Top 2 Horizontal + Bottom 4 Horizontal",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 0.4)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.4)),
+            .rectangle(CGRect(x: 0, y: 0.4, width: 0.25, height: 0.6)),
+            .rectangle(CGRect(x: 0.25, y: 0.4, width: 0.25, height: 0.6)),
+            .rectangle(CGRect(x: 0.5, y: 0.4, width: 0.25, height: 0.6)),
+            .rectangle(CGRect(x: 0.75, y: 0.4, width: 0.25, height: 0.6))
+        ]
+    )
+
+    static let stack6Horiz = LayoutTemplate(
+        id: "stack6Horiz",
+        name: "6 Horizontal Rows",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 1, height: 1.0/6.0)),
+            .rectangle(CGRect(x: 0, y: 1.0/6.0, width: 1, height: 1.0/6.0)),
+            .rectangle(CGRect(x: 0, y: 2.0/6.0, width: 1, height: 1.0/6.0)),
+            .rectangle(CGRect(x: 0, y: 3.0/6.0, width: 1, height: 1.0/6.0)),
+            .rectangle(CGRect(x: 0, y: 4.0/6.0, width: 1, height: 1.0/6.0)),
+            .rectangle(CGRect(x: 0, y: 5.0/6.0, width: 1, height: 1.0/6.0))
+        ]
+    )
+
+    static let left1Right5Mixed = LayoutTemplate(
+        id: "left1Right5Mixed",
+        name: "Left 1 + Right 5 Mixed",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.5, height: 1)),
+            .rectangle(CGRect(x: 0.5, y: 0, width: 0.5, height: 0.25)),
+            .rectangle(CGRect(x: 0.5, y: 0.25, width: 0.5, height: 0.25)),
+            .rectangle(CGRect(x: 0.5, y: 0.5, width: 1.0/6.0, height: 0.5)),
+            .rectangle(CGRect(x: 0.5 + 1.0/6.0, y: 0.5, width: 1.0/6.0, height: 0.5)),
+            .rectangle(CGRect(x: 0.5 + 2.0/6.0, y: 0.5, width: 1.0/6.0, height: 0.5))
+        ]
+    )
+
+    static let left2VertRight4Grid = LayoutTemplate(
+        id: "left2VertRight4Grid",
+        name: "Left 2 Vertical + Right 4 Grid",
+        slots: [
+            .rectangle(CGRect(x: 0, y: 0, width: 0.33, height: 0.5)),
+            .rectangle(CGRect(x: 0, y: 0.5, width: 0.33, height: 0.5)),
+            .rectangle(CGRect(x: 0.33, y: 0, width: 0.335, height: 0.5)),
+            .rectangle(CGRect(x: 0.665, y: 0, width: 0.335, height: 0.5)),
+            .rectangle(CGRect(x: 0.33, y: 0.5, width: 0.335, height: 0.5)),
+            .rectangle(CGRect(x: 0.665, y: 0.5, width: 0.335, height: 0.5))
+        ]
+    )
+
     static let allTemplates: [LayoutTemplate] = [
         grid2x1, grid1x2, diagonal2,
         grid3x1, grid1x3, leftVert2Right1, left1RightVert2, top1BottomHoriz2, topHoriz2Bottom1,
         grid2x2, top1Bottom3Horiz, left1Right3Mixed, left3VertRight1, left2NarrowRight2Wide, asymmetric2x2,
-        left4MixedRight1, top2VertBottom3Horiz, left1Right4Mixed
+        left4MixedRight1, top2VertBottom3Horiz, left1Right4Mixed, grid5x1, top3HorizBottom2,
+        grid3x2, left1Middle2Right1, top3BottomLeft1Right2Vert, top2HorizBottom4Horiz, stack6Horiz, left1Right5Mixed, left2VertRight4Grid
     ]
     
     /// Generates a custom uniform grid template with specified dimensions
