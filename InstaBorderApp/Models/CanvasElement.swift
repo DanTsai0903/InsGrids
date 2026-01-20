@@ -185,7 +185,7 @@ struct StickerElement: Identifiable {
     var type: StickerType
     var content: String  // SF Symbol name or custom sticker asset name
     var color: Color? = nil  // Only used for SF Symbols
-    var size: CGFloat = 64  // Base size before scale
+    var size: CGFloat = 96  // Base size before scale (1.5x of original 64)
 
     // Transform properties
     var position: CGPoint = .zero

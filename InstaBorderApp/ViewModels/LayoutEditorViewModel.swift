@@ -248,7 +248,10 @@ class LayoutEditorViewModel: ObservableObject {
     
     func addStickerElement(_ element: StickerElement) {
         saveSnapshot()
-        stickerElements.append(element)
+        var newElement = element
+        newElement.zIndex = nextZIndex
+        nextZIndex += 1
+        stickerElements.append(newElement)
     }
     
     func removeStickerElement(_ id: UUID) {

@@ -5,8 +5,8 @@ import SwiftUI
 // This file provides additional convenience extensions
 
 extension StickerElement {
-    /// Default sticker size
-    static let defaultSize: CGFloat = 64
+    /// Default sticker size (1.5x of original 64)
+    static let defaultSize: CGFloat = 96
     
     /// Minimum scale (0.3x)
     static let minScale: CGFloat = 0.3

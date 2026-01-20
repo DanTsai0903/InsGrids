@@ -2,18 +2,19 @@
 
 **Create Perfect Aspect Ratios for Your Photos** - A simple and elegant iOS app for adding customizable borders to your photos, perfect for Instagram and social media.
 
-## 📢 What's New in v3.2.0
+## 📢 What's New in v3.2.2
 
-- **Custom Sticker Categories**: Browse 700+ stickers organized into intuitive themed collections
-- **Sticker Import Automation**: Built-in tools for managing and importing custom sticker packs
-- **Enhanced Memory Management**: Improved cache management prevents memory accumulation
-- **iOS 26 Liquid Glass Design**: Modern, fluid UI that integrates seamlessly with iOS 26
+- **Improved Sticker Selection**: Selection rectangle now properly fits sticker dimensions and scales with the sticker
+- **Delete Button UX**: Delete button now appears at the top-right corner of the selection rectangle instead of floating in the center
+- **Larger Default Stickers**: Stickers now appear 1.5x larger by default for better visibility
+- **Sticker Layering**: New stickers are now placed on the top layer automatically
+- **Better Focus Management**: Sticker selection clears when interacting with other elements
 
-See the full [Release Notes](https://github.com/DanTsai0903/InsGrids/releases/tag/v3.2.0).
+See the full [Release Notes](https://github.com/DanTsai0903/InsGrids/releases/tag/v3.2.2).
 
 ## ✨ Features
 
-- **Layout Templates**: Instagram Layout-style collages with predefined templates (2-4 photos). Customize borders, spacing, corner radius, aspect ratio, and background color.
+- **Layout Templates**: Instagram Layout-style collages with 28 predefined templates (2-6 photos). Customize borders, spacing, corner radius, aspect ratio, and background color.
 - **Freeform Grid Layout**: Create Instagram aesthetics by splitting images across NxM grids (1x2, 2x3, 3x3, up to 6x6).
 - **Text Tool**: Add customizable text overlays to your compositions with full font, size, color, and positioning control.
 - **Sticker Library**: Extensive collection of 700+ stickers organized into themed categories (Animals, Nature, Food, Emojis, etc.) for creative expression.

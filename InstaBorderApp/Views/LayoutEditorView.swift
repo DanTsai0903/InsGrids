@@ -332,6 +332,7 @@ struct LayoutEditorView: View {
                     .onTapGesture {
                         activeSlotIndex = nil
                         showActionButtons = false
+                        viewModel.deselectElement()
                     }
                 
                 ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -442,6 +443,7 @@ struct LayoutEditorView: View {
                 .onTapGesture {
                     activeSlotIndex = nil
                     showActionButtons = false
+                    viewModel.deselectElement()
                 }
                 .simultaneousGesture(
                     MagnificationGesture()
@@ -472,6 +474,7 @@ struct LayoutEditorView: View {
                         isSwitchSource: isSwitchMode && switchSourceSlotIndex == index,
                         isSwitchMode: isSwitchMode,
                         onTap: {
+                            viewModel.deselectElement()  // Deselect stickers when tapping on slots
                             if isSwitchMode, let sourceIndex = switchSourceSlotIndex {
                                 // In switch mode: swap photos with animation
                                 if index != sourceIndex {
@@ -494,6 +497,7 @@ struct LayoutEditorView: View {
                             // Dismiss action buttons on drag, keep drag handles visible
                             showActionButtons = false
                             activeSlotIndex = index
+                            viewModel.deselectElement()
                             viewModel.saveSnapshot()
                         },
                         onUpdate: { scale, offset in
@@ -503,6 +507,7 @@ struct LayoutEditorView: View {
                             // Long-press shows action buttons
                             activeSlotIndex = index
                             showActionButtons = true
+                            viewModel.deselectElement()
                         },
                         onAddPhoto: {
                             slotToAddPhoto = index
@@ -571,30 +576,12 @@ struct LayoutEditorView: View {
                         },
                         onUpdateRotation: { newRotation in
                             viewModel.updateStickerRotation(element.id, rotation: newRotation)
+                        },
+                        onDelete: {
+                            viewModel.removeStickerElement(element.id)
                         }
                     )
                     .zIndex(Double(element.zIndex))
-                }
-
-                // Delete button for selected sticker elements only
-                if let elementId = viewModel.selectedElementId {
-                    let isStickerElement = viewModel.stickerElements.contains { $0.id == elementId }
-                    
-                    if isStickerElement {
-                        Button {
-                            let generator = UINotificationFeedbackGenerator()
-                            generator.notificationOccurred(.success)
-                            viewModel.removeStickerElement(elementId)
-                        } label: {
-                            ZStack {
-                                Circle().fill(Color.white).frame(width: 70, height: 70)
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.red)
-                            }
-                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
-                        }
-                    }
                 }
             }
             .frame(width: contentSize.width, height: contentSize.height)

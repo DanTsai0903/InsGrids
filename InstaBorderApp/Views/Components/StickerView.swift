@@ -1,40 +1,98 @@
 import SwiftUI
+import UIKit
 
 /// View for rendering a sticker element on the canvas
 struct StickerView: View {
     let element: StickerElement
     let isSelected: Bool
-    
-    var body: some View {
-        Group {
-            switch element.type {
-            case .emoji:
-                // Legacy support for backward compatibility
-                Text(element.content)
-                    .font(.system(size: element.size))
-            case .sfSymbol:
-                Image(systemName: element.content)
-                    .font(.system(size: element.size))
-                    .foregroundColor(element.color ?? .primary)
-            case .customSticker:
-                // Custom sticker from Assets.xcassets
-                Image(element.content)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: element.size, height: element.size)
-            }
+    var onDelete: (() -> Void)? = nil
+
+    /// Calculate the actual frame size for custom stickers based on image aspect ratio
+    private var customStickerSize: CGSize {
+        guard element.type == .customSticker,
+              let uiImage = UIImage(named: element.content) else {
+            return CGSize(width: element.size, height: element.size)
         }
-        .scaleEffect(element.scale)
-        .rotationEffect(element.rotation)
-        .overlay(selectionOverlay)
+
+        let imageAspect = uiImage.size.width / uiImage.size.height
+
+        if imageAspect > 1 {
+            // Wider than tall - width is the constraining dimension
+            return CGSize(width: element.size, height: element.size / imageAspect)
+        } else {
+            // Taller than wide - height is the constraining dimension
+            return CGSize(width: element.size * imageAspect, height: element.size)
+        }
     }
-    
+
+    var body: some View {
+        stickerContent
+            .overlay(selectionOverlay)
+            .scaleEffect(element.scale)
+            .rotationEffect(element.rotation)
+    }
+
+    @ViewBuilder
+    private var stickerContent: some View {
+        switch element.type {
+        case .emoji:
+            // Legacy support for backward compatibility
+            Text(element.content)
+                .font(.system(size: element.size))
+        case .sfSymbol:
+            Image(systemName: element.content)
+                .font(.system(size: element.size))
+                .foregroundColor(element.color ?? .primary)
+        case .customSticker:
+            // Custom sticker from Assets.xcassets with proper aspect ratio
+            let size = customStickerSize
+            Image(element.content)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size.width, height: size.height)
+        }
+    }
+
     @ViewBuilder
     private var selectionOverlay: some View {
         if isSelected {
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.blue, lineWidth: 2)
-                .padding(-8)
+            GeometryReader { geometry in
+                let padding: CGFloat = 8
+                let deleteButtonSize: CGFloat = 24
+                // Scale-adjusted button size to keep it visually consistent
+                let adjustedButtonSize = deleteButtonSize / element.scale
+
+                ZStack(alignment: .topTrailing) {
+                    // Selection rectangle that fits the sticker
+                    RoundedRectangle(cornerRadius: 4 / element.scale)
+                        .stroke(Color.blue, lineWidth: 2 / element.scale)
+                        .frame(width: geometry.size.width + padding * 2 / element.scale,
+                               height: geometry.size.height + padding * 2 / element.scale)
+                        .position(x: geometry.size.width / 2,
+                                  y: geometry.size.height / 2)
+
+                    // Delete button at top-right corner
+                    if let onDelete = onDelete {
+                        Button {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.success)
+                            onDelete()
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: adjustedButtonSize, height: adjustedButtonSize)
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: adjustedButtonSize))
+                                    .foregroundColor(.red)
+                            }
+                            .shadow(color: .black.opacity(0.3), radius: 2 / element.scale, x: 0, y: 1 / element.scale)
+                        }
+                        .position(x: geometry.size.width + padding / element.scale,
+                                  y: -padding / element.scale)
+                    }
+                }
+            }
         }
     }
 }
@@ -49,14 +107,15 @@ struct StickerElementView: View {
     var onUpdatePosition: (CGPoint) -> Void
     var onUpdateScale: (CGFloat) -> Void
     var onUpdateRotation: (Angle) -> Void
-    
+    var onDelete: (() -> Void)? = nil
+
     @State private var dragOffset: CGSize = .zero
     @GestureState private var gestureScale: CGFloat = 1.0
     @State private var gestureRotationRaw: Angle = .zero
     @State private var hasBeenBroughtToFront = false
-    
+
     var body: some View {
-        StickerView(element: element, isSelected: isSelected)
+        StickerView(element: element, isSelected: isSelected, onDelete: onDelete)
             .scaleEffect(gestureScale)  // Apply live gesture scale
             .rotationEffect(gestureRotationRaw)  // Apply live gesture rotation
             .position(

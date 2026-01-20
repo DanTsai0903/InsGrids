@@ -228,7 +228,10 @@ class GridViewModel: ObservableObject {
     /// Add sticker element to canvas
     func addStickerElement(_ element: StickerElement) {
         saveSnapshot()
-        stickerElements.append(element)
+        var newElement = element
+        newElement.zIndex = nextZIndex
+        nextZIndex += 1
+        stickerElements.append(newElement)
     }
     
     /// Remove sticker element by ID

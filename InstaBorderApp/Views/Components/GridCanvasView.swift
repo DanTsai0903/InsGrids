@@ -87,6 +87,7 @@ struct FreeformCanvasView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onTapGesture {
                         pendingDeleteImageId = nil
+                        selectedElementId = nil
                     }
                 
                 ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -102,6 +103,7 @@ struct FreeformCanvasView: View {
                     DragGesture(minimumDistance: 1)
                         .onChanged { _ in
                             pendingDeleteImageId = nil
+                            selectedElementId = nil
                         }
                 )
                 
@@ -154,26 +156,6 @@ struct FreeformCanvasView: View {
                     }
                 }
                 
-                // Delete button for selected sticker elements only
-                if let elementId = selectedElementId {
-                    let isStickerElement = stickerElements.contains { $0.id == elementId }
-                    
-                    if isStickerElement {
-                        Button {
-                            let generator = UINotificationFeedbackGenerator()
-                            generator.notificationOccurred(.success)
-                            onDeleteSticker?(elementId)
-                        } label: {
-                            ZStack {
-                                Circle().fill(Color.white).frame(width: 70, height: 70)
-                                Image(systemName: "trash.fill")
-                                    .font(.system(size: 30, weight: .bold))
-                                    .foregroundColor(.red)
-                            }
-                            .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
-                        }
-                    }
-                }
             }
         }
     }
@@ -210,6 +192,7 @@ struct FreeformCanvasView: View {
                     canvasSize: CGSize(width: canvasSize.width, height: gridHeight),
                     onManipulate: {
                         pendingDeleteImageId = nil
+                        selectedElementId = nil
                         onImageManipulationStart?()
                         onBringToFront(canvasImage.id)
                     },
@@ -230,6 +213,7 @@ struct FreeformCanvasView: View {
                     },
                     onLongPress: {
                         pendingDeleteImageId = canvasImage.id
+                        selectedElementId = nil
                     }
                 )
                 .zIndex(Double(canvasImage.zIndex))
@@ -288,6 +272,9 @@ struct FreeformCanvasView: View {
                     },
                     onUpdateRotation: { newRotation in
                         onStickerRotationUpdate?(element.id, newRotation)
+                    },
+                    onDelete: {
+                        onDeleteSticker?(element.id)
                     }
                 )
                 .zIndex(Double(element.zIndex))
