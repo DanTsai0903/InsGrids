@@ -10,4 +10,6 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "rich>=14.2.0",
     "typer>=0.21.1",
+    "imagehash>=4.3.1",
+    "numpy>=1.26.0",
 ]

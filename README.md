@@ -144,45 +144,84 @@ The app automatically follows your device's language settings.
 
 ## 🏗 Architecture
 
+### Project Structure
+
 ```
 InsGrids/
-├── InstaBorderApp/
-│   ├── Models/
-│   │   ├── CanvasImage.swift
-│   │   ├── CanvasElement.swift (Text & Sticker support)
-│   │   ├── GridAutoSaveConfig.swift
-│   │   ├── GridLayout.swift
-│   │   ├── GridProcessor.swift
-│   │   ├── LayoutTemplate.swift
+├── InstaBorderApp/                      # Main iOS application
+│   ├── Models/                          # Data models and business logic
+│   │   ├── BorderConfiguration.swift
+│   │   ├── CanvasElement.swift         # Text & Sticker canvas elements
+│   │   ├── CustomStickerCategory.swift # 700+ stickers organized by categories
+│   │   ├── DraggableLine.swift
+│   │   ├── FontFamily.swift
+│   │   ├── IconLibrary.swift
+│   │   ├── ImageProcessor.swift
 │   │   ├── LayoutConfiguration.swift
-│   │   ├── StickerManager.swift
-│   │   └── CustomStickerCategory.swift
-│   ├── ViewModels/
+│   │   ├── LayoutTemplate.swift        # Predefined and custom grid templates
+│   │   ├── PhotoAdjustments.swift
+│   │   ├── Preset.swift
+│   │   ├── StickerCategory.swift
+│   │   ├── StickerElement.swift
+│   │   └── StickerManager.swift
+│   ├── ViewModels/                      # MVVM view models
 │   │   ├── GridViewModel.swift
-│   │   └── LayoutEditorViewModel.swift
-│   ├── Views/
-│   │   ├── ContentView.swift
-│   │   ├── GridEditingView.swift (Contains ImageCropView)
+│   │   ├── LayoutEditorViewModel.swift
+│   │   ├── PhotoEditorViewModel.swift
+│   │   └── PresetManager.swift
+│   ├── Views/                           # SwiftUI views
+│   │   ├── ContentView.swift           # Root view
+│   │   ├── EditingView.swift
+│   │   ├── GridEditingView.swift       # Main grid editing canvas
+│   │   ├── LayoutEditorView.swift      # Layout template editor
 │   │   ├── LayoutTemplateSelectView.swift
-│   │   ├── LayoutEditorView.swift
-│   │   ├── Components/
-│   │   │   ├── FreeformCanvasView.swift
-│   │   │   ├── GridCanvasView.swift
-│   │   │   ├── LayoutPhotoPickerView.swift
-│   │   │   ├── StickerPickerView.swift
-│   │   │   └── StickerView.swift
-│   ├── Utilities/
+│   │   └── Components/                 # Reusable UI components
+│   │       ├── AspectRatioSlider.swift
+│   │       ├── ColorPickerView.swift
+│   │       ├── CustomColorPaletteView.swift
+│   │       ├── CustomGridInputSheet.swift
+│   │       ├── DraggableLinesOverlay.swift
+│   │       ├── EmojiPickerView.swift
+│   │       ├── EyedropperOverlayView.swift
+│   │       ├── FontPickerView.swift
+│   │       ├── GridCanvasView.swift
+│   │       ├── GridDimensionPicker.swift
+│   │       ├── LayoutPhotoPickerView.swift
+│   │       ├── PhotoEditorView.swift
+│   │       ├── PresetsSheet.swift
+│   │       ├── StickerPickerView.swift
+│   │       ├── StickerView.swift
+│   │       ├── TextEditorView.swift
+│   │       └── TextElementView.swift
+│   ├── Utilities/                       # Helper utilities
 │   │   ├── ImageExporter.swift
 │   │   └── PhotoEditorEngine.swift
-│   ├── en.lproj/
-│   ├── zh-Hant.lproj/
+│   ├── Styles/                          # Reusable styling components
+│   ├── Resources/                       # App resources and assets
+│   ├── en.lproj/                        # English localization
+│   ├── zh-Hant.lproj/                   # Traditional Chinese localization
 │   └── Assets.xcassets/
-│       └── Stickers/ (700+ themed stickers)
-├── tools/
-│   └── import-stickers.sh (Automation scripts)
-├── project.yml
-└── generate_ipa.sh
+│       └── Stickers/                   # 700+ themed stickers
+├── openspec/                            # OpenSpec workflow for structured development
+│   ├── project.md                       # Project context and conventions
+│   ├── specs/                           # Feature specifications
+│   └── changes/                         # Individual change proposals
+├── tools/                               # Development automation tools
+│   └── sticker_importer/               # Python-based sticker import automation
+├── agents/                              # AI agent workflows and outputs
+├── .agent/workflows/                    # Development workflow definitions
+├── project.yml                          # XcodeGen project configuration
+├── generate_ipa.sh                      # IPA build script for deployment
+└── import-stickers.sh                   # Sticker import wrapper script
 ```
+
+### Architecture Pattern
+
+The app follows a **MVVM (Model-View-ViewModel)** architecture:
+
+- **Models**: Data structures and business logic (e.g., `LayoutTemplate`, `CustomStickerCategory`)
+- **ViewModels**: Observable state management using Combine framework
+- **Views**: SwiftUI declarative UI with reusable components
 
 ## 🚀 Technical Highlights
 
@@ -191,6 +230,33 @@ InsGrids/
 - **Tiled Rendering**: Exports are processed in background threads using tiled rendering. High-res assets are dynamically loaded and released for each tile to strictly control memory usage (OOM prevention).
 - **Auto-Save System**: Robust state persistence using file system storage for images and UserDefaults for metadata, surviving app termination.
 - **Safe Layout**: Advanced geometry calculations for crop and canvas management.
+
+## 🔧 Development Workflow
+
+This project uses a structured development approach with **OpenSpec** workflow for managing changes:
+
+### OpenSpec Process
+
+1. **Proposal Phase** (`/openspec-proposal`): Create a structured change proposal with goals, requirements, and design considerations
+2. **Design Phase**: Document technical approach and implementation details in `design.md`
+3. **Implementation Phase** (`/openspec-apply`): Execute changes while keeping tasks synchronized
+4. **Archive Phase** (`/openspec-archive`): Document completed changes and update project specs
+
+### Development Tools
+
+- **XcodeGen**: Project file generation from declarative `project.yml` configuration
+- **Sticker Importer**: Python-based automation tool for bulk sticker asset management
+  - Located in `tools/sticker_importer/`
+  - Uses `uv` for Python dependency management
+  - Supports pHash-based deduplication
+- **IPA Generator**: Shell script (`generate_ipa.sh`) for creating deployable app packages
+- **AI Agents**: Workflow automation agents in `agents/` directory
+
+### Testing
+
+- **Framework**: pytest (for Python tools)
+- **iOS Testing**: Manual verification and planned XCTest integration
+- Focus areas: Image processing, memory management, localization
 
 ## 📝 Permissions
 
